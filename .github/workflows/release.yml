@@ -1,0 +1,88 @@
+# GitHub Actions CI/CD Pipeline for Binky
+#
+# This workflow builds, signs, and releases the macOS app for both ARM and Intel architectures.
+#
+# Trigger:
+#   - Push to 'release' branch (standard release flow)
+#   - Manual workflow_dispatch (for emergency hotfix releases)
+#
+# Artifacts produced:
+#   - PKG installer (macOS package for easy installation)
+#   - DMG (disk image for manual installation)
+#   - Updater artifacts (latest.json, .tar.gz, .sig files for auto-updater)
+#
+# Required GitHub Secrets:
+#   - APPLE_CERTIFICATE: Base64-encoded .p12 certificate file
+#   - APPLE_CERTIFICATE_PASSWORD: Password for the .p12 certificate
+#   - APPLE_SIGNING_IDENTITY: Certificate name (e.g., "Developer ID Application: Name (TEAMID)")
+#   - APPLE_ID: Apple ID email for notarization
+#   - APPLE_PASSWORD: App-specific password for notarization
+#   - APPLE_TEAM_ID: Apple Developer Team ID
+#   - TAURI_SIGNING_PRIVATE_KEY: Contents of ~/.tauri/binky.key
+#   - TAURI_SIGNING_PRIVATE_KEY_PASSWORD: Password set during key generation (empty string if no password)
+#   - SENTRY_DSN: Sentry DSN for crash reporting (optional)
+
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+  workflow_dispatch:
+
+jobs:
+  publish-tauri:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
+          - platform: 'macos-latest'
+            args: '--target x86_64-apple-darwin'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: 'npm'
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: npm install
+
+      - name: Build and release Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+        with:
+          tagName: app-v__VERSION__
+          releaseName: 'Binky v__VERSION__'
+          releaseBody: 'Neue Version verfügbar. Details im Changelog.'
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
