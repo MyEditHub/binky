@@ -110,11 +110,39 @@
 
 ## Traceability
 
-This section maps requirements to roadmap phases. It will be populated during roadmap creation.
+This section maps requirements to roadmap phases for full coverage validation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (To be filled by roadmapper) | | |
+| SETUP-01 | Phase 1 | Pending |
+| SETUP-02 | Phase 1 | Pending |
+| SETUP-03 | Phase 1 | Pending |
+| EPISODE-01 | Phase 2 | Pending |
+| EPISODE-02 | Phase 2 | Pending |
+| EPISODE-03 | Phase 2 | Pending |
+| TRANS-01 | Phase 2 | Pending |
+| TRANS-02 | Phase 2 | Pending |
+| TRANS-03 | Phase 2 | Pending |
+| TRANS-04 | Phase 2 | Pending |
+| SPEAK-01 | Phase 3 | Pending |
+| SPEAK-02 | Phase 3 | Pending |
+| SPEAK-03 | Phase 3 | Pending |
+| SPEAK-04 | Phase 3 | Pending |
+| CONTENT-01 | Phase 4 | Pending |
+| CONTENT-02 | Phase 4 | Pending |
+| CONTENT-03 | Phase 4 | Pending |
+| BIRD-01 | Phase 5 | Pending |
+| BIRD-02 | Phase 5 | Pending |
+| BIRD-03 | Phase 5 | Pending |
+| BIRD-04 | Phase 5 | Pending |
+| BIRD-05 | Phase 5 | Pending |
+| BIRD-06 | Phase 5 | Pending |
+| UI-01 | Phase 1 | Pending |
+| UI-02 | Phase 1 | Pending |
+| UI-03 | Phase 2 | Pending |
+| DIST-01 | Phase 1 | Pending |
+| DIST-02 | Phase 1 | Pending |
+| DIST-03 | Phase 1 | Pending |
 
 ---
 
@@ -134,6 +162,9 @@ This section maps requirements to roadmap phases. It will be populated during ro
 
 **Out of Scope:** 15 explicit exclusions
 
+**Traceability Coverage:** 27/27 v1 requirements mapped (100%)
+
 ---
 
 *Requirements defined: 2026-02-11*
+*Traceability updated: 2026-02-11*
