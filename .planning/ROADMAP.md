@@ -30,10 +30,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. App displays German-language UI with minimal design using podcast brand colors
   4. Auto-updater signing key is secured in 1Password with backup documentation
   5. App can be built and signed using existing Editor-Workshop CI/CD infrastructure
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md — Scaffold Tauri v2 project, macOS permissions, SQLite database with migrations
+- [ ] 01-02-PLAN.md — German UI foundation (sidebar, i18n, theme, brand colors)
+- [ ] 01-03-PLAN.md — Auto-updater infrastructure, Sentry crash reporting, database backup
+- [ ] 01-04-PLAN.md — CI/CD pipeline (GitHub Actions release workflow, version bump script)
+- [ ] 01-05-PLAN.md — First-launch tutorial, Settings page, update notification banner
+- [ ] 01-06-PLAN.md — Human verification checkpoint (visual QA, full walkthrough)
 
 ### Phase 2: Episode Management & Transcription
 **Goal**: Users can auto-fetch podcast episodes from RSS feed and transcribe them using local Whisper with German language optimization
@@ -103,7 +108,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Infrastructure | 0/TBD | Not started | - |
+| 1. Foundation & Infrastructure | 0/6 | Planned | - |
 | 2. Episode Management & Transcription | 0/TBD | Not started | - |
 | 3. Speaker Analytics | 0/TBD | Not started | - |
 | 4. Content Analysis | 0/TBD | Not started | - |
