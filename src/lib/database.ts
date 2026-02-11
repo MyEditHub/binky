@@ -7,10 +7,10 @@ import { BaseDirectory, copyFile, exists, mkdir, readDir, remove } from '@tauri-
  * If backup fails, logs warning but continues (non-fatal).
  */
 export async function loadDatabaseWithBackup(): Promise<Database> {
-  const dbPath = 'nettgefluester.db';
+  const dbPath = 'binky.db';
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupDir = 'backups';
-  const backupPath = `${backupDir}/nettgefluester-${timestamp}.db`;
+  const backupPath = `${backupDir}/binky-${timestamp}.db`;
 
   try {
     const dbExists = await exists(dbPath, { baseDir: BaseDirectory.AppData });
@@ -37,7 +37,7 @@ export async function loadDatabaseWithBackup(): Promise<Database> {
     // Continue even if backup fails - don't block app startup
   }
 
-  return await Database.load('sqlite:nettgefluester.db');
+  return await Database.load('sqlite:binky.db');
 }
 
 /**

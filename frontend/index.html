@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nettgeflüster - Vogel & Themen Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        :root {
+            --primary: #FF6B6B;
+            --primary-dark: #E85555;
+            --secondary: #4ECDC4;
+            --accent: #FFE66D;
+            --dark: #2D3142;
+            --light: #F8F9FA;
+            --gradient: linear-gradient(135deg, #FF6B6B 0%, #FFE66D 100%);
+            --shadow: 0 10px 40px rgba(45, 49, 66, 0.1);
+            --shadow-lg: 0 20px 60px rgba(45, 49, 66, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 107, 107, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(78, 205, 196, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 20%, rgba(255, 230, 109, 0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-30px, 30px) rotate(240deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 30px;
+            padding: 40px 50px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: var(--gradient);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--gradient);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            box-shadow: var(--shadow);
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo-text h1 {
+            font-family: 'Righteous', cursive;
+            font-size: 2.5em;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 5px;
+        }
+
+        .logo-text p {
+            color: #6c757d;
+            font-size: 1.1em;
+            font-weight: 300;
+        }
+
+        /* Navigation Tabs */
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab {
+            background: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            flex: 1;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: var(--shadow);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .tab:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .tab.active {
+            background: var(--gradient);
+            color: white;
+            font-weight: 600;
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        /* Content Area */
+        .content {
+            background: white;
+            border-radius: 30px;
+            padding: 50px;
+            box-shadow: var(--shadow-lg);
+            min-height: 600px;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+            position: relative;
+        }
+
+        /* Bird Card */
+        .bird-section {
+            text-align: center;
+        }
+
+        .bird-stats-top {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-bubble {
+            background: var(--gradient);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 50px;
+            box-shadow: var(--shadow);
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) both;
+        }
+
+        .stat-bubble:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.95em;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .bird-display {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-radius: 30px;
+            padding: 40px;
+            margin: 30px 0;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bird-display::before {
+            content: '🌿';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.1;
+            top: -30px;
+            left: -30px;
+            animation: rotate 20s linear infinite;
+        }
+
+        .bird-display::after {
+            content: '🌿';
+            position: absolute;
+            font-size: 150px;
+            opacity: 0.1;
+            bottom: -30px;
+            right: -30px;
+            animation: rotate 20s linear infinite reverse;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .bird-image {
+            width: 100%;
+            max-width: 600px;
+            height: 450px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+            margin: 0 auto 30px;
+            display: block;
+            position: relative;
+            z-index: 1;
+            transition: transform 0.3s ease;
+        }
+
+        .bird-image:hover {
+            transform: scale(1.02);
+        }
+
+        .bird-name {
+            font-family: 'Righteous', cursive;
+            font-size: 3em;
+            color: var(--dark);
+            margin: 25px 0 15px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .bird-scientific {
+            font-style: italic;
+            color: #6c757d;
+            font-size: 1.3em;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+
+        .bird-description {
+            font-size: 1.2em;
+            line-height: 1.9;
+            color: var(--dark);
+            max-width: 800px;
+            margin: 0 auto 40px;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Buttons */
+        .button {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            font-size: 1.2em;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin: 10px;
+            box-shadow: var(--shadow);
+            font-family: 'Poppins', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .button:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .button:active {
+            transform: translateY(-2px);
+        }
+
+        .button.secondary {
+            background: white;
+            color: var(--primary);
+            border: 3px solid var(--primary);
+        }
+
+        .button.danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            padding: 80px 40px;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            font-family: 'Righteous', cursive;
+            font-size: 2.5em;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+
+        .empty-state p {
+            font-size: 1.2em;
+            color: #6c757d;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        /* Topic Section */
+        .topic-form {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            border-radius: 25px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .topic-form h2 {
+            font-family: 'Righteous', cursive;
+            font-size: 2em;
+            margin-bottom: 30px;
+            color: var(--dark);
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1.05em;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 3px solid rgba(255,255,255,0.5);
+            border-radius: 15px;
+            font-size: 1.05em;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .input-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        /* Topic List */
+        .topic-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .topic-header h2 {
+            font-family: 'Righteous', cursive;
+            font-size: 2em;
+            color: var(--dark);
+        }
+
+        .filter-select {
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: 3px solid var(--primary);
+            font-size: 1.05em;
+            font-weight: 500;
+            cursor: pointer;
+            background: white;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.1);
+        }
+
+        .topic-grid {
+            display: grid;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .topic-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            border-left: 6px solid var(--primary);
+            box-shadow: var(--shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: slideIn 0.4s ease-out both;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .topic-card:nth-child(2) { animation-delay: 0.1s; }
+        .topic-card:nth-child(3) { animation-delay: 0.2s; }
+        .topic-card:nth-child(4) { animation-delay: 0.3s; }
+
+        .topic-card:hover {
+            transform: translateX(10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .topic-card.high { border-left-color: #eb3349; }
+        .topic-card.medium { border-left-color: #f39c12; }
+        .topic-card.low { border-left-color: #27ae60; }
+
+        .topic-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .topic-description {
+            color: #6c757d;
+            margin-bottom: 20px;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        .topic-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.9em;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .badge.high { background: #ffe5e5; color: #c0392b; }
+        .badge.medium { background: #fff3cd; color: #d68910; }
+        .badge.low { background: #d4edda; color: #1e7e34; }
+        .badge.backlog { background: #e7f3ff; color: #0066cc; }
+        .badge.planned { background: #fff4e6; color: #e67e22; }
+        .badge.discussed { background: #d4edda; color: #27ae60; }
+        .badge.skipped { background: #f8d7da; color: #721c24; }
+
+        .topic-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 10px 20px;
+            font-size: 0.95em;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-small.primary {
+            background: var(--gradient);
+            color: white;
+        }
+
+        .btn-small.secondary {
+            background: #e9ecef;
+            color: var(--dark);
+        }
+
+        .btn-small.danger {
+            background: #eb3349;
+            color: white;
+        }
+
+        .btn-small:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        /* Messages */
+        .message {
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            animation: slideDown 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .message.error {
+            background: #ffe5e5;
+            color: #c0392b;
+            border-left: 5px solid #eb3349;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #1e7e34;
+            border-left: 5px solid #27ae60;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            font-size: 1.3em;
+            color: var(--primary);
+            font-weight: 300;
+        }
+
+        .loading::after {
+            content: '⏳';
+            display: inline-block;
+            animation: spin 2s linear infinite;
+            margin-left: 10px;
+            font-size: 1.5em;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Stats Page */
+        .stats-empty {
+            text-align: center;
+            padding: 80px 40px;
+        }
+
+        .stats-empty h2 {
+            font-family: 'Righteous', cursive;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+
+        .stats-empty p {
+            font-size: 1.2em;
+            color: #6c757d;
+            margin-bottom: 20px;
+            font-weight: 300;
+            line-height: 1.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 25px;
+            }
+
+            .logo-text h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 30px 25px;
+            }
+
+            .bird-name {
+                font-size: 2em;
+            }
+
+            .tab {
+                min-width: 100%;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button {
+                width: 100%;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Empty Topic State */
+        .empty-topics {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-topics-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-topics p {
+            font-size: 1.2em;
+            font-weight: 300;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const API_URL = 'http://localhost:8000/api';
+
+        function App() {
+            const [activeTab, setActiveTab] = useState('bird');
+            const [loading, setLoading] = useState(false);
+            const [error, setError] = useState(null);
+            const [success, setSuccess] = useState(null);
+            const [currentBird, setCurrentBird] = useState(null);
+            const [birdStats, setBirdStats] = useState({ total: 0, used: 0, remaining: 0 });
+            const [topics, setTopics] = useState([]);
+            const [newTopic, setNewTopic] = useState({
+                title: '',
+                description: '',
+                priority: 'medium',
+                category: ''
+            });
+            const [topicFilter, setTopicFilter] = useState('backlog');
+
+            useEffect(() => {
+                loadBirdStats();
+                loadTopics();
+            }, []);
+
+            useEffect(() => {
+                if (error || success) {
+                    const timer = setTimeout(() => {
+                        setError(null);
+                        setSuccess(null);
+                    }, 5000);
+                    return () => clearTimeout(timer);
+                }
+            }, [error, success]);
+
+            const loadBirdStats = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/birds/stats`);
+                    const data = await response.json();
+                    setBirdStats(data);
+                } catch (err) {
+                    console.error('Fehler beim Laden der Statistiken:', err);
+                }
+            };
+
+            const getRandomBird = async () => {
+                setLoading(true);
+                setError(null);
+                try {
+                    const response = await fetch(`${API_URL}/birds/random`);
+                    if (!response.ok) {
+                        throw new Error('Alle Vögel wurden bereits benutzt! 🎉');
+                    }
+                    const data = await response.json();
+                    setCurrentBird(data);
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const markBirdAsUsed = async () => {
+                if (!currentBird) return;
+                try {
+                    await fetch(`${API_URL}/birds/${currentBird.id}/mark-used`, { method: 'POST' });
+                    setSuccess('🎉 Vogel als benutzt markiert!');
+                    loadBirdStats();
+                    setCurrentBird(null);
+                } catch (err) {
+                    setError('Fehler beim Markieren des Vogels');
+                }
+            };
+
+            const resetAllBirds = async () => {
+                if (!confirm('Wirklich alle Vögel zurücksetzen?')) return;
+                try {
+                    await fetch(`${API_URL}/birds/reset`, { method: 'POST' });
+                    setSuccess('✅ Alle Vögel zurückgesetzt!');
+                    loadBirdStats();
+                    setCurrentBird(null);
+                } catch (err) {
+                    setError('Fehler beim Zurücksetzen');
+                }
+            };
+
+            const loadTopics = async () => {
+                try {
+                    const response = await fetch(`${API_URL}/topics?status=${topicFilter}`);
+                    const data = await response.json();
+                    setTopics(data);
+                } catch (err) {
+                    console.error('Fehler beim Laden der Themen:', err);
+                }
+            };
+
+            useEffect(() => {
+                if (activeTab === 'topics') {
+                    loadTopics();
+                }
+            }, [topicFilter, activeTab]);
+
+            const createTopic = async (e) => {
+                e.preventDefault();
+                if (!newTopic.title.trim()) {
+                    setError('Bitte gib einen Titel ein');
+                    return;
+                }
+                try {
+                    const response = await fetch(`${API_URL}/topics`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(newTopic)
+                    });
+                    if (response.ok) {
+                        setSuccess('✅ Thema erfolgreich erstellt!');
+                        setNewTopic({ title: '', description: '', priority: 'medium', category: '' });
+                        loadTopics();
+                    }
+                } catch (err) {
+                    setError('Fehler beim Erstellen des Themas');
+                }
+            };
+
+            const updateTopicStatus = async (topicId, newStatus) => {
+                try {
+                    const topic = topics.find(t => t.id === topicId);
+                    const response = await fetch(`${API_URL}/topics/${topicId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...topic, status: newStatus })
+                    });
+                    if (response.ok) {
+                        loadTopics();
+                        setSuccess('✅ Status aktualisiert!');
+                    }
+                } catch (err) {
+                    setError('Fehler beim Aktualisieren');
+                }
+            };
+
+            const deleteTopic = async (topicId) => {
+                if (!confirm('Thema wirklich löschen?')) return;
+                try {
+                    await fetch(`${API_URL}/topics/${topicId}`, { method: 'DELETE' });
+                    loadTopics();
+                    setSuccess('🗑️ Thema gelöscht!');
+                } catch (err) {
+                    setError('Fehler beim Löschen');
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <div className="header-content">
+                            <div className="logo">
+                                <div className="logo-icon">🎙️</div>
+                                <div className="logo-text">
+                                    <h1>Nettgeflüster</h1>
+                                    <p>Vogel-Randomizer & Themen-Manager</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {error && <div className="message error"><span style={{ fontSize: '1.5em' }}>⚠️</span>{error}</div>}
+                    {success && <div className="message success"><span style={{ fontSize: '1.5em' }}>✓</span>{success}</div>}
+
+                    <div className="tabs">
+                        <button className={`tab ${activeTab === 'bird' ? 'active' : ''}`} onClick={() => setActiveTab('bird')}>
+                            🐦 Vogel der Woche
+                        </button>
+                        <button className={`tab ${activeTab === 'topics' ? 'active' : ''}`} onClick={() => setActiveTab('topics')}>
+                            📋 Themen-Backlog
+                        </button>
+                        <button className={`tab ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')}>
+                            📊 Statistiken
+                        </button>
+                    </div>
+
+                    <div className="content">
+                        {activeTab === 'bird' && (
+                            <div className="bird-section">
+                                <div className="bird-stats-top">
+                                    <div className="stat-bubble">
+                                        <span className="stat-number">{birdStats.used}</span>
+                                        <span className="stat-label">Benutzt</span>
+                                    </div>
+                                    <div className="stat-bubble">
+                                        <span className="stat-number">{birdStats.remaining}</span>
+                                        <span className="stat-label">Verbleibend</span>
+                                    </div>
+                                </div>
+
+                                {currentBird ? (
+                                    <div className="bird-display">
+                                        <img 
+                                            src={currentBird.image_url} 
+                                            alt={currentBird.name}
+                                            className="bird-image"
+                                            onError={(e) => e.target.src = 'https://via.placeholder.com/600x450/fdcb6e/2d3142?text=Vogelbild'}
+                                        />
+                                        <h2 className="bird-name">🐦 {currentBird.name}</h2>
+                                        <p className="bird-scientific">{currentBird.scientific_name}</p>
+                                        <p className="bird-description">{currentBird.description}</p>
+                                        <div className="button-group">
+                                            <button className="button" onClick={markBirdAsUsed}>✓ Als benutzt markieren</button>
+                                            <button className="button secondary" onClick={getRandomBird}>Nächster Vogel →</button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="empty-state">
+                                        <h2>Bereit für den Vogel der Woche?</h2>
+                                        <p>Klicke auf den Button, um einen zufälligen Vogel aus der NABU-Datenbank zu holen!</p>
+                                        <button className="button" onClick={getRandomBird} disabled={loading}>
+                                            {loading ? '⏳ Lädt...' : '🎲 Zufallsvogel holen'}
+                                        </button>
+                                        <br /><br />
+                                        <button className="button danger" onClick={resetAllBirds}>🔄 Alle Vögel zurücksetzen</button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'topics' && (
+                            <div>
+                                <div className="topic-form">
+                                    <h2>Neues Thema hinzufügen</h2>
+                                    <form onSubmit={createTopic}>
+                                        <div className="input-group">
+                                            <label>Titel *</label>
+                                            <input type="text" value={newTopic.title} onChange={(e) => setNewTopic({...newTopic, title: e.target.value})} placeholder="z.B. Verrückte Pinguin-Geschichte" />
+                                        </div>
+                                        <div className="input-group">
+                                            <label>Beschreibung</label>
+                                            <textarea value={newTopic.description} onChange={(e) => setNewTopic({...newTopic, description: e.target.value})} placeholder="Details zum Thema..." />
+                                        </div>
+                                        <div className="form-row">
+                                            <div className="input-group">
+                                                <label>Priorität</label>
+                                                <select value={newTopic.priority} onChange={(e) => setNewTopic({...newTopic, priority: e.target.value})}>
+                                                    <option value="low">🟢 Niedrig</option>
+                                                    <option value="medium">🟡 Mittel</option>
+                                                    <option value="high">🔴 Hoch</option>
+                                                </select>
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Kategorie</label>
+                                                <input type="text" value={newTopic.category} onChange={(e) => setNewTopic({...newTopic, category: e.target.value})} placeholder="z.B. Familie, News, Tiere" />
+                                            </div>
+                                        </div>
+                                        <button type="submit" className="button">+ Thema hinzufügen</button>
+                                    </form>
+                                </div>
+
+                                <div className="topic-header">
+                                    <h2>Themen-Liste</h2>
+                                    <select className="filter-select" value={topicFilter} onChange={(e) => setTopicFilter(e.target.value)}>
+                                        <option value="backlog">📋 Backlog</option>
+                                        <option value="planned">📅 Geplant</option>
+                                        <option value="discussed">✅ Besprochen</option>
+                                        <option value="skipped">⏭️ Übersprungen</option>
+                                    </select>
+                                </div>
+
+                                {topics.length === 0 ? (
+                                    <div className="empty-topics">
+                                        <div className="empty-topics-icon">📭</div>
+                                        <p>Keine Themen in dieser Kategorie</p>
+                                    </div>
+                                ) : (
+                                    <div className="topic-grid">
+                                        {topics.map(topic => (
+                                            <div key={topic.id} className={`topic-card ${topic.priority}`}>
+                                                <div className="topic-title">{topic.title}</div>
+                                                {topic.description && <div className="topic-description">{topic.description}</div>}
+                                                <div className="topic-meta">
+                                                    <span className={`badge ${topic.priority}`}>
+                                                        {topic.priority === 'high' ? '🔴 Hoch' : topic.priority === 'medium' ? '🟡 Mittel' : '🟢 Niedrig'}
+                                                    </span>
+                                                    <span className={`badge ${topic.status}`}>
+                                                        {topic.status === 'backlog' ? '📋 Backlog' : topic.status === 'planned' ? '📅 Geplant' : topic.status === 'discussed' ? '✅ Besprochen' : '⏭️ Übersprungen'}
+                                                    </span>
+                                                    {topic.category && <span className="badge" style={{ background: '#f3f4f6', color: '#374151' }}>🏷️ {topic.category}</span>}
+                                                </div>
+                                                <div className="topic-actions">
+                                                    {topic.status === 'backlog' && <button className="btn-small primary" onClick={() => updateTopicStatus(topic.id, 'planned')}>📅 Einplanen</button>}
+                                                    {topic.status === 'planned' && (
+                                                        <>
+                                                            <button className="btn-small primary" onClick={() => updateTopicStatus(topic.id, 'discussed')}>✅ Besprochen</button>
+                                                            <button className="btn-small secondary" onClick={() => updateTopicStatus(topic.id, 'skipped')}>⏭️ Überspringen</button>
+                                                        </>
+                                                    )}
+                                                    <button className="btn-small danger" onClick={() => deleteTopic(topic.id)}>🗑️ Löschen</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'stats' && (
+                            <div className="stats-empty">
+                                <h2>📊 Statistiken</h2>
+                                <p>Statistiken werden verfügbar sein, sobald Episoden transkribiert wurden.</p>
+                                <p style={{ marginTop: '30px', fontSize: '1em' }}>💡 Verwende die Mac Admin-App, um Episoden zu transkribieren<br />und Redezeit-Statistiken zu generieren.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

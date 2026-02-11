@@ -1,0 +1,9 @@
+/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/tokio_rustls-f6e18bb44bfdc8df.d: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/client.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/mod.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/handshake.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/server.rs
+
+/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/libtokio_rustls-f6e18bb44bfdc8df.rmeta: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/client.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/mod.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/handshake.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/server.rs
+
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/lib.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/client.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/mod.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/common/handshake.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tokio-rustls-0.26.4/src/server.rs:

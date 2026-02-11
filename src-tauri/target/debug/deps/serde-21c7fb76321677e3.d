@@ -1,0 +1,12 @@
+/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/serde-21c7fb76321677e3.d: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/build/serde-8b65f3d89392c4f4/out/private.rs
+
+/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/libserde-21c7fb76321677e3.rmeta: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs /Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/build/serde-8b65f3d89392c4f4/out/private.rs
+
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/lib.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/integer128.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/mod.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/de.rs:
+/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde-1.0.228/src/private/ser.rs:
+/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/build/serde-8b65f3d89392c4f4/out/private.rs:
+
+# env-dep:OUT_DIR=/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/build/serde-8b65f3d89392c4f4/out

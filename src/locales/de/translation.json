@@ -1,6 +1,6 @@
 {
   "app": {
-    "title": "Nettgefluster",
+    "title": "Binky",
     "version": "Version {{version}}"
   },
   "nav": {
@@ -28,7 +28,7 @@
       "database_label": "Datenbank",
       "database_status": "Verbunden",
       "launch_at_login": "App beim Anmelden starten",
-      "about": "Ueber Nettgefluster"
+      "about": "Ueber Binky"
     },
     "analytics": {
       "title": "Analytik",

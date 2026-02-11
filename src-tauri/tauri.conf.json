@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Nettgefluester",
+  "productName": "Binky",
   "version": "0.1.0",
-  "identifier": "de.nettgefluester.app",
+  "identifier": "de.binky.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
@@ -29,14 +29,14 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDlCMTIwMjVGOTkzQ0MzRDEKUldUUnd6eVpYd0lTbTlWeVNJOStsZy9YNGxHbklab0dNY3dONzBOcjdqTE1sbjdqc1NOSTUxL1AK",
       "endpoints": [
-        "https://github.com/MyEditHub/nettgefluester-app/releases/latest/download/latest.json"
+        "https://github.com/MyEditHub/binky/releases/latest/download/latest.json"
       ]
     }
   },
   "app": {
     "windows": [
       {
-        "title": "Nettgeflüster",
+        "title": "Binky",
         "width": 1200,
         "height": 800,
         "minWidth": 800,

@@ -1,7 +1,7 @@
 {
-  "name": "nettgefluester-app",
+  "name": "binky-app",
   "version": "0.1.0",
-  "description": "Nettgefluster Podcast Manager - Desktop App",
+  "description": "Binky Podcast Manager - Desktop App",
   "type": "module",
   "scripts": {
     "dev": "vite",
