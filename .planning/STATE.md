@@ -77,32 +77,35 @@ Recent decisions affecting current work:
 - Plugin order: sentry (first) -> sql -> updater -> fs (Sentry catches errors from all subsequent plugins)
 
 **From Plan 01-04 (2026-02-11):**
+- Signing approach: GPG-encrypted Tauri key in repo (.github/signing.key.gpg) - NO Apple Developer account required
 - GitHub Actions matrix builds: Separate jobs for ARM and Intel with fail-fast: false (one can fail while other succeeds)
 - Rust cache strategy: swatinem/rust-cache@v2 saves ~90% build time on subsequent builds
-- Bundle targets: ["app", "dmg", "updater"] - PKG created automatically by tauri-action during signing
+- Bundle targets: ["app", "dmg", "updater"] - PKG created without Apple notarization
 - Version management: Single bump-version.sh script keeps package.json, tauri.conf.json, and Cargo.toml in sync
-- Release trigger: Push to release branch (standard) or workflow_dispatch (emergency hotfix)
-- Release naming: app-v__VERSION__ tags with German release body
+- Release trigger: Push v* tags (e.g., v0.1.0) or workflow_dispatch (emergency hotfix)
+- GitHub Secrets: Only 2 required (GPG_PASSPHRASE, TAURI_PRIVATE_KEY_PASSWORD) vs 8+ for Apple notarization
+- Gatekeeper bypass: Users manually allow via System Settings > Privacy & Security > "Open Anyway"
 
 ### Pending Todos
 
 **CRITICAL - Before first release:**
 - Back up private signing key at ~/.tauri/binky.key to 1Password/BitWarden
-- Store signing key as GitHub secret TAURI_SIGNING_PRIVATE_KEY for CI/CD
-- Configure all Apple signing secrets in GitHub (APPLE_CERTIFICATE, APPLE_ID, APPLE_PASSWORD, etc.)
-- Configure Sentry DSN in production environment
+- Configure GitHub Secrets: GPG_PASSPHRASE ("tauri") and TAURI_PRIVATE_KEY_PASSWORD ("tauri")
+- Configure Sentry DSN in production environment (optional)
+- Document Gatekeeper bypass instructions for users
 
 ### Blockers/Concerns
 
 **Phase 1 Critical:**
 - ⚠️ URGENT: Private signing key at ~/.tauri/binky.key must be backed up to 1Password/BitWarden BEFORE first release — losing it means permanent inability to distribute updates
-- ⚠️ URGENT: GitHub Secrets must be configured before CI/CD can run (Apple certificates, signing keys, notarization credentials)
+- ✅ RESOLVED: GPG-encrypted signing key created (.github/signing.key.gpg) - NO Apple Developer account needed
 - ✅ RESOLVED: macOS file access permissions configured correctly in Entitlements.plist (network client + user-selected file read)
 
 **Phase 1 Infrastructure:**
-- GitHub Secrets not configured yet (CI/CD pipeline ready but will fail without secrets)
+- GitHub Secrets not configured yet (only 2 required: GPG_PASSPHRASE and TAURI_PRIVATE_KEY_PASSWORD)
 - Sentry DSN not configured yet (app works but doesn't report crashes until DSN is set)
-- No releases exist yet (first release will trigger once secrets are configured and release branch is pushed)
+- No releases exist yet (first release will trigger when v* tag is pushed)
+- Users will need to manually bypass Gatekeeper (System Settings > "Open Anyway") due to no Apple notarization
 
 **Phase 2 Risk:**
 - German language transcription accuracy on real podcast audio (dialects, crosstalk) needs validation on actual Nettgefluester episodes
