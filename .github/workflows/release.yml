@@ -3,7 +3,7 @@
 # This workflow builds, signs, and releases the macOS app for both ARM and Intel architectures.
 #
 # Trigger:
-#   - Push to 'release' branch (standard release flow)
+#   - Push tags matching v* (e.g., v0.1.0, v0.2.0)
 #   - Manual workflow_dispatch (for emergency hotfix releases)
 #
 # Artifacts produced:
@@ -11,23 +11,23 @@
 #   - DMG (disk image for manual installation)
 #   - Updater artifacts (latest.json, .tar.gz, .sig files for auto-updater)
 #
+# Signing approach:
+#   - Uses GPG-encrypted Tauri signing key stored in .github/signing.key.gpg
+#   - NO Apple Developer account required
+#   - NO Apple notarization required
+#   - Users bypass Gatekeeper via System Settings > Privacy & Security > "Open Anyway"
+#
 # Required GitHub Secrets:
-#   - APPLE_CERTIFICATE: Base64-encoded .p12 certificate file
-#   - APPLE_CERTIFICATE_PASSWORD: Password for the .p12 certificate
-#   - APPLE_SIGNING_IDENTITY: Certificate name (e.g., "Developer ID Application: Name (TEAMID)")
-#   - APPLE_ID: Apple ID email for notarization
-#   - APPLE_PASSWORD: App-specific password for notarization
-#   - APPLE_TEAM_ID: Apple Developer Team ID
-#   - TAURI_SIGNING_PRIVATE_KEY: Contents of ~/.tauri/binky.key
-#   - TAURI_SIGNING_PRIVATE_KEY_PASSWORD: Password set during key generation (empty string if no password)
+#   - GPG_PASSPHRASE: Password for decrypting .github/signing.key.gpg (e.g., "tauri")
+#   - TAURI_PRIVATE_KEY_PASSWORD: Password for Tauri signing key (e.g., "tauri")
 #   - SENTRY_DSN: Sentry DSN for crash reporting (optional)
 
 name: Release
 
 on:
   push:
-    branches:
-      - release
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
@@ -63,6 +63,13 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      - name: Decrypt Tauri signing key
+        run: |
+          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.GPG_PASSPHRASE }}" \
+            --output /tmp/signing.key .github/signing.key.gpg
+          echo "TAURI_SIGNING_PRIVATE_KEY=$(cat /tmp/signing.key)" >> $GITHUB_ENV
+          echo "Signing key decrypted and loaded"
+
       - name: Install frontend dependencies
         run: npm install
 
@@ -70,18 +77,11 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_PRIVATE_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
         with:
-          tagName: app-v__VERSION__
-          releaseName: 'Binky v__VERSION__'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Binky ${{ github.ref_name }}'
           releaseBody: 'Neue Version verfügbar. Details im Changelog.'
           releaseDraft: false
           prerelease: false
