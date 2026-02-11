@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 1 of 5 (Foundation & Infrastructure)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-11 — Completed 01-01-PLAN.md (Tauri scaffold with database)
+Last activity: 2026-02-11 — Completed 01-02-PLAN.md (German UI shell with sidebar navigation)
 
-Progress: [█░░░░░░░░░] 10%
+Progress: [██░░░░░░░░] 20%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 5 min
-- Total execution time: 0.08 hours
+- Total plans completed: 2
+- Average duration: 4 min
+- Total execution time: 0.14 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-infrastructure | 1 | 5 min | 5 min |
+| 01-foundation-infrastructure | 2 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (5min)
-- Trend: Just started
+- Last 5 plans: 01-01 (5min), 01-02 (3min)
+- Trend: Accelerating (3min vs 5min)
 
 *Updated after each plan completion*
 
@@ -55,6 +55,13 @@ Recent decisions affecting current work:
 - macOS entitlements: Network + file access, NO microphone (transcribes existing episodes)
 - Placeholder icons: Minimal valid images via base64, proper branding deferred to Plan 02
 
+**From Plan 01-02 (2026-02-11):**
+- i18n TypeScript types: Compile-time checking prevents typo bugs where raw keys show in UI
+- Emoji icons: Simple navigation icons without icon library dependency
+- CSS custom properties: Theme support via @media (prefers-color-scheme: dark) for macOS auto-detection
+- Warm orange brand color (#d97757): Friendly, minimal aesthetic matching podcast brand
+- Disabled features pattern: Grayed-out nav items with tooltips explaining "kommt bald"
+
 ### Pending Todos
 
 None yet.
@@ -68,7 +75,6 @@ None yet.
 **Phase 2 Risk:**
 - German language transcription accuracy on real podcast audio (dialects, crosstalk) needs validation on actual Nettgefluester episodes
 - Whisper model size vs. memory usage tradeoff requires testing on user's Mac hardware (specs unknown)
-- Placeholder icons created in Plan 01 need replacement with proper branding
 
 **Phase 3 Risk:**
 - pyannote-audio speaker diarization accuracy for German two-person podcasts uncertain (10-20% DER expected, real-world performance needs validation)
@@ -80,7 +86,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-11 19:00:51 UTC
-Stopped at: Completed 01-01-PLAN.md (Tauri scaffold + database)
+Last session: 2026-02-11 19:07:54 UTC
+Stopped at: Completed 01-02-PLAN.md (German UI shell with sidebar navigation)
 Resume file: None
-Next: Plan 02 - UI shell with German-language layout and navigation
+Next: Plan 03 - RSS parser for episode fetching
