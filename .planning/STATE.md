@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 1 of 5 (Foundation & Infrastructure)
-Plan: 2 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-11 — Completed 01-02-PLAN.md (German UI shell with sidebar navigation)
+Last activity: 2026-02-11 — Completed 01-03-PLAN.md (Auto-updater, Sentry, database backup)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Average duration: 4 min
-- Total execution time: 0.14 hours
+- Total execution time: 0.20 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-infrastructure | 2 | 8 min | 4 min |
+| 01-foundation-infrastructure | 3 | 12 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (5min), 01-02 (3min)
-- Trend: Accelerating (3min vs 5min)
+- Last 5 plans: 01-01 (5min), 01-02 (3min), 01-03 (4min)
+- Trend: Steady at ~4min average
 
 *Updated after each plan completion*
 
@@ -62,15 +62,29 @@ Recent decisions affecting current work:
 - Warm orange brand color (#d97757): Friendly, minimal aesthetic matching podcast brand
 - Disabled features pattern: Grayed-out nav items with tooltips explaining "kommt bald"
 
+**From Plan 01-03 (2026-02-11):**
+- Updater signing key: Generated without password for CI/CD compatibility (stored at ~/.tauri/nettgefluester.key)
+- Sentry DSN: Optional via env var - app works without it in development
+- Update size warning: Prompt user before downloading >50MB updates (German text)
+- Database backups: Keep last 5, auto-clean old ones (non-fatal if backup fails)
+- Plugin order: sentry (first) -> sql -> updater -> fs (Sentry catches errors from all subsequent plugins)
+
 ### Pending Todos
 
-None yet.
+**CRITICAL - Before first release:**
+- Back up private signing key at ~/.tauri/nettgefluester.key to 1Password/BitWarden
+- Store signing key as GitHub secret TAURI_SIGNING_PRIVATE_KEY for CI/CD
+- Configure Sentry DSN in production environment
 
 ### Blockers/Concerns
 
 **Phase 1 Critical:**
-- Auto-updater signing key must be secured in 1Password/BitWarden BEFORE first release — losing it means permanent inability to distribute updates
+- ⚠️ URGENT: Private signing key at ~/.tauri/nettgefluester.key must be backed up to 1Password/BitWarden BEFORE first release — losing it means permanent inability to distribute updates
 - ✅ RESOLVED: macOS file access permissions configured correctly in Entitlements.plist (network client + user-selected file read)
+
+**Phase 1 Infrastructure:**
+- Sentry DSN not configured yet (app works but doesn't report crashes until DSN is set)
+- Update endpoint points to GitHub Releases but no releases exist yet (need CI/CD pipeline in next plan)
 
 **Phase 2 Risk:**
 - German language transcription accuracy on real podcast audio (dialects, crosstalk) needs validation on actual Nettgefluester episodes
@@ -79,14 +93,15 @@ None yet.
 **Phase 3 Risk:**
 - pyannote-audio speaker diarization accuracy for German two-person podcasts uncertain (10-20% DER expected, real-world performance needs validation)
 
-**Phase 1 Plan 01 Observations:**
+**Phase 1 Observations:**
 - Tauri v2 capabilities system differs from v1 allowlist (documentation accurate, but takes learning)
 - Icon generation without standard tools (ImageMagick/PIL) required base64 workaround
 - Cargo generate_context! macro requires dist folder at compile time (not mentioned in most Tauri docs)
+- Update plugin API: contentLength is in DownloadEvent Started data, not on Update object (plan assumed wrong location)
 
 ## Session Continuity
 
-Last session: 2026-02-11 19:07:54 UTC
-Stopped at: Completed 01-02-PLAN.md (German UI shell with sidebar navigation)
+Last session: 2026-02-11 18:37:08 UTC
+Stopped at: Completed 01-03-PLAN.md (Auto-updater, Sentry, database backup)
 Resume file: None
-Next: Plan 03 - RSS parser for episode fetching
+Next: Plan 04 - CI/CD pipeline for building and distributing releases
