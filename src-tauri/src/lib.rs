@@ -17,6 +17,8 @@ pub fn run() {
                 .add_migrations("sqlite:nettgefluester.db", migrations)
                 .build()
         )
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_fs::init())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
