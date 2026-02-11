@@ -2,7 +2,7 @@
 phase: 01-foundation-infrastructure
 plan: 04
 subsystem: infra
-tags: [ci-cd, github-actions, release-automation, version-management, pkg-installer, signing, apple-notarization]
+tags: [ci-cd, github-actions, release-automation, version-management, pkg-installer, gpg-signing, tauri-signing]
 
 # Dependency graph
 requires:
@@ -22,17 +22,19 @@ tech-stack:
 key-files:
   created:
     - .github/workflows/release.yml
+    - .github/signing.key.gpg
     - scripts/bump-version.sh
   modified:
     - src-tauri/tauri.conf.json
 
 key-decisions:
+  - "Signing: GPG-encrypted Tauri key in repo (NO Apple Developer account required)"
   - "Build strategy: Separate matrix builds for ARM and Intel (fail-fast: false)"
   - "Rust cache: swatinem/rust-cache@v2 saves ~90% build time on subsequent builds"
   - "Bundle targets: app, dmg, and updater (PKG created automatically by tauri-action)"
-  - "Release trigger: Push to release branch or manual workflow_dispatch"
+  - "Release trigger: Push v* tags (not release branch)"
   - "Version management: Single script synchronizes package.json, tauri.conf.json, and Cargo.toml"
-  - "Release naming: app-v__VERSION__ tags with German release body"
+  - "Gatekeeper bypass: Users manually allow in System Settings (no notarization)"
 
 patterns-established:
   - "Matrix builds: Separate jobs for each architecture with fail-fast: false"
@@ -61,10 +63,11 @@ completed: 2026-02-11
 - GitHub Actions workflow configured for macOS ARM (aarch64-apple-darwin) and Intel (x86_64-apple-darwin) builds
 - Rust cache enabled (swatinem/rust-cache@v2) for ~90% faster subsequent builds
 - PKG installer, DMG, and updater artifacts generation configured
-- Apple signing and notarization fully integrated via GitHub Secrets
+- GPG-encrypted Tauri signing key created and stored in repo (.github/signing.key.gpg)
+- NO Apple Developer account required - uses Tauri signing only
 - Version bump script synchronizes version across package.json, tauri.conf.json, and Cargo.toml
-- All required GitHub Secrets documented in workflow comments
-- Release process documented: bump version -> commit -> push to release branch
+- Only 2 GitHub Secrets required (GPG_PASSPHRASE, TAURI_PRIVATE_KEY_PASSWORD)
+- Release process documented: bump version -> commit -> tag -> push
 
 ## Task Commits
 
@@ -72,9 +75,11 @@ Each task was committed atomically:
 
 1. **Task 1: Configure PKG bundling and GitHub Actions release workflow** - `a8936c7` (feat)
 2. **Task 2: Create version bump script and document GitHub Secrets** - `576bb36` (feat)
+3. **Fix: Use GPG-encrypted signing key instead of Apple notarization** - `35fc1ea` (fix)
 
 ## Files Created/Modified
-- `.github/workflows/release.yml` - CI/CD pipeline with matrix builds for ARM + Intel
+- `.github/workflows/release.yml` - CI/CD pipeline with GPG-encrypted signing (no Apple certs)
+- `.github/signing.key.gpg` - GPG-encrypted Tauri signing key (passphrase: "tauri")
 - `scripts/bump-version.sh` - Version synchronization script with semver validation
 - `src-tauri/tauri.conf.json` - Updated bundle.targets to ["app", "dmg", "updater"]
 
@@ -92,16 +97,18 @@ Each task was committed atomically:
 
 **PKG installer generation:**
 - Bundle targets set to ["app", "dmg", "updater"]
-- tauri-action automatically creates PKG installer when app is signed and notarized
+- tauri-action creates PKG installer without Apple notarization
 - PKG is the preferred installation method (easier than DMG for users)
+- Users must manually allow in System Settings > Privacy & Security > "Open Anyway"
 
-**GitHub Secrets documentation:**
-- All required secrets documented in release.yml header comments:
-  - Apple certificates (APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_SIGNING_IDENTITY)
-  - Apple notarization (APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID)
-  - Tauri updater signing (TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD)
-  - Sentry DSN (optional)
-- Documentation includes what each secret contains and how to generate it
+**Signing approach (NO Apple Developer required):**
+- GPG-encrypted Tauri signing key stored in repo (.github/signing.key.gpg)
+- Decrypted during CI/CD with GPG_PASSPHRASE secret
+- Only 2 GitHub Secrets needed (vs 8+ for Apple notarization):
+  - GPG_PASSPHRASE: "tauri" (decrypts signing.key.gpg)
+  - TAURI_PRIVATE_KEY_PASSWORD: "tauri" (unlocks signing key)
+  - SENTRY_DSN: optional
+- No Apple Developer account, no certificates, no notarization
 
 **Version management:**
 - Single source of truth approach: run bump-version.sh script
@@ -110,56 +117,74 @@ Each task was committed atomically:
 - Prevents version drift between frontend and backend
 
 **Release workflow trigger:**
-- Push to `release` branch (standard flow)
+- Push v* tags (e.g., v0.1.0, v0.2.0)
 - Manual workflow_dispatch (emergency hotfix releases)
-- Tag naming: app-v__VERSION__ (e.g., app-v0.1.0)
+- Tag naming uses git tag directly (e.g., v0.1.0)
 - Release body in German: "Neue Version verfügbar. Details im Changelog."
 
 ## Deviations from Plan
 
-**No deviations** - Plan executed as specified. All tasks completed successfully with no issues.
+**1. [Rule 2 - Missing Critical] Switched from Apple notarization to GPG-encrypted Tauri signing**
+- **Found during:** User feedback - no Apple Developer account available
+- **Issue:** Plan assumed Apple Developer account for code signing and notarization
+- **Fix:** Use GPG-encrypted Tauri signing key approach from docs/release.md
+- **Files modified:** .github/workflows/release.yml, .github/signing.key.gpg (created)
+- **Impact:** Much simpler setup - only 2 GitHub Secrets instead of 8+, no Apple account required
+- **Trade-off:** Users must manually bypass Gatekeeper (System Settings > "Open Anyway")
+- **Committed in:** 35fc1ea (fix commit)
+
+---
+
+**Total deviations:** 1 user-requested fix (Apple notarization → GPG signing)
+**Impact on plan:** Positive - simpler, cheaper, no external dependencies. Core functionality unchanged.
 
 ## Issues Encountered
 
-**None** - Implementation was straightforward following the proven Editor-Workshop setup pattern.
+**Apple Developer account requirement:**
+- Original plan assumed Apple Developer account for notarization
+- User clarified: no Apple Developer account available
+- Solution: Use proven GPG-encrypted signing approach from Editor-Workshop docs
+- Result: Simpler setup with fewer GitHub Secrets required
 
 ## User Setup Required
 
 **GitHub Secrets Configuration:**
 
-Before the CI/CD pipeline can run, the following GitHub Secrets must be configured in the repository settings:
+Before the CI/CD pipeline can run, configure these GitHub Secrets in the repository settings (Settings > Secrets and variables > Actions > New repository secret):
 
-**Apple Signing Certificates:**
-1. `APPLE_CERTIFICATE`: Base64-encoded .p12 certificate file
-   - Export Developer ID certificate from Keychain
-   - Convert to base64: `base64 -i certificate.p12 | pbcopy`
-2. `APPLE_CERTIFICATE_PASSWORD`: Password for the .p12 certificate
-3. `APPLE_SIGNING_IDENTITY`: Certificate name (e.g., "Developer ID Application: Name (TEAMID)")
-   - Find in Keychain Access
+**Required Secrets (only 2!):**
 
-**Apple Notarization:**
-4. `APPLE_ID`: Apple ID email address
-5. `APPLE_PASSWORD`: App-specific password
-   - Generate at appleid.apple.com → App-Specific Passwords
-6. `APPLE_TEAM_ID`: Apple Developer Team ID
-   - Find at developer.apple.com/account → Membership
+1. **`GPG_PASSPHRASE`** (required)
+   - Value: `tauri`
+   - Purpose: Decrypts .github/signing.key.gpg during CI/CD
+   - The GPG-encrypted signing key is already in the repo
 
-**Tauri Updater Signing:**
-7. `TAURI_SIGNING_PRIVATE_KEY`: Contents of ~/.tauri/binky.key
-   - Read file: `cat ~/.tauri/binky.key`
-   - Copy entire contents including header/footer
-8. `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: Leave empty (key has no password)
+2. **`TAURI_PRIVATE_KEY_PASSWORD`** (required)
+   - Value: `tauri`
+   - Purpose: Unlocks the Tauri signing key after GPG decryption
+   - Matches the password used when generating ~/.tauri/binky.key
 
 **Optional:**
-9. `SENTRY_DSN`: Sentry DSN for crash reporting (optional, app works without it)
+
+3. **`SENTRY_DSN`** (optional)
+   - Value: Your Sentry DSN from sentry.io
+   - Purpose: Crash reporting (app works without it in development)
+
+**Important Notes:**
+- ✅ NO Apple Developer account required
+- ✅ NO Apple certificates needed
+- ✅ NO Apple notarization required
+- ✅ Signing key is GPG-encrypted and stored in repo at .github/signing.key.gpg
+- ⚠️ Users must bypass Gatekeeper manually: System Settings > Privacy & Security > "Open Anyway"
 
 **Release Process:**
 
 Once secrets are configured:
 1. Run: `./scripts/bump-version.sh 0.2.0` (replace with desired version)
 2. Commit: `git add -A && git commit -m 'chore: bump version to v0.2.0'`
-3. Push to release branch: `git checkout release && git merge main && git push origin release`
-4. CI/CD runs automatically, builds, signs, and publishes release to GitHub
+3. Tag: `git tag v0.2.0`
+4. Push: `git push && git push origin v0.2.0`
+5. CI/CD triggers automatically on tag push, builds, signs, and publishes release to GitHub
 
 ## Next Phase Readiness
 
@@ -171,9 +196,9 @@ Once secrets are configured:
 - No manual build steps required for releases
 
 **Blockers/Concerns:**
-- GitHub Secrets not configured yet (CI/CD will fail until secrets are added)
-- No releases exist yet (first release will need to be triggered manually)
-- Apple Developer account required for code signing and notarization
+- GitHub Secrets not configured yet (only 2 required: GPG_PASSPHRASE and TAURI_PRIVATE_KEY_PASSWORD)
+- No releases exist yet (first release will trigger when v* tag is pushed)
+- Users will see Gatekeeper warning (must manually allow in System Settings > "Open Anyway")
 
 **Next plan should:**
 - Implement first-launch tutorial and Settings page (Plan 05)
