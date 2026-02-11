@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 1 of 5 (Foundation & Infrastructure)
-Plan: 3 of TBD in current phase
+Plan: 4 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-11 — Completed 01-03-PLAN.md (Auto-updater, Sentry, database backup)
+Last activity: 2026-02-11 — Completed 01-04-PLAN.md (CI/CD pipeline, version management)
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 4 min
-- Total execution time: 0.20 hours
+- Total execution time: 0.25 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-infrastructure | 3 | 12 min | 4 min |
+| 01-foundation-infrastructure | 4 | 15 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (5min), 01-02 (3min), 01-03 (4min)
-- Trend: Steady at ~4min average
+- Last 5 plans: 01-01 (5min), 01-02 (3min), 01-03 (4min), 01-04 (3min)
+- Trend: Consistent at ~4min average
 
 *Updated after each plan completion*
 
@@ -70,28 +70,39 @@ Recent decisions affecting current work:
 - Disabled features pattern: Grayed-out nav items with tooltips explaining "kommt bald"
 
 **From Plan 01-03 (2026-02-11):**
-- Updater signing key: Generated without password for CI/CD compatibility (stored at ~/.tauri/nettgefluester.key)
+- Updater signing key: Generated without password for CI/CD compatibility (stored at ~/.tauri/binky.key)
 - Sentry DSN: Optional via env var - app works without it in development
 - Update size warning: Prompt user before downloading >50MB updates (German text)
 - Database backups: Keep last 5, auto-clean old ones (non-fatal if backup fails)
 - Plugin order: sentry (first) -> sql -> updater -> fs (Sentry catches errors from all subsequent plugins)
 
+**From Plan 01-04 (2026-02-11):**
+- GitHub Actions matrix builds: Separate jobs for ARM and Intel with fail-fast: false (one can fail while other succeeds)
+- Rust cache strategy: swatinem/rust-cache@v2 saves ~90% build time on subsequent builds
+- Bundle targets: ["app", "dmg", "updater"] - PKG created automatically by tauri-action during signing
+- Version management: Single bump-version.sh script keeps package.json, tauri.conf.json, and Cargo.toml in sync
+- Release trigger: Push to release branch (standard) or workflow_dispatch (emergency hotfix)
+- Release naming: app-v__VERSION__ tags with German release body
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
-- Back up private signing key at ~/.tauri/nettgefluester.key to 1Password/BitWarden
+- Back up private signing key at ~/.tauri/binky.key to 1Password/BitWarden
 - Store signing key as GitHub secret TAURI_SIGNING_PRIVATE_KEY for CI/CD
+- Configure all Apple signing secrets in GitHub (APPLE_CERTIFICATE, APPLE_ID, APPLE_PASSWORD, etc.)
 - Configure Sentry DSN in production environment
 
 ### Blockers/Concerns
 
 **Phase 1 Critical:**
-- ⚠️ URGENT: Private signing key at ~/.tauri/nettgefluester.key must be backed up to 1Password/BitWarden BEFORE first release — losing it means permanent inability to distribute updates
+- ⚠️ URGENT: Private signing key at ~/.tauri/binky.key must be backed up to 1Password/BitWarden BEFORE first release — losing it means permanent inability to distribute updates
+- ⚠️ URGENT: GitHub Secrets must be configured before CI/CD can run (Apple certificates, signing keys, notarization credentials)
 - ✅ RESOLVED: macOS file access permissions configured correctly in Entitlements.plist (network client + user-selected file read)
 
 **Phase 1 Infrastructure:**
+- GitHub Secrets not configured yet (CI/CD pipeline ready but will fail without secrets)
 - Sentry DSN not configured yet (app works but doesn't report crashes until DSN is set)
-- Update endpoint points to GitHub Releases but no releases exist yet (need CI/CD pipeline in next plan)
+- No releases exist yet (first release will trigger once secrets are configured and release branch is pushed)
 
 **Phase 2 Risk:**
 - German language transcription accuracy on real podcast audio (dialects, crosstalk) needs validation on actual Nettgefluester episodes
@@ -108,7 +119,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-02-11 18:37:08 UTC
-Stopped at: Completed 01-03-PLAN.md (Auto-updater, Sentry, database backup)
+Last session: 2026-02-11 18:43:00 UTC
+Stopped at: Completed 01-04-PLAN.md (CI/CD pipeline, version management)
 Resume file: None
-Next: Plan 04 - CI/CD pipeline for building and distributing releases
+Next: Plan 05 - First-launch tutorial, Settings page, update notification banner
