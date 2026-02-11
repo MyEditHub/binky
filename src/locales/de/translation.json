@@ -1,0 +1,59 @@
+{
+  "app": {
+    "title": "Nettgefluster",
+    "version": "Version {{version}}"
+  },
+  "nav": {
+    "episodes": "Episoden",
+    "analytics": "Analytik",
+    "topics": "Themen",
+    "bird": "Vogel-Randomizer",
+    "settings": "Einstellungen"
+  },
+  "nav_disabled": {
+    "analytics": "Analytik (kommt bald)",
+    "topics": "Themen (kommt bald)",
+    "bird": "Vogel-Randomizer (kommt bald)"
+  },
+  "pages": {
+    "episodes": {
+      "title": "Episoden",
+      "empty": "Noch keine Episoden geladen.",
+      "empty_hint": "Episoden werden in einer zukuenftigen Version automatisch geladen."
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "app_info": "App-Informationen",
+      "version_label": "Version",
+      "database_label": "Datenbank",
+      "database_status": "Verbunden",
+      "launch_at_login": "App beim Anmelden starten",
+      "about": "Ueber Nettgefluster"
+    },
+    "analytics": {
+      "title": "Analytik",
+      "coming_soon": "Sprechzeit-Analyse kommt in Phase 3."
+    },
+    "topics": {
+      "title": "Themen",
+      "coming_soon": "Themen-Tracking kommt in Phase 4."
+    },
+    "bird": {
+      "title": "Vogel-Randomizer",
+      "coming_soon": "Der Vogel-Randomizer kommt in Phase 5."
+    }
+  },
+  "dates": {
+    "today": "heute",
+    "yesterday": "gestern",
+    "daysAgo": "vor {{count}} Tagen"
+  },
+  "common": {
+    "loading": "Laden...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schliessen",
+    "back": "Zurueck"
+  }
+}
