@@ -58,6 +58,13 @@ Recent decisions affecting current work:
 **From Plan 01-02 (2026-02-11):**
 - i18n TypeScript types: Compile-time checking prevents typo bugs where raw keys show in UI
 - Emoji icons: Simple navigation icons without icon library dependency
+
+**Rebrand (2026-02-11):**
+- App name changed from "Nettgeflüster" to "Binky"
+- Bundle ID: de.binky.app
+- Database: binky.db
+- Repository: github.com/MyEditHub/binky
+- Signing key: ~/.tauri/binky.key
 - CSS custom properties: Theme support via @media (prefers-color-scheme: dark) for macOS auto-detection
 - Warm orange brand color (#d97757): Friendly, minimal aesthetic matching podcast brand
 - Disabled features pattern: Grayed-out nav items with tooltips explaining "kommt bald"

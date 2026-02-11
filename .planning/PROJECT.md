@@ -1,8 +1,10 @@
-# Project: Nettgeflüster Podcast Management App
+# Project: Binky
 
 ## What This Is
 
-Desktop Mac app for managing the Nettgeflüster podcast - automated transcription, speaking balance analytics, unfinished topic tracking, and bird-of-the-week randomizer.
+**Binky** - Desktop Mac app for podcast management with automated transcription, speaking balance analytics, unfinished topic tracking, and bird-of-the-week randomizer.
+
+*(Originally named "Nettgeflüster Podcast Management App", rebranded to "Binky" on 2026-02-11)*
 
 ## Why It Needs to Exist
 
@@ -18,7 +20,7 @@ Automatically transcribe episodes, analyze speaking patterns, detect unfinished 
 
 ## Who It's For
 
-**Primary Users:** Two podcast hosts (married couple) who record Nettgeflüster
+**Primary Users:** Two podcast hosts (married couple)
 - Need easy installation (no terminal)
 - Mac users
 - German-speaking

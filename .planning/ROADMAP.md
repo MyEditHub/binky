@@ -1,8 +1,8 @@
-# Roadmap: Nettgefluester Podcast Management App
+# Roadmap: Binky
 
 ## Overview
 
-This roadmap delivers a Mac desktop app that automatically transcribes German podcast episodes, analyzes speaking balance between hosts, tracks unfinished topics, and provides a bird-of-the-week randomizer. The journey progresses from foundational infrastructure through core transcription and analytics features to specialized tools, building incrementally on proven dependencies while addressing critical technical pitfalls early.
+This roadmap delivers **Binky**, a Mac desktop app that automatically transcribes German podcast episodes, analyzes speaking balance between hosts, tracks unfinished topics, and provides a bird-of-the-week randomizer. The journey progresses from foundational infrastructure through core transcription and analytics features to specialized tools, building incrementally on proven dependencies while addressing critical technical pitfalls early.
 
 ## Phases
 
