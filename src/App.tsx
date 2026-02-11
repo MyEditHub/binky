@@ -1,14 +1,7 @@
-import { useState } from "react";
+import Layout from "./components/Layout";
 
 function App() {
-  const [message, setMessage] = useState("Nettgeflüster");
-
-  return (
-    <div className="container">
-      <h1>{message}</h1>
-      <p>Podcast Manager wird geladen...</p>
-    </div>
-  );
+  return <Layout />;
 }
 
 export default App;
