@@ -20,7 +20,8 @@
 # Required GitHub Secrets:
 #   - GPG_PASSPHRASE: Password for decrypting .github/signing.key.gpg (e.g., "tauri")
 #   - TAURI_PRIVATE_KEY_PASSWORD: Password for Tauri signing key (e.g., "tauri")
-#   - SENTRY_DSN: Sentry DSN for crash reporting (optional)
+#   - SENTRY_DSN: Sentry DSN for Rust backend crash reporting (optional)
+#   - VITE_SENTRY_DSN: Sentry DSN for frontend error tracking (optional)
 
 name: Release
 
@@ -79,6 +80,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_PRIVATE_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'Binky ${{ github.ref_name }}'
