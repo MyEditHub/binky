@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
-import { openUrl } from '@tauri-apps/plugin-opener';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 
@@ -12,17 +11,14 @@ export default function SettingsPage() {
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
 
   useEffect(() => {
-    // Load app version
     getVersion()
       .then((v) => setVersion(v))
       .catch(() => setVersion('?'));
 
-    // Check database connection
     Database.load('sqlite:binky.db')
       .then(() => setDbStatus('ok'))
       .catch(() => setDbStatus('error'));
 
-    // Load launch-at-login preference
     getSetting('launchAtLogin').then((val) => {
       setLaunchAtLogin(val === 'true');
     });
@@ -32,14 +28,6 @@ export default function SettingsPage() {
     const next = !launchAtLogin;
     setLaunchAtLogin(next);
     await setSetting('launchAtLogin', next ? 'true' : 'false');
-  }
-
-  async function handleOpenWebsite() {
-    try {
-      await openUrl('https://www.nettgefluester.de');
-    } catch (err) {
-      console.warn('Could not open website:', err);
-    }
   }
 
   return (
@@ -110,16 +98,6 @@ export default function SettingsPage() {
           <span className="settings-row-label settings-about-desc">
             {t('pages.settings.about_desc')}
           </span>
-        </div>
-
-        <div className="settings-row">
-          <button
-            className="settings-link-btn"
-            onClick={handleOpenWebsite}
-            type="button"
-          >
-            {t('pages.settings.open_website')} ↗
-          </button>
         </div>
       </div>
     </div>

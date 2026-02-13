@@ -5,6 +5,8 @@ type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'settings';
 interface SidebarProps {
   activePage: Page;
   onNavigate: (page: Page) => void;
+  isCollapsed: boolean;
+  onToggle: () => void;
 }
 
 interface NavItem {
@@ -15,7 +17,7 @@ interface NavItem {
   disabledTooltipKey?: string;
 }
 
-export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
+export default function Sidebar({ activePage, onNavigate, isCollapsed, onToggle }: SidebarProps) {
   const { t } = useTranslation();
 
   const navItems: NavItem[] = [
@@ -61,9 +63,17 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
   };
 
   return (
-    <div className="sidebar">
+    <div className={`sidebar${isCollapsed ? ' sidebar-collapsed' : ''}`}>
       <div className="sidebar-header">
-        <h1 className="sidebar-title">{t('app.title')}</h1>
+        {!isCollapsed && <h1 className="sidebar-title">{t('app.title')}</h1>}
+        <button
+          className="sidebar-toggle-btn"
+          onClick={onToggle}
+          title={isCollapsed ? 'Menü öffnen' : 'Menü schließen'}
+          type="button"
+        >
+          {isCollapsed ? '›' : '‹'}
+        </button>
       </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => (
@@ -71,13 +81,19 @@ export default function Sidebar({ activePage, onNavigate }: SidebarProps) {
             key={item.id}
             className={`nav-item ${activePage === item.id ? 'nav-item-active' : ''} ${
               item.disabled ? 'nav-item-disabled' : ''
-            }`}
+            } ${isCollapsed ? 'nav-item-collapsed' : ''}`}
             onClick={() => handleClick(item)}
-            title={item.disabled && item.disabledTooltipKey ? t(item.disabledTooltipKey) : undefined}
+            title={
+              isCollapsed
+                ? t(item.labelKey)
+                : item.disabled && item.disabledTooltipKey
+                ? t(item.disabledTooltipKey)
+                : undefined
+            }
             disabled={item.disabled}
           >
             <span className="nav-item-icon">{item.icon}</span>
-            <span>{t(item.labelKey)}</span>
+            {!isCollapsed && <span>{t(item.labelKey)}</span>}
           </button>
         ))}
       </nav>

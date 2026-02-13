@@ -19,7 +19,7 @@
     "episodes": {
       "title": "Episoden",
       "empty": "Noch keine Episoden geladen.",
-      "empty_hint": "Episoden werden in einer zukuenftigen Version automatisch geladen."
+      "empty_hint": "Episoden werden in einer zukünftigen Version automatisch geladen."
     },
     "settings": {
       "title": "Einstellungen",
@@ -31,9 +31,8 @@
       "database_status": "Verbunden",
       "launch_at_login": "App beim Anmelden starten",
       "launch_at_login_desc": "Binky automatisch nach dem Login starten",
-      "about": "Ueber Binky",
-      "about_desc": "Binky ist ein Podcast-Analyse-Tool fuer das Nettgefluester-Team.",
-      "open_website": "Webseite oeffnen",
+      "about": "Über Binky",
+      "about_desc": "Binky ist ein Podcast-Analyse-Tool für das Nettgeflüster-Team.",
       "preferences": "Einstellungen"
     },
     "analytics": {
@@ -54,7 +53,7 @@
     "welcome_text": "Diese App hilft euch, euren Podcast zu analysieren und zu verbessern.",
     "features_title": "Was euch erwartet",
     "phase1": "App-Grundlage",
-    "phase1_desc": "Die Basis steht - bereit fuer mehr!",
+    "phase1_desc": "Die Basis steht – bereit für mehr!",
     "phase2": "Episoden & Transkription",
     "phase2_desc": "Automatische Transkription eurer Episoden",
     "phase3": "Sprechzeit-Analyse",
@@ -62,24 +61,24 @@
     "phase4": "Themen-Tracking",
     "phase4_desc": "Offene Themen im Blick behalten",
     "phase5": "Vogel-Randomizer",
-    "phase5_desc": "Zufaelliger Vogel der Woche",
+    "phase5_desc": "Zufälliger Vogel der Woche",
     "settings_title": "Einstellungen",
     "launch_at_login": "App beim Anmelden starten?",
     "next": "Weiter",
     "start": "Los geht's!",
-    "skip": "Ueberspringen",
+    "skip": "Überspringen",
     "current_phase": "aktuell"
   },
   "update": {
-    "available": "Update verfuegbar: v{{version}}",
+    "available": "Update verfügbar: v{{version}}",
     "download": "Jetzt aktualisieren",
-    "later": "Spaeter erinnern",
-    "downloading": "Wird heruntergeladen... {{percent}}%",
+    "later": "Später erinnern",
+    "downloading": "Wird heruntergeladen… {{percent}}%",
     "ready": "Update bereit. Jetzt neu starten?",
     "restart": "Jetzt neu starten",
-    "restart_later": "Spaeter",
+    "restart_later": "Später",
     "post_update": "Jetzt auf v{{version}}",
-    "size_warning": "Das Update ist {{size}} MB gross. Jetzt herunterladen?",
+    "size_warning": "Das Update ist {{size}} MB groß. Jetzt herunterladen?",
     "confirm": "Herunterladen",
     "cancel": "Abbrechen"
   },
@@ -89,11 +88,11 @@
     "daysAgo": "vor {{count}} Tagen"
   },
   "common": {
-    "loading": "Laden...",
+    "loading": "Laden…",
     "error": "Fehler",
     "save": "Speichern",
     "cancel": "Abbrechen",
-    "close": "Schliessen",
-    "back": "Zurueck"
+    "close": "Schließen",
+    "back": "Zurück"
   }
 }

@@ -10,6 +10,7 @@ type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'settings';
 
 export default function Layout() {
   const [activePage, setActivePage] = useState<Page>('episodes');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const renderPage = () => {
     switch (activePage) {
@@ -30,7 +31,12 @@ export default function Layout() {
 
   return (
     <div className="app-layout">
-      <Sidebar activePage={activePage} onNavigate={setActivePage} />
+      <Sidebar
+        activePage={activePage}
+        onNavigate={setActivePage}
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((c) => !c)}
+      />
       <div className="content-area">
         <div className="content-scroll">
           {renderPage()}
