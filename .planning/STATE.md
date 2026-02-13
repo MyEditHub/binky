@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 1 of 5 (Foundation & Infrastructure)
-Plan: 4 of 6 in current phase
+Plan: 5 of 6 in current phase
 Status: In progress
-Last activity: 2026-02-11 — Completed 01-04-PLAN.md (CI/CD pipeline, version management)
+Last activity: 2026-02-13 — Completed 01-05-PLAN.md (first-launch tutorial, settings page, update banner)
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 4 min
-- Total execution time: 0.25 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-foundation-infrastructure | 4 | 15 min | 4 min |
+| 01-foundation-infrastructure | 5 | 18 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (5min), 01-02 (3min), 01-03 (4min), 01-04 (3min)
+- Last 5 plans: 01-01 (5min), 01-02 (3min), 01-03 (4min), 01-04 (3min), 01-05 (3min)
 - Trend: Consistent at ~4min average
 
 *Updated after each plan completion*
@@ -86,6 +86,14 @@ Recent decisions affecting current work:
 - GitHub Secrets: Only 2 required (GPG_PASSPHRASE, TAURI_PRIVATE_KEY_PASSWORD) vs 8+ for Apple notarization
 - Gatekeeper bypass: Users manually allow via System Settings > Privacy & Security > "Open Anyway"
 
+**From Plan 01-05 (2026-02-13):**
+- Settings pattern: getSetting/setSetting via Database.load('sqlite:binky.db') with graceful null defaults on error
+- Tutorial pattern: modal overlay, React screen index state, keyboard nav (Esc=skip, Enter=advance), markFirstLaunchComplete on finish
+- UpdateBanner is self-contained: polls for updates internally on mount rather than receiving state from App.tsx
+- Post-update detection: lastKnownVersion key in settings table compared to getVersion() on app mount
+- plugin-opener (Tauri v2) used for external URL opening instead of plugin-shell (v1 API)
+- launchAtLogin stored in settings table but NOT yet wired to OS login item registration (deferred to future)
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -122,7 +130,7 @@ Recent decisions affecting current work:
 
 ## Session Continuity
 
-Last session: 2026-02-11 18:43:00 UTC
-Stopped at: Completed 01-04-PLAN.md (CI/CD pipeline, version management)
+Last session: 2026-02-13 07:44:39 UTC
+Stopped at: Completed 01-05-PLAN.md (first-launch tutorial, settings page, update banner)
 Resume file: None
-Next: Plan 05 - First-launch tutorial, Settings page, update notification banner
+Next: Plan 06 - (final Phase 1 plan)
