@@ -2,23 +2,16 @@ use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Initialize Sentry BEFORE Tauri builder (only if DSN is provided)
-    let _guard = if let Some(dsn) = option_env!("SENTRY_DSN") {
-        if !dsn.is_empty() {
-            Some(sentry::init((
-                dsn,
-                sentry::ClientOptions {
-                    release: sentry::release_name!(),
-                    auto_session_tracking: true,
-                    ..Default::default()
-                },
-            )))
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+    // Initialize Sentry before Tauri (only when DSN is provided at compile time)
+    let _sentry = option_env!("SENTRY_DSN").filter(|s| !s.is_empty()).map(|dsn| {
+        sentry::init((
+            dsn,
+            sentry::ClientOptions {
+                release: sentry::release_name!(),
+                ..Default::default()
+            },
+        ))
+    });
 
     let migrations = vec![
         Migration {
@@ -29,18 +22,11 @@ pub fn run() {
         },
     ];
 
-    let mut builder = tauri::Builder::default();
-
-    // Add Sentry plugin only if initialized
-    if let Some(ref guard) = _guard {
-        builder = builder.plugin(tauri_plugin_sentry::init_with_no_injection(guard));
-    }
-
-    builder
+    tauri::Builder::default()
         .plugin(
             SqlBuilder::default()
-                .add_migrations("sqlite:nettgefluester.db", migrations)
-                .build()
+                .add_migrations("sqlite:binky.db", migrations)
+                .build(),
         )
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())

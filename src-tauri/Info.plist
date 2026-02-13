@@ -3,8 +3,21 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleDisplayName</key>
-  <string>Nettgeflüster</string>
+  <string>Binky</string>
   <key>CFBundleName</key>
-  <string>Nettgeflüster</string>
+  <string>Binky</string>
+  <key>CFBundleIdentifier</key>
+  <string>de.binky.app</string>
+  <key>CFBundleExecutable</key>
+  <string>binky</string>
+  <key>NSPrincipalClass</key>
+  <string>NSApplication</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsLocalNetworking</key>
+    <true/>
+  </dict>
 </dict>
 </plist>
