@@ -26,9 +26,15 @@
       "app_info": "App-Informationen",
       "version_label": "Version",
       "database_label": "Datenbank",
+      "database_connected": "Verbunden",
+      "database_error": "Fehler",
       "database_status": "Verbunden",
       "launch_at_login": "App beim Anmelden starten",
-      "about": "Ueber Binky"
+      "launch_at_login_desc": "Binky automatisch nach dem Login starten",
+      "about": "Ueber Binky",
+      "about_desc": "Binky ist ein Podcast-Analyse-Tool fuer das Nettgefluester-Team.",
+      "open_website": "Webseite oeffnen",
+      "preferences": "Einstellungen"
     },
     "analytics": {
       "title": "Analytik",
@@ -42,6 +48,40 @@
       "title": "Vogel-Randomizer",
       "coming_soon": "Der Vogel-Randomizer kommt in Phase 5."
     }
+  },
+  "tutorial": {
+    "welcome_title": "Willkommen bei Binky!",
+    "welcome_text": "Diese App hilft euch, euren Podcast zu analysieren und zu verbessern.",
+    "features_title": "Was euch erwartet",
+    "phase1": "App-Grundlage",
+    "phase1_desc": "Die Basis steht - bereit fuer mehr!",
+    "phase2": "Episoden & Transkription",
+    "phase2_desc": "Automatische Transkription eurer Episoden",
+    "phase3": "Sprechzeit-Analyse",
+    "phase3_desc": "Wer spricht wie viel?",
+    "phase4": "Themen-Tracking",
+    "phase4_desc": "Offene Themen im Blick behalten",
+    "phase5": "Vogel-Randomizer",
+    "phase5_desc": "Zufaelliger Vogel der Woche",
+    "settings_title": "Einstellungen",
+    "launch_at_login": "App beim Anmelden starten?",
+    "next": "Weiter",
+    "start": "Los geht's!",
+    "skip": "Ueberspringen",
+    "current_phase": "aktuell"
+  },
+  "update": {
+    "available": "Update verfuegbar: v{{version}}",
+    "download": "Jetzt aktualisieren",
+    "later": "Spaeter erinnern",
+    "downloading": "Wird heruntergeladen... {{percent}}%",
+    "ready": "Update bereit. Jetzt neu starten?",
+    "restart": "Jetzt neu starten",
+    "restart_later": "Spaeter",
+    "post_update": "Jetzt auf v{{version}}",
+    "size_warning": "Das Update ist {{size}} MB gross. Jetzt herunterladen?",
+    "confirm": "Herunterladen",
+    "cancel": "Abbrechen"
   },
   "dates": {
     "today": "heute",
