@@ -9,6 +9,7 @@
     "sql:allow-execute",
     "sql:allow-select",
     "updater:default",
-    "fs:default"
+    "fs:default",
+    "opener:default"
   ]
 }

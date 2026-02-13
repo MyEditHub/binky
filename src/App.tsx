@@ -1,24 +1,38 @@
 import { useState, useEffect } from 'react';
+import { getVersion } from '@tauri-apps/api/app';
 import Layout from './components/Layout';
 import Tutorial from './components/Tutorial';
-import { isFirstLaunch } from './lib/settings';
-import { checkForUpdates } from './lib/updater';
+import UpdateBanner from './components/UpdateBanner';
+import { isFirstLaunch, getSetting, setSetting } from './lib/settings';
 
 function App() {
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialChecked, setTutorialChecked] = useState(false);
+  const [postUpdateVersion, setPostUpdateVersion] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    // Check first launch and trigger background update check
     async function init() {
+      // Check first launch
       const firstLaunch = await isFirstLaunch();
       setShowTutorial(firstLaunch);
-      setTutorialChecked(true);
 
-      // Non-blocking update check in background
-      checkForUpdates().catch((err) => {
-        console.warn('Background update check failed (non-fatal):', err);
-      });
+      // Detect post-update: compare stored version to current version
+      try {
+        const currentVersion = await getVersion();
+        const lastKnownVersion = await getSetting('lastKnownVersion');
+
+        if (lastKnownVersion && lastKnownVersion !== currentVersion) {
+          // Version changed since last launch — show post-update banner
+          setPostUpdateVersion(currentVersion);
+        }
+
+        // Always update the stored version
+        await setSetting('lastKnownVersion', currentVersion);
+      } catch (err) {
+        console.warn('Post-update detection failed (non-fatal):', err);
+      }
+
+      setTutorialChecked(true);
     }
 
     init();
@@ -30,12 +44,15 @@ function App() {
   }
 
   return (
-    <>
-      <Layout />
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <UpdateBanner postUpdateVersion={postUpdateVersion} />
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        <Layout />
+      </div>
       {showTutorial && (
         <Tutorial onClose={() => setShowTutorial(false)} />
       )}
-    </>
+    </div>
   );
 }
 
