@@ -12,7 +12,7 @@ This roadmap delivers **Binky**, a Mac desktop app that automatically transcribe
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation & Infrastructure** - Tauri app scaffold, database, permissions, auto-updater setup
+- [x] **Phase 1: Foundation & Infrastructure** - Tauri app scaffold, database, permissions, auto-updater setup
 - [ ] **Phase 2: Episode Management & Transcription** - RSS feed integration, episode library, German transcription engine
 - [ ] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
 - [ ] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
@@ -33,12 +33,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Scaffold Tauri v2 project, macOS permissions, SQLite database with migrations
-- [ ] 01-02-PLAN.md — German UI foundation (sidebar, i18n, theme, brand colors)
-- [ ] 01-03-PLAN.md — Auto-updater infrastructure, Sentry crash reporting, database backup
-- [ ] 01-04-PLAN.md — CI/CD pipeline (GitHub Actions release workflow, version bump script)
-- [ ] 01-05-PLAN.md — First-launch tutorial, Settings page, update notification banner
-- [ ] 01-06-PLAN.md — Human verification checkpoint (visual QA, full walkthrough)
+- [x] 01-01-PLAN.md — Scaffold Tauri v2 project, macOS permissions, SQLite database with migrations
+- [x] 01-02-PLAN.md — German UI foundation (sidebar, i18n, theme, brand colors)
+- [x] 01-03-PLAN.md — Auto-updater infrastructure, Sentry crash reporting, database backup
+- [x] 01-04-PLAN.md — CI/CD pipeline (GitHub Actions release workflow, version bump script)
+- [x] 01-05-PLAN.md — First-launch tutorial, Settings page, update notification banner
+- [x] 01-06-PLAN.md — Human verification checkpoint (visual QA, full walkthrough)
 
 ### Phase 2: Episode Management & Transcription
 **Goal**: Users can auto-fetch podcast episodes from RSS feed and transcribe them using local Whisper with German language optimization
@@ -108,7 +108,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Infrastructure | 0/6 | Planned | - |
+| 1. Foundation & Infrastructure | 6/6 | Complete | 2026-02-13 |
 | 2. Episode Management & Transcription | 0/TBD | Not started | - |
 | 3. Speaker Analytics | 0/TBD | Not started | - |
 | 4. Content Analysis | 0/TBD | Not started | - |
