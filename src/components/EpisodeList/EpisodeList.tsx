@@ -1,10 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { invoke } from '@tauri-apps/api/core';
 import { useEpisodes } from '../../hooks/useEpisodes';
+import { useTranscription } from '../../hooks/useTranscription';
 import EpisodeRow from './EpisodeRow';
 import EpisodeExpandedView from './EpisodeExpandedView';
 
-export default function EpisodeList() {
+interface ModelStatus {
+  downloaded_model: string | null;
+}
+
+interface EpisodeListProps {
+  onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
+}
+
+export default function EpisodeList({ onTranscriptionStateChange }: EpisodeListProps) {
   const { t } = useTranslation();
   const {
     episodes,
@@ -14,7 +24,36 @@ export default function EpisodeList() {
     searchQuery,
     setSearchQuery,
     syncRss,
+    loadEpisodes,
   } = useEpisodes();
+
+  // Fetch model status so we know whether transcription is available
+  const [downloadedModel, setDownloadedModel] = useState<string | null>(null);
+
+  useEffect(() => {
+    invoke<ModelStatus>('get_model_status')
+      .then((status) => setDownloadedModel(status.downloaded_model))
+      .catch(() => setDownloadedModel(null));
+  }, []);
+
+  const {
+    activeEpisodeId,
+    progress,
+    queueLength,
+    isProcessing,
+    startTranscription,
+    cancelTranscription,
+  } = useTranscription(() => {
+    // Reload episodes from DB when a transcription completes/errors/cancels
+    loadEpisodes();
+    // Notify Layout of state changes for the sidebar badge
+    onTranscriptionStateChange?.(isProcessing, queueLength);
+  });
+
+  // Keep parent in sync when processing state changes
+  useEffect(() => {
+    onTranscriptionStateChange?.(isProcessing, queueLength);
+  }, [isProcessing, queueLength, onTranscriptionStateChange]);
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -27,6 +66,8 @@ export default function EpisodeList() {
     count === 1
       ? t('pages.episodes.count_one')
       : t('pages.episodes.count', { count });
+
+  const modelDownloaded = downloadedModel !== null;
 
   return (
     <div className="episode-list">
@@ -91,18 +132,32 @@ export default function EpisodeList() {
 
       {!loading && episodes.length > 0 && (
         <div className="episode-rows">
-          {episodes.map((ep) => (
-            <div key={ep.id}>
-              <EpisodeRow
-                episode={ep}
-                isExpanded={expandedId === ep.id}
-                onToggle={handleToggle}
-              />
-              {expandedId === ep.id && (
-                <EpisodeExpandedView episode={ep} />
-              )}
-            </div>
-          ))}
+          {episodes.map((ep) => {
+            const isThisActive = activeEpisodeId === ep.id;
+            return (
+              <div key={ep.id}>
+                <EpisodeRow
+                  episode={ep}
+                  isExpanded={expandedId === ep.id}
+                  onToggle={handleToggle}
+                  transcriptionProgress={isThisActive ? progress : null}
+                />
+                {expandedId === ep.id && (
+                  <EpisodeExpandedView
+                    episode={ep}
+                    modelDownloaded={modelDownloaded}
+                    isTranscribing={isThisActive && isProcessing}
+                    onTranscribe={() => {
+                      if (ep.audio_url) {
+                        startTranscription(ep.id, ep.audio_url);
+                      }
+                    }}
+                    onCancel={cancelTranscription}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

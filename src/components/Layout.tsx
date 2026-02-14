@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import EpisodesPage from './pages/EpisodesPage';
 import AnalyticsPage from './pages/AnalyticsPage';
@@ -12,10 +12,26 @@ export default function Layout() {
   const [activePage, setActivePage] = useState<Page>('episodes');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  // Transcription state lifted to Layout so Sidebar badge can reflect it
+  const [transcriptionActive, setTranscriptionActive] = useState(false);
+  const [queueCount, setQueueCount] = useState(0);
+
+  const handleTranscriptionStateChange = useCallback(
+    (isProcessing: boolean, count: number) => {
+      setTranscriptionActive(isProcessing);
+      setQueueCount(count);
+    },
+    []
+  );
+
   const renderPage = () => {
     switch (activePage) {
       case 'episodes':
-        return <EpisodesPage />;
+        return (
+          <EpisodesPage
+            onTranscriptionStateChange={handleTranscriptionStateChange}
+          />
+        );
       case 'analytics':
         return <AnalyticsPage />;
       case 'topics':
@@ -25,7 +41,11 @@ export default function Layout() {
       case 'settings':
         return <SettingsPage />;
       default:
-        return <EpisodesPage />;
+        return (
+          <EpisodesPage
+            onTranscriptionStateChange={handleTranscriptionStateChange}
+          />
+        );
     }
   };
 
@@ -36,6 +56,8 @@ export default function Layout() {
         onNavigate={setActivePage}
         isCollapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((c) => !c)}
+        transcriptionActive={transcriptionActive}
+        queueCount={queueCount}
       />
       <div className="content-area">
         <div className="content-scroll">

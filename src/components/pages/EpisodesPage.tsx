@@ -1,7 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import EpisodeList from '../EpisodeList/EpisodeList';
 
-export default function EpisodesPage() {
+interface EpisodesPageProps {
+  onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
+}
+
+export default function EpisodesPage({ onTranscriptionStateChange }: EpisodesPageProps) {
   const { t } = useTranslation();
 
   return (
@@ -9,7 +13,7 @@ export default function EpisodesPage() {
       <div className="page-header">
         <h2 className="page-title">{t('pages.episodes.title')}</h2>
       </div>
-      <EpisodeList />
+      <EpisodeList onTranscriptionStateChange={onTranscriptionStateChange} />
     </div>
   );
 }

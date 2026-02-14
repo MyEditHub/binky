@@ -5,6 +5,8 @@ interface EpisodeRowProps {
   episode: Episode;
   isExpanded: boolean;
   onToggle: (id: number) => void;
+  /** Progress value 0–100 if this episode is actively being transcribed, otherwise null */
+  transcriptionProgress: number | null;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -42,12 +44,23 @@ function StatusBadge({ status }: { status: Episode['transcription_status'] }) {
   );
 }
 
-export default function EpisodeRow({ episode, isExpanded, onToggle }: EpisodeRowProps) {
+export default function EpisodeRow({
+  episode,
+  isExpanded,
+  onToggle,
+  transcriptionProgress,
+}: EpisodeRowProps) {
   const { t } = useTranslation();
 
-  const durationLabel = episode.duration_minutes != null
-    ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
-    : null;
+  const durationLabel =
+    episode.duration_minutes != null
+      ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
+      : null;
+
+  const showProgress =
+    transcriptionProgress !== null &&
+    (episode.transcription_status === 'downloading' ||
+      episode.transcription_status === 'transcribing');
 
   return (
     <div
@@ -78,6 +91,14 @@ export default function EpisodeRow({ episode, isExpanded, onToggle }: EpisodeRow
           <span className="episode-row-chevron">{isExpanded ? '▲' : '▼'}</span>
         </div>
       </div>
+      {showProgress && (
+        <div className="episode-progress-bar">
+          <div
+            className="episode-progress-fill"
+            style={{ width: `${transcriptionProgress ?? 0}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

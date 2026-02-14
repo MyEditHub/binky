@@ -38,7 +38,12 @@
       "sync_error": "Fehler beim Synchronisieren der Episoden.",
       "model_needed": "Whisper-Modell in Einstellungen herunterladen",
       "empty": "Noch keine Episoden geladen.",
-      "empty_hint": "Klicke auf \"Synchronisieren\", um Episoden zu laden."
+      "empty_hint": "Klicke auf \"Synchronisieren\", um Episoden zu laden.",
+      "transcription_cancel": "Abbrechen",
+      "transcription_retry": "Erneut versuchen",
+      "transcription_queued": "Wartend...",
+      "transcription_progress": "{{percent}}%",
+      "queue_badge": "{{count}} in Warteschlange"
     },
     "settings": {
       "title": "Einstellungen",

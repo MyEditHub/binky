@@ -4,6 +4,10 @@ import { Episode } from '../../hooks/useEpisodes';
 
 interface EpisodeExpandedViewProps {
   episode: Episode;
+  onTranscribe: () => void;
+  onCancel: () => void;
+  isTranscribing: boolean;
+  modelDownloaded: boolean;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -16,7 +20,13 @@ function formatDate(dateStr: string | null): string {
   return `${dd}.${mm}.${yyyy}`;
 }
 
-export default function EpisodeExpandedView({ episode }: EpisodeExpandedViewProps) {
+export default function EpisodeExpandedView({
+  episode,
+  onTranscribe,
+  onCancel,
+  isTranscribing,
+  modelDownloaded,
+}: EpisodeExpandedViewProps) {
   const { t } = useTranslation();
   const [showFull, setShowFull] = useState(false);
 
@@ -25,11 +35,70 @@ export default function EpisodeExpandedView({ episode }: EpisodeExpandedViewProp
     ? episode.description!
     : t('pages.episodes.no_description');
 
-  const isDone = episode.transcription_status === 'done';
+  const status = episode.transcription_status;
+  const isDone = status === 'done';
+  const isQueued = status === 'queued';
+  const isActive = status === 'downloading' || status === 'transcribing';
+  const isError = status === 'error';
+  const hasNoModel = !modelDownloaded;
 
-  const durationLabel = episode.duration_minutes != null
-    ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
-    : null;
+  const durationLabel =
+    episode.duration_minutes != null
+      ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
+      : null;
+
+  // Render the appropriate action button depending on state
+  function renderTranscribeAction() {
+    if (isDone) {
+      // No transcribe button when done — only "view transcript"
+      return null;
+    }
+
+    if (isActive || isTranscribing) {
+      // Show cancel button while downloading or transcribing
+      return (
+        <button
+          className="episode-action-btn episode-action-cancel"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCancel();
+          }}
+        >
+          {t('pages.episodes.transcription_cancel')}
+        </button>
+      );
+    }
+
+    if (isQueued) {
+      // Queued — waiting to process
+      return (
+        <button
+          className="episode-action-btn episode-action-primary"
+          disabled
+        >
+          <span className="spinner episode-btn-spinner" />
+          {t('pages.episodes.transcription_queued')}
+        </button>
+      );
+    }
+
+    // not_started or error — show transcribe button
+    return (
+      <button
+        className="episode-action-btn episode-action-primary"
+        disabled={hasNoModel}
+        title={hasNoModel ? t('pages.episodes.model_needed') : undefined}
+        onClick={(e) => {
+          e.stopPropagation();
+          onTranscribe();
+        }}
+      >
+        {isError
+          ? t('pages.episodes.transcription_retry')
+          : t('pages.episodes.transcribe_btn')}
+      </button>
+    );
+  }
 
   return (
     <div
@@ -46,6 +115,13 @@ export default function EpisodeExpandedView({ episode }: EpisodeExpandedViewProp
           <span>{t('pages.episodes.episode_label', { number: episode.episode_number })}</span>
         )}
       </div>
+
+      {/* Transcription error message */}
+      {isError && episode.transcription_error && (
+        <div className="episode-error-msg">
+          {episode.transcription_error}
+        </div>
+      )}
 
       {/* Description with truncation toggle */}
       <div className={`episode-description${showFull ? ' episode-description-full' : ''}`}>
@@ -65,13 +141,7 @@ export default function EpisodeExpandedView({ episode }: EpisodeExpandedViewProp
 
       {/* Action buttons */}
       <div className="episode-actions">
-        <button
-          className="episode-action-btn episode-action-primary"
-          disabled
-          title={t('pages.episodes.model_needed')}
-        >
-          {t('pages.episodes.transcribe_btn')}
-        </button>
+        {renderTranscribeAction()}
         <button
           className="episode-action-btn episode-action-secondary"
           disabled={!isDone}

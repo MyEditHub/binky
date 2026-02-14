@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import QueueBadge from './TranscriptionQueue/QueueBadge';
 
 type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'settings';
 
@@ -7,6 +8,8 @@ interface SidebarProps {
   onNavigate: (page: Page) => void;
   isCollapsed: boolean;
   onToggle: () => void;
+  transcriptionActive?: boolean;
+  queueCount?: number;
 }
 
 interface NavItem {
@@ -17,7 +20,14 @@ interface NavItem {
   disabledTooltipKey?: string;
 }
 
-export default function Sidebar({ activePage, onNavigate, isCollapsed, onToggle }: SidebarProps) {
+export default function Sidebar({
+  activePage,
+  onNavigate,
+  isCollapsed,
+  onToggle,
+  transcriptionActive = false,
+  queueCount = 0,
+}: SidebarProps) {
   const { t } = useTranslation();
 
   const navItems: NavItem[] = [
@@ -94,6 +104,9 @@ export default function Sidebar({ activePage, onNavigate, isCollapsed, onToggle 
           >
             <span className="nav-item-icon">{item.icon}</span>
             {!isCollapsed && <span>{t(item.labelKey)}</span>}
+            {item.id === 'episodes' && (transcriptionActive || queueCount > 0) && (
+              <QueueBadge isActive={transcriptionActive} count={queueCount} />
+            )}
           </button>
         ))}
       </nav>

@@ -1097,6 +1097,88 @@ body {
   background-color: var(--color-surface);
 }
 
+/* Cancel button for active transcription */
+.episode-action-cancel {
+  background-color: #c0392b;
+  color: #ffffff;
+  border: 1px solid #a93226 !important;
+}
+
+.episode-action-cancel:hover {
+  background-color: #a93226;
+}
+
+/* Transcription progress bar below episode title */
+.episode-progress-bar {
+  height: 3px;
+  width: 100%;
+  background-color: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.episode-progress-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* Spinner inside a button */
+.episode-btn-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* Transcription error message inside expanded view */
+.episode-error-msg {
+  font-size: 11px;
+  color: #c0392b;
+  background-color: #fdecea;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .episode-error-msg {
+    background-color: #3d1a1a;
+    border-color: #7b2d2d;
+    color: #f48080;
+  }
+}
+
+/* Queue badge in Sidebar nav item */
+.queue-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background-color: var(--color-primary);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  margin-left: auto;
+}
+
+.queue-badge-pulse {
+  animation: queue-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes queue-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.65; transform: scale(0.9); }
+}
+
 /* ============================================================
    End Episode List Styles
    ============================================================ */
