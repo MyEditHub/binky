@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 2 of 5 (Episode Management & Transcription)
-Plan: 3 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-14 — Completed Plan 02-03 (Whisper Model Management)
+Last activity: 2026-02-14 — Completed Plan 02-04 (Transcription Engine & UI)
 
-Progress: [████████░░] ~33% (Phase 1 complete + Plans 02-01, 02-02, 02-03 done)
+Progress: [██████████░░] ~40% (Phase 1 complete + Plans 02-01, 02-02, 02-03, 02-04 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
+- Total plans completed: 10
 - Average duration: ~4.6 min
-- Total execution time: ~0.72 hours
+- Total execution time: ~0.85 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-infrastructure | 6 | ~30 min | ~5 min |
-| 02-episode-management | 3 | ~9 min | ~3 min |
+| 02-episode-management | 4 | ~17 min | ~4.25 min |
 
 *Updated after each plan completion*
 
@@ -104,6 +104,15 @@ Progress: [████████░░] ~33% (Phase 1 complete + Plans 02-01,
 - Upsert for settings: INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value
 - useModelManager hook pattern: encapsulates all Tauri invocations + state for model management
 
+**From Plan 02-04 (2026-02-14):**
+- Arc<TranscriptionState> managed in Tauri: allows `.inner().clone()` in async tasks without unsafe Send/Sync
+- whisper-rs 0.15 iterator API: state.as_iter() → WhisperSegment with .to_string(), .start_timestamp(), .end_timestamp()
+- rusqlite 0.32 (bundled) for Rust-side DB writes: avoids JS bridge for background queue operations
+- Download progress 0-50 + whisper progress 50-100: unified bar for seamless visual progress
+- Model status fetched in EpisodeList directly: avoids prop-drilling through Layout/SettingsPage
+- Episode status progression: queued → downloading → transcribing → done/error/not_started (cancelled)
+- Sequential queue: processing loop dequeues until empty, then sets is_processing=false
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -120,13 +129,13 @@ Progress: [████████░░] ~33% (Phase 1 complete + Plans 02-01,
 - Sentry DSN not configured yet
 
 **Phase 2 Risk:**
-- German transcription accuracy on real podcast audio needs validation
+- German transcription accuracy on real podcast audio needs validation (Plan 02-04 complete, testing needed)
 - Whisper model size vs. memory tradeoff requires hardware testing
 - macOS sandbox network access in production builds needs verification (Tauri issue #13878)
 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed Plan 02-03 (Whisper Model Management)
+Stopped at: Completed Plan 02-04 (Transcription Engine & UI)
 Resume file: None
-Next: /gsd:execute-phase 02 plan 04 — Transcription queue execution
+Next: /gsd:execute-phase 02 plan 05 — Transcript viewer or next phase plan

@@ -43,7 +43,17 @@
       "transcription_retry": "Erneut versuchen",
       "transcription_queued": "Wartend...",
       "transcription_progress": "{{percent}}%",
-      "queue_badge": "{{count}} in Warteschlange"
+      "queue_badge": "{{count}} in Warteschlange",
+      "transcript_title": "Transkript",
+      "transcript_search_placeholder": "Im Transkript suchen…",
+      "transcript_search_results": "{{current}} von {{total}} Ergebnissen",
+      "transcript_no_results": "Keine Übereinstimmungen",
+      "transcript_delete": "Transkript löschen",
+      "transcript_delete_confirm": "Transkript wirklich löschen?",
+      "transcript_delete_blocked": "Transkription läuft – löschen nicht möglich.",
+      "transcript_model_info": "Modell: {{model}} | Sprache: {{language}}",
+      "transcript_no_text": "Kein Transkripttext vorhanden.",
+      "transcript_close": "Schließen"
     },
     "settings": {
       "title": "Einstellungen",
