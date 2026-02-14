@@ -20,9 +20,21 @@ tauri-plugin-sql = { version = "2.0", features = ["sqlite"] }
 tauri-plugin-updater = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-opener = "2"
+tauri-plugin-http = "2"
 sentry = { version = "0.42", default-features = false, features = ["backtrace", "contexts", "panic", "transport"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Phase 2: Episode Management & Transcription
+whisper-rs = { version = "0.15", features = ["metal"] }
+rss = "2"
+sha2 = "0.10"
+tokio-util = { version = "0.7", features = ["rt"] }
+symphonia = { version = "0.5", features = ["mp3"] }
+rubato = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+futures-util = "0.3"
+tokio = { version = "1", features = ["fs", "io-util"] }
 
 [features]
 default = ["custom-protocol"]
