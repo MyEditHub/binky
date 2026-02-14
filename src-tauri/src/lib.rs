@@ -1,5 +1,9 @@
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
+mod commands;
+mod models;
+mod state;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Initialize Sentry before Tauri (only when DSN is provided at compile time)
@@ -20,9 +24,16 @@ pub fn run() {
             sql: include_str!("../migrations/001_initial.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 2,
+            description: "episodes_transcripts",
+            sql: include_str!("../migrations/002_episodes_transcripts.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(
             SqlBuilder::default()
                 .add_migrations("sqlite:binky.db", migrations)
@@ -31,6 +42,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
+        .manage(state::transcription_queue::TranscriptionState::new())
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
