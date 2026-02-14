@@ -6,6 +6,7 @@ interface EpisodeExpandedViewProps {
   episode: Episode;
   onTranscribe: () => void;
   onCancel: () => void;
+  onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
   isTranscribing: boolean;
   modelDownloaded: boolean;
 }
@@ -24,6 +25,7 @@ export default function EpisodeExpandedView({
   episode,
   onTranscribe,
   onCancel,
+  onViewTranscript,
   isTranscribing,
   modelDownloaded,
 }: EpisodeExpandedViewProps) {
@@ -146,6 +148,12 @@ export default function EpisodeExpandedView({
           className="episode-action-btn episode-action-secondary"
           disabled={!isDone}
           title={!isDone ? t('pages.episodes.model_needed') : undefined}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (isDone && onViewTranscript) {
+              onViewTranscript(episode.id, episode.title);
+            }
+          }}
         >
           {t('pages.episodes.view_transcript_btn')}
         </button>

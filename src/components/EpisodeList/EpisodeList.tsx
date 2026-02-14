@@ -12,9 +12,10 @@ interface ModelStatus {
 
 interface EpisodeListProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
+  onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
 }
 
-export default function EpisodeList({ onTranscriptionStateChange }: EpisodeListProps) {
+export default function EpisodeList({ onTranscriptionStateChange, onViewTranscript }: EpisodeListProps) {
   const { t } = useTranslation();
   const {
     episodes,
@@ -58,6 +59,12 @@ export default function EpisodeList({ onTranscriptionStateChange }: EpisodeListP
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   function handleToggle(id: number) {
+    // Find the episode to check if it's done
+    const ep = episodes.find((e) => e.id === id);
+    if (ep?.transcription_status === 'done' && onViewTranscript) {
+      onViewTranscript(ep.id, ep.title);
+      return;
+    }
     setExpandedId((prev) => (prev === id ? null : id));
   }
 
@@ -153,6 +160,7 @@ export default function EpisodeList({ onTranscriptionStateChange }: EpisodeListP
                       }
                     }}
                     onCancel={cancelTranscription}
+                    onViewTranscript={onViewTranscript}
                   />
                 )}
               </div>
