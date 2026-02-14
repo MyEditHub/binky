@@ -64,6 +64,14 @@ export function useEpisodes() {
       const metadata = await invoke<EpisodeMetadata[]>('sync_rss');
       const db = await getDb();
 
+      // Remove duplicate rows created before the WHERE NOT EXISTS guard was added.
+      // Keep the row with the lowest id for each (title, publish_date) pair.
+      await db.execute(
+        `DELETE FROM episodes WHERE id NOT IN (
+           SELECT MIN(id) FROM episodes GROUP BY title, publish_date
+         )`
+      );
+
       for (const ep of metadata) {
         // episodes table has no UNIQUE constraint, so INSERT OR IGNORE alone won't
         // deduplicate. Use WHERE NOT EXISTS to avoid inserting the same episode twice.

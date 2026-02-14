@@ -157,6 +157,8 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
                     onTranscribe={() => {
                       if (ep.audio_url) {
                         startTranscription(ep.id, ep.audio_url);
+                      } else {
+                        alert('Keine Audio-URL für diese Episode gefunden. Bitte neu synchronisieren (Synchronisieren-Button).');
                       }
                     }}
                     onCancel={cancelTranscription}
