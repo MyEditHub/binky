@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
+import ModelManager from '../ModelManager/ModelManager';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -84,6 +85,9 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {/* Transcription / Model Manager */}
+      <ModelManager />
 
       {/* About */}
       <div className="settings-section">
