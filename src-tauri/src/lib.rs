@@ -44,7 +44,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(state::transcription_queue::TranscriptionState::new())
         .invoke_handler(tauri::generate_handler![
-            commands::episodes::sync_rss
+            commands::episodes::sync_rss,
+            commands::transcription::get_model_status,
+            commands::transcription::download_whisper_model,
+            commands::transcription::delete_whisper_model,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
