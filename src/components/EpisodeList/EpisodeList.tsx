@@ -141,6 +141,10 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
         <div className="episode-rows">
           {episodes.map((ep) => {
             const isThisActive = activeEpisodeId === ep.id;
+            // Disable transcription on other episodes while one is already running.
+            // The Rust queue is sequential so we block at the UI level to avoid
+            // a second invoke call that would crash the runtime.
+            const anotherIsActive = isProcessing && !isThisActive;
             return (
               <div key={ep.id}>
                 <EpisodeRow
@@ -154,6 +158,7 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
                     episode={ep}
                     modelDownloaded={modelDownloaded}
                     isTranscribing={isThisActive && isProcessing}
+                    anotherIsActive={anotherIsActive}
                     onTranscribe={() => {
                       if (ep.audio_url) {
                         startTranscription(ep.id, ep.audio_url);

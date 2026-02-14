@@ -9,6 +9,8 @@ interface EpisodeExpandedViewProps {
   onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
   isTranscribing: boolean;
   modelDownloaded: boolean;
+  /** True when a different episode is currently being transcribed. Disables the transcribe button. */
+  anotherIsActive: boolean;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -28,6 +30,7 @@ export default function EpisodeExpandedView({
   onViewTranscript,
   isTranscribing,
   modelDownloaded,
+  anotherIsActive,
 }: EpisodeExpandedViewProps) {
   const { t } = useTranslation();
   const [showFull, setShowFull] = useState(false);
@@ -85,11 +88,18 @@ export default function EpisodeExpandedView({
     }
 
     // not_started or error — show transcribe button
+    const disabledByOther = anotherIsActive;
+    const isDisabled = hasNoModel || disabledByOther;
+    const titleHint = hasNoModel
+      ? t('pages.episodes.model_needed')
+      : disabledByOther
+      ? 'Eine andere Episode wird gerade transkribiert.'
+      : undefined;
     return (
       <button
         className="episode-action-btn episode-action-primary"
-        disabled={hasNoModel}
-        title={hasNoModel ? t('pages.episodes.model_needed') : undefined}
+        disabled={isDisabled}
+        title={titleHint}
         onClick={(e) => {
           e.stopPropagation();
           onTranscribe();
