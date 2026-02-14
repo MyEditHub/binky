@@ -57,10 +57,11 @@ export default function EpisodeRow({
       ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
       : null;
 
-  const showProgress =
-    transcriptionProgress !== null &&
-    (episode.transcription_status === 'downloading' ||
-      episode.transcription_status === 'transcribing');
+  // Show the progress bar whenever the parent hook says this episode is active —
+  // don't gate on episode.transcription_status from DB, which lags behind the
+  // real-time Rust updates and would never be 'downloading'|'transcribing' during
+  // the early phases of progress reporting.
+  const showProgress = transcriptionProgress !== null;
 
   return (
     <div

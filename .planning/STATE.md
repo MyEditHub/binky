@@ -10,16 +10,16 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 2 of 5 (Episode Management & Transcription)
-Plan: 4 of TBD in current phase
+Plan: 5 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-14 — Completed Plan 02-04 (Transcription Engine & UI)
+Last activity: 2026-02-14 — Completed Plan 02-05 (Transcript Viewer UI)
 
-Progress: [██████████░░] ~40% (Phase 1 complete + Plans 02-01, 02-02, 02-03, 02-04 done)
+Progress: [████████████░░] ~45% (Phase 1 complete + Plans 02-01, 02-02, 02-03, 02-04, 02-05 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: ~4.6 min
 - Total execution time: ~0.85 hours
 
@@ -28,7 +28,7 @@ Progress: [██████████░░] ~40% (Phase 1 complete + Plans 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-infrastructure | 6 | ~30 min | ~5 min |
-| 02-episode-management | 4 | ~17 min | ~4.25 min |
+| 02-episode-management | 5 | ~20 min | ~4 min |
 
 *Updated after each plan completion*
 
@@ -104,6 +104,13 @@ Progress: [██████████░░] ~40% (Phase 1 complete + Plans 
 - Upsert for settings: INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value
 - useModelManager hook pattern: encapsulates all Tauri invocations + state for model management
 
+**From Plan 02-05 (2026-02-14):**
+- Paragraph gap threshold 2000ms: natural podcast speech pause grouping from segments_json
+- Full-page swap for transcript viewer (not modal): cleaner on small macOS window
+- reloadKey pattern on EpisodeList: bump key to force reload after transcript deletion
+- Delete guarded by get_queue_status: blocks if active_episode_id matches episode being deleted
+- groupIntoParagraphs exported from useTranscript.ts: reusable in Phase 3/4
+
 **From Plan 02-04 (2026-02-14):**
 - Arc<TranscriptionState> managed in Tauri: allows `.inner().clone()` in async tasks without unsafe Send/Sync
 - whisper-rs 0.15 iterator API: state.as_iter() → WhisperSegment with .to_string(), .start_timestamp(), .end_timestamp()
@@ -136,6 +143,6 @@ Progress: [██████████░░] ~40% (Phase 1 complete + Plans 
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed Plan 02-04 (Transcription Engine & UI)
+Stopped at: Completed Plan 02-05 (Transcript Viewer UI)
 Resume file: None
-Next: /gsd:execute-phase 02 plan 05 — Transcript viewer or next phase plan
+Next: /gsd:execute-phase 02 plan 06 — next Phase 2 plan or Phase 3 planning

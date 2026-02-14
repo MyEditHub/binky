@@ -41,6 +41,8 @@ export function useTranscription(onEpisodeUpdated?: () => void): UseTranscriptio
   const [progress, setProgress] = useState<number>(0);
   const [queueLength, setQueueLength] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  // Track whether we've already triggered a reload for the current download phase
+  const downloadStartedRef = useRef(false);
 
   // Keep track of whether we should be polling
   const isProcessingRef = useRef(isProcessing);
@@ -77,6 +79,8 @@ export function useTranscription(onEpisodeUpdated?: () => void): UseTranscriptio
     async (episodeId: number, audioUrl: string) => {
       const channel = new Channel<TranscriptionEvent>();
 
+      downloadStartedRef.current = false;
+
       channel.onmessage = (event: TranscriptionEvent) => {
         switch (event.event) {
           case 'Downloading': {
@@ -84,6 +88,12 @@ export function useTranscription(onEpisodeUpdated?: () => void): UseTranscriptio
             setActiveEpisodeId(episodeId);
             setIsProcessing(true);
             setProgress(event.data.percent);
+            // Reload episodes once on the first Downloading event so the status
+            // badge switches from 'not_started' → 'downloading' in the UI.
+            if (!downloadStartedRef.current) {
+              downloadStartedRef.current = true;
+              onEpisodeUpdated?.();
+            }
             break;
           }
           case 'Progress': {
@@ -102,7 +112,9 @@ export function useTranscription(onEpisodeUpdated?: () => void): UseTranscriptio
             break;
           }
           case 'Error': {
-            console.error('[useTranscription] transcription error:', event.data.message);
+            const errMsg = event.data.message;
+            console.error('[useTranscription] transcription error:', errMsg);
+            alert('Transkriptionsfehler: ' + errMsg);
             setIsProcessing(false);
             setActiveEpisodeId(null);
             setProgress(0);
@@ -129,11 +141,8 @@ export function useTranscription(onEpisodeUpdated?: () => void): UseTranscriptio
         });
       } catch (err) {
         console.error('[useTranscription] start_transcription error:', err);
-        // Show error to user via alert (basic UX; toast system comes later)
-        const msg = String(err);
-        if (msg.includes('Kein Whisper-Modell')) {
-          alert(msg);
-        }
+        // Show all errors — not just the "no model" case.
+        alert('Fehler beim Starten der Transkription:\n' + String(err));
         setIsProcessing(false);
         setActiveEpisodeId(null);
         setProgress(0);

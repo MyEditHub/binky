@@ -65,11 +65,16 @@ export function useEpisodes() {
       const db = await getDb();
 
       for (const ep of metadata) {
+        // episodes table has no UNIQUE constraint, so INSERT OR IGNORE alone won't
+        // deduplicate. Use WHERE NOT EXISTS to avoid inserting the same episode twice.
         await db.execute(
-          `INSERT OR IGNORE INTO episodes
+          `INSERT INTO episodes
              (title, description, audio_url, publish_date, duration_minutes,
               episode_number, podcast_name, transcription_status)
-           VALUES (?, ?, ?, ?, ?, ?, 'Nettgefluster', 'not_started')`,
+           SELECT ?, ?, ?, ?, ?, ?, 'Nettgefluster', 'not_started'
+           WHERE NOT EXISTS (
+             SELECT 1 FROM episodes WHERE title = ? AND publish_date = ?
+           )`,
           [
             ep.title,
             ep.description ?? null,
@@ -77,6 +82,8 @@ export function useEpisodes() {
             ep.pub_date ?? null,
             ep.duration_minutes ?? null,
             ep.episode_number ?? null,
+            ep.title,
+            ep.pub_date ?? null,
           ]
         );
       }
