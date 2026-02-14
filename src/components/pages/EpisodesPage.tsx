@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import EpisodeList from '../EpisodeList/EpisodeList';
 
 export default function EpisodesPage() {
   const { t } = useTranslation();
@@ -8,11 +9,7 @@ export default function EpisodesPage() {
       <div className="page-header">
         <h2 className="page-title">{t('pages.episodes.title')}</h2>
       </div>
-      <div className="empty-state">
-        <div className="empty-state-icon">🎙️</div>
-        <div className="empty-state-title">{t('pages.episodes.empty')}</div>
-        <div className="empty-state-hint">{t('pages.episodes.empty_hint')}</div>
-      </div>
+      <EpisodeList />
     </div>
   );
 }

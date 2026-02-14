@@ -18,8 +18,27 @@
   "pages": {
     "episodes": {
       "title": "Episoden",
+      "sync": "Synchronisieren",
+      "syncing": "Synchronisiere...",
+      "search_placeholder": "Episoden durchsuchen...",
+      "count": "{{count}} Episoden",
+      "count_one": "1 Episode",
+      "status_queued": "Wartend",
+      "status_downloading": "Laden...",
+      "status_transcribing": "Transkribiere...",
+      "status_done": "Transkribiert",
+      "status_error": "Fehler",
+      "transcribe_btn": "Transkribieren",
+      "view_transcript_btn": "Transkript anzeigen",
+      "show_more": "mehr anzeigen",
+      "show_less": "weniger anzeigen",
+      "no_description": "Keine Beschreibung verfügbar.",
+      "duration_minutes": "{{minutes}} Min.",
+      "episode_label": "Folge {{number}}",
+      "sync_error": "Fehler beim Synchronisieren der Episoden.",
+      "model_needed": "Whisper-Modell in Einstellungen herunterladen",
       "empty": "Noch keine Episoden geladen.",
-      "empty_hint": "Episoden werden in einer zukünftigen Version automatisch geladen."
+      "empty_hint": "Klicke auf \"Synchronisieren\", um Episoden zu laden."
     },
     "settings": {
       "title": "Einstellungen",
