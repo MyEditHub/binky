@@ -23,5 +23,6 @@ pub struct EpisodeMetadata {
     pub audio_url: Option<String>,
     pub pub_date: Option<String>,
     pub duration_str: Option<String>,
+    pub duration_minutes: Option<f64>,
     pub episode_number: Option<i32>,
 }

@@ -10,24 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 2 of 5 (Episode Management & Transcription)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-13 — Completed Phase 1 (Foundation & Infrastructure) — all 6 plans done, human QA approved
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-14 — Completed Plan 02-01 (Rust Foundation & Dependencies)
 
-Progress: [██████░░░░] ~20% (Phase 1 complete, 4 phases remain)
+Progress: [███████░░░] ~25% (Phase 1 complete + Plan 02-01 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: ~5 min
-- Total execution time: ~0.5 hours
+- Total execution time: ~0.6 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-infrastructure | 6 | ~30 min | ~5 min |
+| 02-episode-management | 1 | ~2 min | ~2 min |
 
 *Updated after each plan completion*
 
@@ -79,6 +80,14 @@ Progress: [██████░░░░] ~20% (Phase 1 complete, 4 phases rema
 - Collapsible sidebar: 200px expanded / 52px collapsed, ‹/› toggle in header
 - Settings page: No website link; description uses correct German with umlauts
 
+**From Plan 02-01 (2026-02-14):**
+- whisper-rs 0.15 with metal feature: GPU-accelerated transcription (3-6x faster on Apple Silicon)
+- tauri-plugin-http placed BEFORE sql plugin in Builder chain for correct entitlement scoping
+- ALTER TABLE without IF NOT EXISTS: safe in migration system that guarantees single execution
+- CancellationToken over JoinHandle::abort: whisper runs in spawn_blocking, abort() has no effect
+- cmake required: whisper-rs-sys build requires cmake (installed via Homebrew)
+- Module stubs: command stubs created now, implemented in dedicated plans (02-02, 02-04)
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -90,16 +99,18 @@ Progress: [██████░░░░] ~20% (Phase 1 complete, 4 phases rema
 ### Blockers/Concerns
 
 **Before First Release:**
-- ⚠️ URGENT: Private signing key at ~/.tauri/binky.key must be backed up before first release
+- URGENT: Private signing key at ~/.tauri/binky.key must be backed up before first release
 - GitHub Secrets not configured yet
 - Sentry DSN not configured yet
 
 **Phase 2 Risk:**
 - German transcription accuracy on real podcast audio needs validation
 - Whisper model size vs. memory tradeoff requires hardware testing
+- macOS sandbox network access in production builds needs verification (Tauri issue #13878)
 
 ## Session Continuity
 
-Last session: 2026-02-13
-Stopped at: Phase 1 complete — all 6 plans executed and human-verified
-Next: /gsd:discuss-phase 02 or /gsd:plan-phase 02 — Episode Management & Transcription
+Last session: 2026-02-14
+Stopped at: Completed Plan 02-01 (Rust Foundation & Dependencies)
+Resume file: None
+Next: /gsd:execute-phase 02 plan 02 — Episode list commands (get_episodes, update_episode)
