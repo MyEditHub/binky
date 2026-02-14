@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 2 of 5 (Episode Management & Transcription)
-Plan: 1 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-14 — Completed Plan 02-01 (Rust Foundation & Dependencies)
+Last activity: 2026-02-14 — Completed Plan 02-03 (Whisper Model Management)
 
-Progress: [███████░░░] ~25% (Phase 1 complete + Plan 02-01 done)
+Progress: [████████░░] ~33% (Phase 1 complete + Plans 02-01, 02-02, 02-03 done)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
-- Average duration: ~5 min
-- Total execution time: ~0.6 hours
+- Total plans completed: 9
+- Average duration: ~4.6 min
+- Total execution time: ~0.72 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation-infrastructure | 6 | ~30 min | ~5 min |
-| 02-episode-management | 1 | ~2 min | ~2 min |
+| 02-episode-management | 3 | ~9 min | ~3 min |
 
 *Updated after each plan completion*
 
@@ -88,6 +88,22 @@ Progress: [███████░░░] ~25% (Phase 1 complete + Plan 02-01 d
 - cmake required: whisper-rs-sys build requires cmake (installed via Homebrew)
 - Module stubs: command stubs created now, implemented in dedicated plans (02-02, 02-04)
 
+**From Plan 02-02 (2026-02-14):**
+- sync_rss returns Vec<EpisodeMetadata> to frontend (not Rust-side SQL): consistent with plugin-sql JS pattern from Phase 1
+- duration_minutes computed in Rust during RSS parse: avoids re-parsing duration strings in TypeScript
+- INSERT OR IGNORE upsert on (title, publish_date): idempotent, no duplicate rows on repeated sync
+- Background RSS sync on mount: load DB first (instant render), then network sync, then reload
+- Episode list uses single expandedId state: collapse current on second click or new selection
+- tauri_plugin_http::reqwest (not raw reqwest): required for macOS sandbox entitlement compliance
+
+**From Plan 02-03 (2026-02-14):**
+- tauri-plugin-http stream feature: bytes_stream() requires features = ["stream"] in Cargo.toml
+- tauri::Manager import: app.path() requires explicit `use tauri::Manager` in Rust files
+- Single model policy: delete existing ggml-*.bin before downloading new one
+- Whisper model path convention: app_local_data_dir/models/ggml-{name}.bin
+- Upsert for settings: INSERT ... ON CONFLICT(key) DO UPDATE SET value = excluded.value
+- useModelManager hook pattern: encapsulates all Tauri invocations + state for model management
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -111,6 +127,6 @@ Progress: [███████░░░] ~25% (Phase 1 complete + Plan 02-01 d
 ## Session Continuity
 
 Last session: 2026-02-14
-Stopped at: Completed Plan 02-01 (Rust Foundation & Dependencies)
+Stopped at: Completed Plan 02-03 (Whisper Model Management)
 Resume file: None
-Next: /gsd:execute-phase 02 plan 02 — Episode list commands (get_episodes, update_episode)
+Next: /gsd:execute-phase 02 plan 04 — Transcription queue execution

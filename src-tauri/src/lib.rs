@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 mod commands;
@@ -42,12 +43,16 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
-        .manage(state::transcription_queue::TranscriptionState::new())
+        // Manage Arc<TranscriptionState> so we can clone it into async tasks
+        .manage(Arc::new(state::transcription_queue::TranscriptionState::new()))
         .invoke_handler(tauri::generate_handler![
             commands::episodes::sync_rss,
             commands::transcription::get_model_status,
             commands::transcription::download_whisper_model,
             commands::transcription::delete_whisper_model,
+            commands::transcription::start_transcription,
+            commands::transcription::cancel_transcription,
+            commands::transcription::get_queue_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
