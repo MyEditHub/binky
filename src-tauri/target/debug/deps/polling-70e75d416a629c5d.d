@@ -1,8 +1,0 @@
-/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/polling-70e75d416a629c5d.d: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os/kqueue.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/kqueue.rs
-
-/Users/tmtlxantonio/Desktop/nettgefluester-app/src-tauri/target/debug/deps/libpolling-70e75d416a629c5d.rmeta: /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/lib.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os/kqueue.rs /Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/kqueue.rs
-
-/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/lib.rs:
-/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os.rs:
-/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/os/kqueue.rs:
-/Users/tmtlxantonio/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/polling-3.11.0/src/kqueue.rs:

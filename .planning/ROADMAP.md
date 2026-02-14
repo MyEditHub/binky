@@ -51,10 +51,15 @@ Plans:
   4. Transcription runs in background without freezing UI, showing real-time progress with cancel option
   5. User can view completed transcripts stored in SQLite database
   6. App handles large Whisper models without memory explosion (quantization, model selection UI)
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Rust foundation: Cargo deps, migration 002, module structure, types
+- [ ] 02-02-PLAN.md — RSS feed sync + episode list UI (search, expand, status badges)
+- [ ] 02-03-PLAN.md — Whisper model download/delete management + Settings UI
+- [ ] 02-04-PLAN.md — Transcription engine: audio decode, whisper, queue, progress, cancel
+- [ ] 02-05-PLAN.md — Transcript viewer with search, paragraph grouping, delete
+- [ ] 02-06-PLAN.md — Human verification checkpoint (full Phase 2 QA)
 
 ### Phase 3: Speaker Analytics
 **Goal**: Users can see speaking balance metrics showing who talked how much in each episode, with automatic speaker diarization
@@ -109,7 +114,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Infrastructure | 6/6 | Complete | 2026-02-13 |
-| 2. Episode Management & Transcription | 0/TBD | Not started | - |
+| 2. Episode Management & Transcription | 0/6 | Planning complete | - |
 | 3. Speaker Analytics | 0/TBD | Not started | - |
 | 4. Content Analysis | 0/TBD | Not started | - |
 | 5. Bird Randomizer & Polish | 0/TBD | Not started | - |
