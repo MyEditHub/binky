@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 3 of 5 (Speaker Analytics)
-Plan: 1 of TBD in current phase
+Plan: 3 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-15 — Completed 03-01-PLAN.md (diarization infrastructure foundation)
+Last activity: 2026-02-16 — Completed 03-03-PLAN.md (diarization engine + auto-chaining after transcription)
 
-Progress: [████████████████░░] ~58% (Phases 1 + 2 complete, Phase 3 plan 1 done)
+Progress: [██████████████████░] ~65% (Phases 1 + 2 complete, Phase 3 plans 1-3 done)
 
 ## Performance Metrics
 
@@ -126,6 +126,22 @@ Progress: [████████████████░░] ~58% (Phases 
 - Diarization command prefix: get_diarization_, download_diarization_, cancel_diarization_, get_diarization_queue_status
 - Diarization status progression: queued → processing → done/error/not_started (cancelled)
 
+**From Plan 03-02 (2026-02-16):**
+- Segmentation model URL: tar.bz2 only (no standalone .onnx) — extract with tar --strip-components=1 -C segmentation/
+- Embedding model filename: wespeaker_en_voxceleb_resnet34_LM.onnx (underscores, includes _en_voxceleb_)
+- tokio "process" feature: required for tokio::process::Command (tar extraction)
+- Model paths: app_local_data_dir/models/diarization/segmentation/model.onnx and embedding/wespeaker_en_voxceleb_resnet34_LM.onnx
+- Two-phase progress: segmentation 0–50%, embedding 50–100%
+
+**From Plan 03-03 (2026-02-16):**
+- sherpa-rs 0.6.8 real diarize API: Diarize::new(seg, emb, DiarizeConfig) + compute(Vec<f32>, Option<ProgressCallback>) → Result<Vec<Segment>>
+- Segment fields: start: f32, end: f32, speaker: i32 (index) — NOT embedded speaker labels; map to "SPEAKER_N" strings
+- Seconds-to-ms: sherpa-rs returns f32 seconds, multiply by 1000.0 for milliseconds
+- Option<Channel> pattern: process_diarization_episode takes Option<&Channel<DiarizationEvent>> for dual use (user cmd + internal chain)
+- Solo detection: <=1 unique speaker OR minor speaker <5% of total speaking time → status='solo'
+- Diarization chaining: fires after TranscriptionEvent::Done via fire-and-forget spawn; skips if models not downloaded
+- decode_mp3_to_pcm and push_mono_frames are now pub(crate)
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -148,7 +164,7 @@ Progress: [████████████████░░] ~58% (Phases 
 
 ## Session Continuity
 
-Last session: 2026-02-15T18:40:03Z
-Stopped at: Completed 03-01-PLAN.md (sherpa-rs + migration 003 + diarization infrastructure)
+Last session: 2026-02-15T23:40:17Z
+Stopped at: Completed 03-03-PLAN.md (diarization engine + auto-chaining after transcription)
 Resume file: None
-Next: /gsd:execute-phase 03 — execute 03-02-PLAN.md
+Next: /gsd:execute-phase 03 — execute 03-04-PLAN.md
