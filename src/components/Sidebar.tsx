@@ -41,8 +41,7 @@ export default function Sidebar({
       id: 'analytics',
       labelKey: 'nav.analytics',
       icon: '📊',
-      disabled: true,
-      disabledTooltipKey: 'nav_disabled.analytics',
+      disabled: false,
     },
     {
       id: 'topics',
