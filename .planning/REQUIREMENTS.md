@@ -10,16 +10,16 @@
 
 ### Episode Management
 
-- [ ] **EPISODE-01**: Auto-fetch episodes from RSS feed in background (https://cdn.julephosting.de/podcasts/1188-nettgefluster-der-podcast-eines-ehepaars/feed.rss)
-- [ ] **EPISODE-02**: Display episode list with title, date, duration, episode number
-- [ ] **EPISODE-03**: Filter to show only 2024-2025 episodes
+- [x] **EPISODE-01**: Auto-fetch episodes from RSS feed in background (https://cdn.julephosting.de/podcasts/1188-nettgefluster-der-podcast-eines-ehepaars/feed.rss)
+- [x] **EPISODE-02**: Display episode list with title, date, duration, episode number
+- [x] **EPISODE-03**: Filter to show only 2024-2025 episodes
 
 ### Transcription
 
-- [ ] **TRANS-01**: Transcribe episodes using local Whisper with German language model
-- [ ] **TRANS-02**: Background processing without blocking UI (async with tokio)
-- [ ] **TRANS-03**: Store transcripts in SQLite database with compression
-- [ ] **TRANS-04**: Display transcription progress with cancel button
+- [x] **TRANS-01**: Transcribe episodes using local Whisper with German language model
+- [x] **TRANS-02**: Background processing without blocking UI (async with tokio)
+- [x] **TRANS-03**: Store transcripts in SQLite database with compression
+- [x] **TRANS-04**: Display transcription progress with cancel button
 
 ### Speaker Analytics (Core Differentiator)
 
@@ -47,7 +47,7 @@
 
 - [ ] **UI-01**: German language throughout entire app (all buttons, labels, text)
 - [ ] **UI-02**: Minimal design using podcast brand colors from website, no gradients
-- [ ] **UI-03**: Responsive, non-blocking UI interactions (no freezing during transcription)
+- [x] **UI-03**: Responsive, non-blocking UI interactions (no freezing during transcription)
 
 ### Distribution
 
@@ -117,13 +117,13 @@ This section maps requirements to roadmap phases for full coverage validation.
 | SETUP-01 | Phase 1 | Pending |
 | SETUP-02 | Phase 1 | Pending |
 | SETUP-03 | Phase 1 | Pending |
-| EPISODE-01 | Phase 2 | Pending |
-| EPISODE-02 | Phase 2 | Pending |
-| EPISODE-03 | Phase 2 | Pending |
-| TRANS-01 | Phase 2 | Pending |
-| TRANS-02 | Phase 2 | Pending |
-| TRANS-03 | Phase 2 | Pending |
-| TRANS-04 | Phase 2 | Pending |
+| EPISODE-01 | Phase 2 | Complete |
+| EPISODE-02 | Phase 2 | Complete |
+| EPISODE-03 | Phase 2 | Complete |
+| TRANS-01 | Phase 2 | Complete |
+| TRANS-02 | Phase 2 | Complete |
+| TRANS-03 | Phase 2 | Complete |
+| TRANS-04 | Phase 2 | Complete |
 | SPEAK-01 | Phase 3 | Pending |
 | SPEAK-02 | Phase 3 | Pending |
 | SPEAK-03 | Phase 3 | Pending |
@@ -139,7 +139,7 @@ This section maps requirements to roadmap phases for full coverage validation.
 | BIRD-06 | Phase 5 | Pending |
 | UI-01 | Phase 1 | Pending |
 | UI-02 | Phase 1 | Pending |
-| UI-03 | Phase 2 | Pending |
+| UI-03 | Phase 2 | Complete |
 | DIST-01 | Phase 1 | Pending |
 | DIST-02 | Phase 1 | Pending |
 | DIST-03 | Phase 1 | Pending |

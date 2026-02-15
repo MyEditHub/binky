@@ -13,7 +13,7 @@ This roadmap delivers **Binky**, a Mac desktop app that automatically transcribe
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Infrastructure** - Tauri app scaffold, database, permissions, auto-updater setup
-- [ ] **Phase 2: Episode Management & Transcription** - RSS feed integration, episode library, German transcription engine
+- [x] **Phase 2: Episode Management & Transcription** - RSS feed integration, episode library, German transcription engine
 - [ ] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
 - [ ] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
 - [ ] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
@@ -71,10 +71,15 @@ Plans:
   3. User can see visual representation of speaking balance (charts/graphs showing conversation flow)
   4. App displays confidence indicators for speaker attribution and allows manual corrections
   5. Speaking balance metrics are calculated for all transcribed episodes
-**Plans**: TBD
+**Plans**: 6 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [ ] 03-01-PLAN.md — Rust foundation: sherpa-rs dependency, migration 003, diarization state/types/command stubs
+- [ ] 03-02-PLAN.md — Diarization model download/delete management + Settings UI
+- [ ] 03-03-PLAN.md — Diarization engine: sherpa-rs inference, speaker segments, queue, chained pipeline
+- [ ] 03-04-PLAN.md — Analytics page: dashboard summary, episode list with balance bars, host confirmation
+- [ ] 03-05-PLAN.md — Trend chart (recharts), manual corrections, host Settings, re-analyze
+- [ ] 03-06-PLAN.md — Human verification checkpoint (full Phase 3 QA)
 
 ### Phase 4: Content Analysis
 **Goal**: Users can track unfinished topics across episodes and see AI-powered content insights without manual work
@@ -109,13 +114,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Infrastructure | 6/6 | Complete | 2026-02-13 |
-| 2. Episode Management & Transcription | 0/6 | Planning complete | - |
-| 3. Speaker Analytics | 0/TBD | Not started | - |
+| 2. Episode Management & Transcription | 6/6 | Complete | 2026-02-15 |
+| 3. Speaker Analytics | 0/6 | Not started | - |
 | 4. Content Analysis | 0/TBD | Not started | - |
 | 5. Bird Randomizer & Polish | 0/TBD | Not started | - |
 

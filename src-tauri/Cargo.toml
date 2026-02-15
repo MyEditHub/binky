@@ -27,6 +27,9 @@ serde_json = "1.0"
 
 # Phase 2: Episode Management & Transcription
 whisper-rs = { version = "0.15", features = ["metal"] }
+
+# Phase 3: Speaker Analytics
+sherpa-rs = { version = "0.6.8" }
 rss = "2"
 sha2 = "0.10"
 tokio-util = { version = "0.7", features = ["rt"] }
