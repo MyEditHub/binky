@@ -4,6 +4,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
+import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
 
 export default function SettingsPage() {
   const { t } = useTranslation();
@@ -88,6 +89,9 @@ export default function SettingsPage() {
 
       {/* Transcription / Model Manager */}
       <ModelManager />
+
+      {/* Diarization Model Manager */}
+      <DiarizationModelManager />
 
       {/* About */}
       <div className="settings-section">

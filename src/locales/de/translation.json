@@ -86,7 +86,18 @@
       "model_large_desc": "Beste Qualität (viel Arbeitsspeicher)",
       "model_turbo_desc": "Beste Balance aus Qualität und Größe",
       "language_label": "Transkriptionssprache",
-      "language_de": "Deutsch (de)"
+      "language_de": "Deutsch (de)",
+      "diarization_models": "Diarisierungsmodelle",
+      "diarization_segmentation": "Segmentierung",
+      "diarization_embedding": "Sprechererkennung",
+      "diarization_downloaded": "Heruntergeladen",
+      "diarization_not_downloaded": "Nicht heruntergeladen",
+      "diarization_download": "Diarisierungsmodelle herunterladen",
+      "diarization_downloading": "Wird heruntergeladen... {{percent}}%",
+      "diarization_delete": "Modelle löschen",
+      "diarization_delete_confirm": "Sollen die Diarisierungsmodelle wirklich gelöscht werden?",
+      "diarization_size_info": "~32 MB insgesamt",
+      "diarization_desc": "Für automatische Sprechererkennung (wer spricht wann)"
     },
     "analytics": {
       "title": "Analytik",
