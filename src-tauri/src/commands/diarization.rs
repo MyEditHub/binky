@@ -1,13 +1,14 @@
 use crate::models::diarization::{
     DiarizationEvent, DiarizationModelDownloadEvent, DiarizationModelStatus, DiarizationQueueStatus,
 };
-use crate::state::diarization_queue::DiarizationState;
+use crate::state::diarization_queue::{DiarizationJob, DiarizationState};
 use futures_util::StreamExt;
 use std::sync::Arc;
 use tauri::ipc::Channel;
 use tauri::Manager;
 use tauri_plugin_http::reqwest;
 use tokio::io::AsyncWriteExt;
+use tokio_util::sync::CancellationToken;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model URLs (verified 2026-02-16)
@@ -268,18 +269,537 @@ pub async fn delete_diarization_models(app: tauri::AppHandle) -> Result<(), Stri
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Diarization engine stubs (Plan 03-03+)
+// Diarization engine helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Find the diarization model paths. Returns (segmentation_path, embedding_path).
+async fn find_diarization_models(
+    app: &tauri::AppHandle,
+) -> Result<(std::path::PathBuf, std::path::PathBuf), String> {
+    let models_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| format!("Cannot resolve app local data dir: {}", e))?
+        .join("models")
+        .join("diarization");
+
+    let seg_path = models_dir.join("segmentation").join("model.onnx");
+    let emb_path = models_dir.join("embedding").join(EMBEDDING_FILENAME);
+
+    if !seg_path.exists() {
+        return Err("Segmentierungsmodell nicht heruntergeladen. Bitte zuerst die Diarisierungsmodelle in den Einstellungen herunterladen.".to_string());
+    }
+    if !emb_path.exists() {
+        return Err("Erkennungsmodell nicht heruntergeladen. Bitte zuerst die Diarisierungsmodelle in den Einstellungen herunterladen.".to_string());
+    }
+
+    Ok((seg_path, emb_path))
+}
+
+/// Update diarization_status and diarization_error columns for an episode.
+fn update_diarization_status(
+    db_path: &std::path::Path,
+    episode_id: i64,
+    status: &str,
+    error_msg: Option<&str>,
+) {
+    if let Ok(conn) = rusqlite::Connection::open(db_path) {
+        if let Some(msg) = error_msg {
+            let _ = conn.execute(
+                "UPDATE episodes SET diarization_status = ?1, diarization_error = ?2, updated_at = datetime('now') WHERE id = ?3",
+                rusqlite::params![status, msg, episode_id],
+            );
+        } else {
+            let _ = conn.execute(
+                "UPDATE episodes SET diarization_status = ?1, diarization_error = NULL, updated_at = datetime('now') WHERE id = ?2",
+                rusqlite::params![status, episode_id],
+            );
+        }
+    }
+}
+
+/// Store diarization segments in SQLite atomically.
+/// Deletes existing segments first (allows re-runs).
+fn store_diarization_segments(
+    db_path: &std::path::Path,
+    episode_id: i64,
+    segments: &[crate::models::diarization::DiarizationSegment],
+) -> Result<(), String> {
+    let conn = rusqlite::Connection::open(db_path)
+        .map_err(|e| format!("Failed to open DB: {}", e))?;
+
+    conn.execute("BEGIN", [])
+        .map_err(|e| format!("Failed to begin tx: {}", e))?;
+
+    conn.execute(
+        "DELETE FROM diarization_segments WHERE episode_id = ?1",
+        rusqlite::params![episode_id],
+    )
+    .map_err(|e| format!("Failed to delete existing segments: {}", e))?;
+
+    for seg in segments {
+        conn.execute(
+            "INSERT INTO diarization_segments (episode_id, start_ms, end_ms, speaker_label, confidence) VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![episode_id, seg.start_ms, seg.end_ms, seg.speaker_label, seg.confidence],
+        )
+        .map_err(|e| format!("Failed to insert segment: {}", e))?;
+    }
+
+    conn.execute("COMMIT", [])
+        .map_err(|e| format!("Failed to commit tx: {}", e))?;
+
+    Ok(())
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Core processing function
+//
+// Accepts Option<Channel<DiarizationEvent>> so both the user-facing command
+// (Some(channel)) and the internal chained call (None) use the same code path.
+// ─────────────────────────────────────────────────────────────────────────────
+
+async fn process_diarization_episode(
+    job: &DiarizationJob,
+    app: &tauri::AppHandle,
+    state: &Arc<DiarizationState>,
+    on_event: Option<&Channel<DiarizationEvent>>,
+    seg_path: &std::path::PathBuf,
+    emb_path: &std::path::PathBuf,
+    db_path: &std::path::PathBuf,
+) {
+    let episode_id = job.episode_id;
+
+    // Update status to 'processing' and register cancellation token
+    update_diarization_status(db_path, episode_id, "processing", None);
+
+    let cancel_token = CancellationToken::new();
+    {
+        let mut q = state.queue.lock().unwrap();
+        q.active_token = Some(cancel_token.clone());
+        q.active_episode_id = Some(episode_id);
+    }
+
+    // Resolve cache directory for temp audio file
+    let cache_dir = match app.path().app_cache_dir() {
+        Ok(d) => d,
+        Err(e) => {
+            let msg = format!("Cannot resolve cache dir: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+    };
+
+    if let Err(e) = tokio::fs::create_dir_all(&cache_dir).await {
+        let msg = format!("Cannot create cache dir: {}", e);
+        update_diarization_status(db_path, episode_id, "error", Some(&msg));
+        if let Some(ch) = on_event {
+            let _ = ch.send(DiarizationEvent::Error { message: msg });
+        }
+        let mut q = state.queue.lock().unwrap();
+        q.active_episode_id = None;
+        q.active_token = None;
+        return;
+    }
+
+    let temp_path = cache_dir.join(format!("diarize_{}.mp3", episode_id));
+    let temp_path_for_cleanup = temp_path.clone();
+
+    // ── Download audio (progress 0–50%) ────────────────────────────────────
+
+    let response = match reqwest::get(&job.audio_url).await {
+        Ok(r) => r,
+        Err(e) => {
+            let msg = format!("Audio download failed: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+    };
+
+    let total_bytes = response.content_length().unwrap_or(0);
+    let mut stream = response.bytes_stream();
+    let mut downloaded_bytes: u64 = 0;
+
+    let mut file = match tokio::fs::File::create(&temp_path).await {
+        Ok(f) => f,
+        Err(e) => {
+            let msg = format!("Cannot create temp audio file: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+    };
+
+    while let Some(chunk_result) = stream.next().await {
+        if cancel_token.is_cancelled() {
+            let _ = file.flush().await;
+            drop(file);
+            let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+            update_diarization_status(db_path, episode_id, "not_started", None);
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Cancelled);
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+
+        let chunk = match chunk_result {
+            Ok(c) => c,
+            Err(e) => {
+                let _ = file.flush().await;
+                drop(file);
+                let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+                let msg = format!("Download stream error: {}", e);
+                update_diarization_status(db_path, episode_id, "error", Some(&msg));
+                if let Some(ch) = on_event {
+                    let _ = ch.send(DiarizationEvent::Error { message: msg });
+                }
+                let mut q = state.queue.lock().unwrap();
+                q.active_episode_id = None;
+                q.active_token = None;
+                return;
+            }
+        };
+
+        if let Err(e) = file.write_all(&chunk).await {
+            let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+            let msg = format!("Failed to write audio chunk: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+
+        downloaded_bytes += chunk.len() as u64;
+        let download_percent = if total_bytes > 0 {
+            ((downloaded_bytes * 50) / total_bytes) as i32
+        } else {
+            25
+        };
+        if let Some(ch) = on_event {
+            let _ = ch.send(DiarizationEvent::Progress { percent: download_percent });
+        }
+    }
+
+    if let Err(e) = file.flush().await {
+        let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+        let msg = format!("Failed to flush audio file: {}", e);
+        update_diarization_status(db_path, episode_id, "error", Some(&msg));
+        if let Some(ch) = on_event {
+            let _ = ch.send(DiarizationEvent::Error { message: msg });
+        }
+        let mut q = state.queue.lock().unwrap();
+        q.active_episode_id = None;
+        q.active_token = None;
+        return;
+    }
+    drop(file);
+
+    // Check cancellation after download
+    if cancel_token.is_cancelled() {
+        let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+        update_diarization_status(db_path, episode_id, "not_started", None);
+        if let Some(ch) = on_event {
+            let _ = ch.send(DiarizationEvent::Cancelled);
+        }
+        let mut q = state.queue.lock().unwrap();
+        q.active_episode_id = None;
+        q.active_token = None;
+        return;
+    }
+
+    // ── Decode audio to 16 kHz mono f32 PCM ────────────────────────────────
+
+    let samples = match crate::commands::transcription::decode_mp3_to_pcm(&temp_path) {
+        Ok(s) => s,
+        Err(e) => {
+            let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+            let msg = format!("Audio decode failed: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+            let mut q = state.queue.lock().unwrap();
+            q.active_episode_id = None;
+            q.active_token = None;
+            return;
+        }
+    };
+
+    // Delete temp file now that audio is decoded
+    let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
+
+    // ── Run sherpa-rs diarization in spawn_blocking ─────────────────────────
+
+    let seg_path_str = seg_path.to_string_lossy().to_string();
+    let emb_path_str = emb_path.to_string_lossy().to_string();
+
+    let diar_result = tauri::async_runtime::spawn_blocking(move || {
+        use sherpa_rs::diarize::{Diarize, DiarizeConfig};
+
+        let config = DiarizeConfig {
+            num_clusters: Some(2), // 2 main podcast hosts
+            threshold: Some(0.5),
+            min_duration_on: Some(0.3),
+            min_duration_off: Some(0.3),
+            provider: None,
+            debug: false,
+        };
+
+        let mut diarizer = Diarize::new(&seg_path_str, &emb_path_str, config)
+            .map_err(|e| format!("Failed to initialize diarizer: {:?}", e))?;
+
+        let raw_segments = diarizer
+            .compute(samples, None)
+            .map_err(|e| format!("Diarization failed: {:?}", e))?;
+
+        let results: Vec<crate::models::diarization::DiarizationSegment> = raw_segments
+            .into_iter()
+            .map(|seg| {
+                // sherpa-rs returns seconds (f32) — multiply by 1000 for milliseconds
+                let start_ms = (seg.start * 1000.0) as i64;
+                let end_ms = (seg.end * 1000.0) as i64;
+                // speaker is an i32 index (0, 1, 2...)
+                let speaker_label = format!("SPEAKER_{}", seg.speaker);
+
+                crate::models::diarization::DiarizationSegment {
+                    start_ms,
+                    end_ms,
+                    speaker_label,
+                    confidence: None,
+                }
+            })
+            .collect();
+
+        Ok::<Vec<crate::models::diarization::DiarizationSegment>, String>(results)
+    })
+    .await;
+
+    // Send 100% progress after inference completes
+    if let Some(ch) = on_event {
+        let _ = ch.send(DiarizationEvent::Progress { percent: 100 });
+    }
+
+    match diar_result {
+        Ok(Ok(segments)) => {
+            // ── Solo detection ──────────────────────────────────────────────
+            // A podcast is 'solo' if there's only 1 unique speaker, or if any
+            // one speaker accounts for < 5% of total speaking time (likely noise).
+            let unique_speakers: std::collections::HashSet<_> =
+                segments.iter().map(|s| &s.speaker_label).collect();
+            let total_ms: i64 = segments.iter().map(|s| s.end_ms - s.start_ms).sum();
+
+            let is_solo = unique_speakers.len() <= 1 || {
+                let speaker_ms =
+                    segments
+                        .iter()
+                        .fold(std::collections::HashMap::new(), |mut m, s| {
+                            *m.entry(&s.speaker_label).or_insert(0i64) +=
+                                s.end_ms - s.start_ms;
+                            m
+                        });
+                let min_speaker_ms = speaker_ms.values().copied().min().unwrap_or(0);
+                total_ms > 0 && (min_speaker_ms * 100 / total_ms) < 5
+            };
+
+            let final_status = if is_solo { "solo" } else { "done" };
+
+            // Store segments in DB
+            if let Err(e) = store_diarization_segments(db_path, episode_id, &segments) {
+                update_diarization_status(db_path, episode_id, "error", Some(&e));
+                if let Some(ch) = on_event {
+                    let _ = ch.send(DiarizationEvent::Error { message: e });
+                }
+            } else {
+                update_diarization_status(db_path, episode_id, final_status, None);
+                if let Some(ch) = on_event {
+                    let _ = ch.send(DiarizationEvent::Done { episode_id });
+                }
+            }
+        }
+        Ok(Err(e)) => {
+            update_diarization_status(db_path, episode_id, "error", Some(&e));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: e });
+            }
+        }
+        Err(e) => {
+            let msg = format!("Diarization task panicked: {}", e);
+            update_diarization_status(db_path, episode_id, "error", Some(&msg));
+            if let Some(ch) = on_event {
+                let _ = ch.send(DiarizationEvent::Error { message: msg });
+            }
+        }
+    }
+
+    // Clear active episode tracking
+    let mut q = state.queue.lock().unwrap();
+    q.active_episode_id = None;
+    q.active_token = None;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Diarization engine commands
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[tauri::command]
 pub async fn start_diarization(
-    _episode_id: i64,
-    _audio_url: String,
-    _on_event: Channel<DiarizationEvent>,
-    _app: tauri::AppHandle,
-    _state: tauri::State<'_, Arc<DiarizationState>>,
+    episode_id: i64,
+    audio_url: String,
+    on_event: Channel<DiarizationEvent>,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, Arc<DiarizationState>>,
 ) -> Result<(), String> {
-    Err("Not implemented yet".to_string())
+    let (seg_path, emb_path) = find_diarization_models(&app).await?;
+
+    let db_path = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| format!("Cannot resolve app data dir: {}", e))?
+        .join("binky.db");
+
+    let already_processing = {
+        let mut q = state.queue.lock().unwrap();
+        q.enqueue(DiarizationJob {
+            episode_id,
+            audio_url,
+        });
+        let was = q.is_processing;
+        if !was {
+            q.is_processing = true;
+        }
+        was
+    };
+
+    update_diarization_status(&db_path, episode_id, "queued", None);
+
+    if already_processing {
+        return Ok(());
+    }
+
+    let state_arc: Arc<DiarizationState> = state.inner().clone();
+
+    tauri::async_runtime::spawn(async move {
+        loop {
+            let job = {
+                let mut q = state_arc.queue.lock().unwrap();
+                q.dequeue()
+            };
+
+            match job {
+                None => {
+                    state_arc.queue.lock().unwrap().is_processing = false;
+                    break;
+                }
+                Some(j) => {
+                    process_diarization_episode(
+                        &j,
+                        &app,
+                        &state_arc,
+                        Some(&on_event),
+                        &seg_path,
+                        &emb_path,
+                        &db_path,
+                    )
+                    .await;
+                }
+            }
+        }
+    });
+
+    Ok(())
+}
+
+/// Enqueue a diarization job from internal code (e.g., after transcription completes).
+/// Returns immediately — models not downloaded → silently skipped (fire-and-forget).
+pub(crate) async fn enqueue_diarization_internal(
+    episode_id: i64,
+    audio_url: String,
+    app: &tauri::AppHandle,
+    state: &Arc<DiarizationState>,
+) {
+    let (seg_path, emb_path) = match find_diarization_models(app).await {
+        Ok(paths) => paths,
+        Err(_) => return, // Models not downloaded — skip silently
+    };
+
+    let db_path = match app.path().app_data_dir() {
+        Ok(d) => d.join("binky.db"),
+        Err(_) => return,
+    };
+
+    let already_processing = {
+        let mut q = state.queue.lock().unwrap();
+        q.enqueue(DiarizationJob {
+            episode_id,
+            audio_url,
+        });
+        let was = q.is_processing;
+        if !was {
+            q.is_processing = true;
+        }
+        was
+    };
+
+    update_diarization_status(&db_path, episode_id, "queued", None);
+
+    if already_processing {
+        return;
+    }
+
+    let state_arc = state.clone();
+    let app_clone = app.clone();
+
+    tauri::async_runtime::spawn(async move {
+        loop {
+            let job = {
+                let mut q = state_arc.queue.lock().unwrap();
+                q.dequeue()
+            };
+
+            match job {
+                None => {
+                    state_arc.queue.lock().unwrap().is_processing = false;
+                    break;
+                }
+                Some(j) => {
+                    // No frontend channel for chained runs — pass None
+                    process_diarization_episode(
+                        &j,
+                        &app_clone,
+                        &state_arc,
+                        None,
+                        &seg_path,
+                        &emb_path,
+                        &db_path,
+                    )
+                    .await;
+                }
+            }
+        }
+    });
 }
 
 #[tauri::command]
