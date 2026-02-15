@@ -97,7 +97,13 @@
       "diarization_delete": "Modelle löschen",
       "diarization_delete_confirm": "Sollen die Diarisierungsmodelle wirklich gelöscht werden?",
       "diarization_size_info": "~32 MB insgesamt",
-      "diarization_desc": "Für automatische Sprechererkennung (wer spricht wann)"
+      "diarization_desc": "Für automatische Sprechererkennung (wer spricht wann)",
+      "hosts_title": "Hosts",
+      "hosts_desc": "Namen und Farben der Podcast-Hosts",
+      "host_0_label": "Host 1",
+      "host_1_label": "Host 2",
+      "hosts_save": "Speichern",
+      "hosts_saved": "Gespeichert"
     },
     "analytics": {
       "title": "Analytik",
@@ -124,7 +130,15 @@
       "status_processing": "Wird analysiert...",
       "status_not_started": "Nicht analysiert",
       "status_error": "Fehler",
-      "minutes_short": "{{minutes}} Min."
+      "minutes_short": "{{minutes}} Min.",
+      "trend_title": "Trend",
+      "trend_min_episodes": "Mindestens 2 analysierte Episoden für die Trendanzeige erforderlich.",
+      "flip_speakers": "Sprecher tauschen",
+      "correct_segments": "Segmente korrigieren",
+      "reanalyze": "Neu analysieren",
+      "reanalyze_confirm": "Alle Korrekturen werden verworfen und die Episode wird neu analysiert. Fortfahren?",
+      "load_more": "Mehr laden",
+      "correction_close": "Schließen"
     },
     "topics": {
       "title": "Themen",

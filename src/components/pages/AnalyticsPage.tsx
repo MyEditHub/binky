@@ -6,11 +6,22 @@ import { useDiarization } from '../../hooks/useDiarization';
 import HostConfirmation from '../Analytics/HostConfirmation';
 import DashboardSummary from '../Analytics/DashboardSummary';
 import EpisodeAnalyticsList from '../Analytics/EpisodeAnalyticsList';
+import HostTrendChart from '../Analytics/HostTrendChart';
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
-  const { episodes, aggregate, hostProfile, loading, error, refresh, saveHostProfile } =
-    useAnalytics();
+  const {
+    episodes,
+    aggregate,
+    hostProfile,
+    loading,
+    error,
+    refresh,
+    saveHostProfile,
+    flipEpisodeSpeakers,
+    correctSegment,
+    loadSegments,
+  } = useAnalytics();
   const diarization = useDiarization(refresh);
   const autoStartedRef = useRef(false);
 
@@ -37,6 +48,26 @@ export default function AnalyticsPage() {
       })
       .catch(console.error);
   }, [hostProfile.confirmed]);
+
+  const handleReanalyze = async (episodeId: number, audioUrl: string) => {
+    const db = await Database.load('sqlite:binky.db');
+    await db.execute('DELETE FROM diarization_segments WHERE episode_id = ?', [episodeId]);
+    await db.execute(
+      `UPDATE episodes SET diarization_status = 'not_started', diarization_error = NULL WHERE id = ?`,
+      [episodeId]
+    );
+    await diarization.startDiarization(episodeId, audioUrl);
+    await refresh();
+  };
+
+  const trendData = [...episodes]
+    .filter((e) => e.diarizationStatus === 'done')
+    .reverse()
+    .map((e) => ({
+      label: `#${e.episodeId}`,
+      host0Pct: e.host0Pct,
+      host1Pct: e.host1Pct,
+    }));
 
   const handleAnalyzeAll = () => {
     Database.load('sqlite:binky.db')
@@ -78,11 +109,22 @@ export default function AnalyticsPage() {
             ) : (
               <>
                 <DashboardSummary aggregate={aggregate} hostProfile={hostProfile} />
+                <HostTrendChart
+                  data={trendData}
+                  host0Name={hostProfile.host0Name}
+                  host1Name={hostProfile.host1Name}
+                  host0Color={hostProfile.host0Color}
+                  host1Color={hostProfile.host1Color}
+                />
                 <EpisodeAnalyticsList
                   episodes={episodes}
                   hostProfile={hostProfile}
                   diarization={diarization}
                   onAnalyzeAll={handleAnalyzeAll}
+                  flipEpisodeSpeakers={flipEpisodeSpeakers}
+                  correctSegment={correctSegment}
+                  loadSegments={loadSegments}
+                  onReanalyze={handleReanalyze}
                 />
               </>
             )}

@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 3 of 5 (Speaker Analytics)
-Plan: 3 of TBD in current phase
+Plan: 4 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-16 — Completed 03-03-PLAN.md (diarization engine + auto-chaining after transcription)
+Last activity: 2026-02-16 — Completed 03-04-PLAN.md (Analytics page UI: hooks, balance bars, host confirmation, dashboard)
 
-Progress: [██████████████████░] ~65% (Phases 1 + 2 complete, Phase 3 plans 1-3 done)
+Progress: [████████████████████░] ~70% (Phases 1 + 2 complete, Phase 3 plans 1-4 done)
 
 ## Performance Metrics
 
@@ -133,6 +133,13 @@ Progress: [██████████████████░] ~65% (Phas
 - Model paths: app_local_data_dir/models/diarization/segmentation/model.onnx and embedding/wespeaker_en_voxceleb_resnet34_LM.onnx
 - Two-phase progress: segmentation 0–50%, embedding 50–100%
 
+**From Plan 03-04 (2026-02-16):**
+- HostProfile storage: settings table key-value (host_0_name, host_1_name, host_0_color, host_1_color, hosts_confirmed) — avoids separate host_profiles table
+- Auto-detect host names: German regex patterns (Hallo, Hey, danke, sag mal) + STOPWORD filter; auto-confirm if >=5 occurrences and >=50% match share
+- Analytics page gate: hostProfile.confirmed=false shows HostConfirmation first; auto-confirmed silently on high confidence
+- Auto-start diarization: fires on first analytics page visit via autoStartedRef (not on re-renders); batch queues all transcribed-but-not-diarized episodes
+- Analytics components: src/components/Analytics/ directory; host_0/host_1 naming maps to SPEAKER_0/SPEAKER_1
+
 **From Plan 03-03 (2026-02-16):**
 - sherpa-rs 0.6.8 real diarize API: Diarize::new(seg, emb, DiarizeConfig) + compute(Vec<f32>, Option<ProgressCallback>) → Result<Vec<Segment>>
 - Segment fields: start: f32, end: f32, speaker: i32 (index) — NOT embedded speaker labels; map to "SPEAKER_N" strings
@@ -164,7 +171,7 @@ Progress: [██████████████████░] ~65% (Phas
 
 ## Session Continuity
 
-Last session: 2026-02-15T23:40:17Z
-Stopped at: Completed 03-03-PLAN.md (diarization engine + auto-chaining after transcription)
+Last session: 2026-02-15T23:49:44Z
+Stopped at: Completed 03-04-PLAN.md (Analytics page UI: hooks, balance bars, host confirmation, dashboard)
 Resume file: None
-Next: /gsd:execute-phase 03 — execute 03-04-PLAN.md
+Next: /gsd:execute-phase 03 — execute next plan in phase 03 if any

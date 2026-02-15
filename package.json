@@ -21,7 +21,8 @@
     "i18next": "^25.8.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-i18next": "^16.5.4"
+    "react-i18next": "^16.5.4",
+    "recharts": "^3.7.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",

@@ -4,6 +4,15 @@ import { getSetting, setSetting } from '../lib/settings';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface SegmentRow {
+  id: number;
+  start_ms: number;
+  end_ms: number;
+  speaker_label: string;
+  corrected_speaker: string | null;
+  confidence: number | null;
+}
+
 export interface EpisodeStats {
   episodeId: number;
   title: string;
@@ -193,9 +202,52 @@ export function useAnalytics() {
     }
   }, [loadHostProfile, loadEpisodeStats]);
 
+  const flipEpisodeSpeakers = useCallback(async (episodeId: number) => {
+    const db = await Database.load('sqlite:binky.db');
+    await db.execute(
+      `UPDATE diarization_segments
+       SET corrected_speaker = CASE
+           WHEN COALESCE(corrected_speaker, speaker_label) = 'SPEAKER_0' THEN 'SPEAKER_1'
+           ELSE 'SPEAKER_0'
+       END
+       WHERE episode_id = ?`,
+      [episodeId]
+    );
+    await refresh();
+  }, [refresh]);
+
+  const correctSegment = useCallback(async (segmentId: number, newSpeaker: string) => {
+    const db = await Database.load('sqlite:binky.db');
+    await db.execute(
+      'UPDATE diarization_segments SET corrected_speaker = ? WHERE id = ?',
+      [newSpeaker, segmentId]
+    );
+    await refresh();
+  }, [refresh]);
+
+  const loadSegments = useCallback(async (episodeId: number): Promise<SegmentRow[]> => {
+    const db = await Database.load('sqlite:binky.db');
+    return db.select<SegmentRow[]>(
+      `SELECT id, start_ms, end_ms, speaker_label, corrected_speaker, confidence
+       FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
+      [episodeId]
+    );
+  }, []);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  return { episodes, aggregate, hostProfile, loading, error, refresh, saveHostProfile };
+  return {
+    episodes,
+    aggregate,
+    hostProfile,
+    loading,
+    error,
+    refresh,
+    saveHostProfile,
+    flipEpisodeSpeakers,
+    correctSegment,
+    loadSegments,
+  };
 }
