@@ -322,7 +322,7 @@ fn store_transcript(
 /// output buffer (~230 MB for a 60-min episode) is kept in memory, rather
 /// than first accumulating a full decoded buffer (~635 MB) and then a
 /// resampled buffer simultaneously.
-fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
+pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
     use rubato::{FftFixedIn, Resampler};
     use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
     use symphonia::core::formats::FormatOptions;
@@ -455,7 +455,7 @@ fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
 }
 
 /// Extract mono f32 frames from a decoded AudioBufferRef and append to `out`.
-fn push_mono_frames(
+pub(crate) fn push_mono_frames(
     decoded: &symphonia::core::audio::AudioBufferRef<'_>,
     track_channels: usize,
     out: &mut Vec<f32>,
@@ -758,6 +758,23 @@ async fn process_episode(
             store_transcript(db_path, episode_id, &full_text, &segments_json, &used_model, &language);
             update_episode_status(db_path, episode_id, "done", None);
             let _ = on_event.send(TranscriptionEvent::Done { episode_id });
+
+            // Chain diarization automatically when models are available
+            if let Some(diarize_state) = app.try_state::<Arc<crate::state::diarization_queue::DiarizationState>>() {
+                let diarize_arc = diarize_state.inner().clone();
+                let audio_url_for_diarize = job.audio_url.clone();
+                let episode_id_for_diarize = episode_id;
+                let app_for_diarize = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    crate::commands::diarization::enqueue_diarization_internal(
+                        episode_id_for_diarize,
+                        audio_url_for_diarize,
+                        &app_for_diarize,
+                        &diarize_arc,
+                    )
+                    .await;
+                });
+            }
         }
         Ok(Err(e)) => {
             update_episode_status(db_path, episode_id, "error", Some(&e));
