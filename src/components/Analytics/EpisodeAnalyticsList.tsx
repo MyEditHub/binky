@@ -1,5 +1,5 @@
 import EpisodeAnalyticsRow from './EpisodeAnalyticsRow';
-import { EpisodeStats, HostProfile } from '../../hooks/useAnalytics';
+import { EpisodeStats, HostProfile, SegmentRow } from '../../hooks/useAnalytics';
 import { UseDiarizationReturn } from '../../hooks/useDiarization';
 import { useTranslation } from 'react-i18next';
 
@@ -8,6 +8,10 @@ interface Props {
   hostProfile: HostProfile;
   diarization: UseDiarizationReturn;
   onAnalyzeAll: () => void;
+  flipEpisodeSpeakers: (episodeId: number) => Promise<void>;
+  correctSegment: (segmentId: number, newSpeaker: string) => Promise<void>;
+  loadSegments: (episodeId: number) => Promise<SegmentRow[]>;
+  onReanalyze: (episodeId: number, audioUrl: string) => void;
 }
 
 export default function EpisodeAnalyticsList({
@@ -15,6 +19,10 @@ export default function EpisodeAnalyticsList({
   hostProfile,
   diarization,
   onAnalyzeAll,
+  flipEpisodeSpeakers,
+  correctSegment,
+  loadSegments,
+  onReanalyze,
 }: Props) {
   const { t } = useTranslation();
 
@@ -48,7 +56,15 @@ export default function EpisodeAnalyticsList({
         </div>
       ) : (
         episodes.map((ep) => (
-          <EpisodeAnalyticsRow key={ep.episodeId} stats={ep} hostProfile={hostProfile} />
+          <EpisodeAnalyticsRow
+            key={ep.episodeId}
+            stats={ep}
+            hostProfile={hostProfile}
+            flipEpisodeSpeakers={flipEpisodeSpeakers}
+            correctSegment={correctSegment}
+            loadSegments={loadSegments}
+            onReanalyze={onReanalyze}
+          />
         ))
       )}
     </div>
