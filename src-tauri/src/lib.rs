@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use tauri::Manager;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 
 mod commands;
@@ -45,6 +46,22 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // Manage Arc<TranscriptionState> so we can clone it into async tasks
         .manage(Arc::new(state::transcription_queue::TranscriptionState::new()))
+        .setup(|app| {
+            // Reset any in-flight transcription statuses left over from a previous
+            // crashed/force-quit session. The in-memory queue is empty on every
+            // startup, so 'queued'/'downloading'/'transcribing' states are stale.
+            if let Ok(db_path) = app.path().app_data_dir().map(|d: std::path::PathBuf| d.join("binky.db")) {
+                if let Ok(conn) = rusqlite::Connection::open(&db_path) {
+                    let _ = conn.execute(
+                        "UPDATE episodes \
+                         SET transcription_status = 'not_started', transcription_error = NULL \
+                         WHERE transcription_status IN ('queued', 'downloading', 'transcribing')",
+                        [],
+                    );
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             commands::episodes::sync_rss,
             commands::transcription::get_model_status,

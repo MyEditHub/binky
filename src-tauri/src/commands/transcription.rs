@@ -317,8 +317,13 @@ fn store_transcript(
 }
 
 /// Decode an MP3 file to mono f32 PCM at 16 kHz using symphonia + rubato.
+///
+/// Streams packets directly through the resampler so that only the growing
+/// output buffer (~230 MB for a 60-min episode) is kept in memory, rather
+/// than first accumulating a full decoded buffer (~635 MB) and then a
+/// resampled buffer simultaneously.
 fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
-    use symphonia::core::audio::{AudioBufferRef, Signal};
+    use rubato::{FftFixedIn, Resampler};
     use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
     use symphonia::core::formats::FormatOptions;
     use symphonia::core::io::MediaSourceStream;
@@ -361,7 +366,65 @@ fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
         .make(&track.codec_params, &DecoderOptions::default())
         .map_err(|e| format!("Decoder error: {}", e))?;
 
-    let mut mono_samples: Vec<f32> = Vec::new();
+    // If no resampling is needed, collect directly into output.
+    if sample_rate == 16000 {
+        let mut output: Vec<f32> = Vec::new();
+        loop {
+            let packet = match format.next_packet() {
+                Ok(p) => p,
+                Err(_) => break,
+            };
+            if packet.track_id() != track_id {
+                continue;
+            }
+            let decoded = match decoder.decode(&packet) {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+            push_mono_frames(&decoded, track_channels, &mut output);
+        }
+        if output.is_empty() {
+            return Err("No audio data decoded from MP3".to_string());
+        }
+        return Ok(output);
+    }
+
+    // Streaming resample path: feed each decoded packet directly through rubato
+    // so the intermediate "all decoded samples" buffer is never materialised.
+    const CHUNK_SIZE: usize = 4096;
+    let mut resampler = FftFixedIn::<f32>::new(sample_rate as usize, 16000, CHUNK_SIZE, 2, 1)
+        .map_err(|e| format!("Resampler creation error: {}", e))?;
+
+    // `pending` holds decoded samples waiting to fill one resampler chunk (tiny).
+    let mut pending: Vec<f32> = Vec::with_capacity(CHUNK_SIZE * 2);
+    let mut resampled: Vec<f32> = Vec::new();
+
+    // Flush `pending` through the resampler whenever it has a full chunk.
+    let flush = |resampler: &mut FftFixedIn<f32>,
+                 pending: &mut Vec<f32>,
+                 resampled: &mut Vec<f32>,
+                 force: bool|
+     -> Result<(), String> {
+        loop {
+            let needed = resampler.input_frames_next();
+            if pending.len() < needed {
+                if !force {
+                    break;
+                }
+                // Pad the last partial chunk with silence.
+                pending.resize(needed, 0.0);
+            }
+            let chunk: Vec<f32> = pending.drain(..needed).collect();
+            let out = resampler
+                .process(&[&chunk], None)
+                .map_err(|e| format!("Resample error: {}", e))?;
+            resampled.extend_from_slice(&out[0]);
+            if force && pending.is_empty() {
+                break;
+            }
+        }
+        Ok(())
+    };
 
     loop {
         let packet = match format.next_packet() {
@@ -371,86 +434,66 @@ fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
         if packet.track_id() != track_id {
             continue;
         }
-
         let decoded = match decoder.decode(&packet) {
             Ok(d) => d,
             Err(_) => continue,
         };
-
-        match &decoded {
-            AudioBufferRef::F32(buf) => {
-                let n = buf.frames();
-                for i in 0..n {
-                    let mut sum = 0.0f32;
-                    for ch in 0..track_channels {
-                        sum += buf.chan(ch)[i];
-                    }
-                    mono_samples.push(sum / track_channels as f32);
-                }
-            }
-            AudioBufferRef::S16(buf) => {
-                let n = buf.frames();
-                for i in 0..n {
-                    let mut sum = 0.0f32;
-                    for ch in 0..track_channels {
-                        sum += buf.chan(ch)[i] as f32 / 32768.0;
-                    }
-                    mono_samples.push(sum / track_channels as f32);
-                }
-            }
-            AudioBufferRef::S32(buf) => {
-                let n = buf.frames();
-                for i in 0..n {
-                    let mut sum = 0.0f32;
-                    for ch in 0..track_channels {
-                        sum += buf.chan(ch)[i] as f32 / 2_147_483_648.0;
-                    }
-                    mono_samples.push(sum / track_channels as f32);
-                }
-            }
-            _ => continue,
-        }
+        push_mono_frames(&decoded, track_channels, &mut pending);
+        flush(&mut resampler, &mut pending, &mut resampled, false)?;
     }
 
-    if mono_samples.is_empty() {
+    // Flush any remaining samples with zero-padding.
+    if !pending.is_empty() {
+        flush(&mut resampler, &mut pending, &mut resampled, true)?;
+    }
+
+    if resampled.is_empty() {
         return Err("No audio data decoded from MP3".to_string());
     }
 
-    // Resample to 16 kHz if needed
-    if sample_rate != 16000 {
-        use rubato::{FftFixedIn, Resampler};
-        let chunk_size = 1024usize;
-        let mut resampler =
-            FftFixedIn::<f32>::new(sample_rate as usize, 16000, chunk_size, 2, 1)
-                .map_err(|e| format!("Resampler creation error: {}", e))?;
+    Ok(resampled)
+}
 
-        let mut resampled: Vec<f32> = Vec::new();
-        let mut pos = 0usize;
-
-        loop {
-            let frames_next = resampler.input_frames_next();
-            if pos >= mono_samples.len() {
-                break;
+/// Extract mono f32 frames from a decoded AudioBufferRef and append to `out`.
+fn push_mono_frames(
+    decoded: &symphonia::core::audio::AudioBufferRef<'_>,
+    track_channels: usize,
+    out: &mut Vec<f32>,
+) {
+    use symphonia::core::audio::{AudioBufferRef, Signal};
+    match decoded {
+        AudioBufferRef::F32(buf) => {
+            let n = buf.frames();
+            for i in 0..n {
+                let mut sum = 0.0f32;
+                for ch in 0..track_channels {
+                    sum += buf.chan(ch)[i];
+                }
+                out.push(sum / track_channels as f32);
             }
-            let end = (pos + frames_next).min(mono_samples.len());
-            let mut chunk = mono_samples[pos..end].to_vec();
-
-            // Pad with zeros if last chunk is short
-            if chunk.len() < frames_next {
-                chunk.resize(frames_next, 0.0);
-            }
-
-            let out = resampler
-                .process(&[&chunk], None)
-                .map_err(|e| format!("Resample error: {}", e))?;
-            resampled.extend_from_slice(&out[0]);
-            pos += frames_next;
         }
-
-        return Ok(resampled);
+        AudioBufferRef::S16(buf) => {
+            let n = buf.frames();
+            for i in 0..n {
+                let mut sum = 0.0f32;
+                for ch in 0..track_channels {
+                    sum += buf.chan(ch)[i] as f32 / 32768.0;
+                }
+                out.push(sum / track_channels as f32);
+            }
+        }
+        AudioBufferRef::S32(buf) => {
+            let n = buf.frames();
+            for i in 0..n {
+                let mut sum = 0.0f32;
+                for ch in 0..track_channels {
+                    sum += buf.chan(ch)[i] as f32 / 2_147_483_648.0;
+                }
+                out.push(sum / track_channels as f32);
+            }
+        }
+        _ => {}
     }
-
-    Ok(mono_samples)
 }
 
 /// Process a single transcription job: download audio, decode PCM, run Whisper, store result.
@@ -619,47 +662,77 @@ async fn process_episode(
             WhisperContext::new_with_params(&model_path_str, WhisperContextParameters::default())
                 .map_err(|e| format!("Failed to load Whisper model: {}", e))?;
 
-        let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
-        params.set_language(Some(language_clone.as_str()));
-        params.set_print_progress(false);
-        params.set_print_realtime(false);
-        params.set_print_special(false);
-        params.set_print_timestamps(false);
+        // Process audio in 20-minute chunks so whisper.cpp never needs to allocate
+        // the mel spectrogram for the full 60-min episode at once (~115 MB → ~38 MB/chunk).
+        //
+        // IMPORTANT: a fresh WhisperState is created for each chunk. whisper.cpp stores
+        // raw callback pointers (abort/progress) from FullParams inside the state object.
+        // Reusing the same state across calls causes those pointers to go stale (dangling)
+        // after FullParams is dropped at the end of each loop iteration → SIGSEGV.
+        const CHUNK_SAMPLES: usize = 20 * 60 * 16_000; // 20 min at 16 kHz
+        let num_chunks = (audio_data.len() + CHUNK_SAMPLES - 1) / CHUNK_SAMPLES;
 
-        // Abort callback: checked at each segment boundary by whisper-rs
-        let cancel_for_abort = cancel_token_for_whisper.clone();
-        params.set_abort_callback_safe(move || cancel_for_abort.is_cancelled());
-
-        // Progress callback: maps whisper 0-100 to overall 50-100
-        params.set_progress_callback_safe(move |progress| {
-            let overall = 50 + progress / 2;
-            let _ = on_event_for_whisper.send(TranscriptionEvent::Progress { percent: overall });
-        });
-
-        let mut whisper_state = ctx
-            .create_state()
-            .map_err(|e| format!("Failed to create Whisper state: {}", e))?;
-
-        whisper_state
-            .full(params, &audio_data)
-            .map_err(|e| format!("Whisper transcription failed: {}", e))?;
-
-        // Extract segments using the iterator API (whisper-rs 0.15)
         let mut full_text = String::new();
         let mut segments_arr: Vec<serde_json::Value> = Vec::new();
 
-        for segment in whisper_state.as_iter() {
-            let text = segment.to_string();
-            // start/end timestamps are in centiseconds; convert to milliseconds (* 10)
-            let t0 = segment.start_timestamp();
-            let t1 = segment.end_timestamp();
+        for chunk_idx in 0..num_chunks {
+            // Allow clean cancellation between chunks without waiting for the
+            // next full() call — the abort callback handles in-chunk cancellation.
+            if cancel_token_for_whisper.is_cancelled() {
+                break;
+            }
 
-            full_text.push_str(&text);
-            segments_arr.push(serde_json::json!({
-                "text": text,
-                "start_ms": t0 * 10,
-                "end_ms": t1 * 10
-            }));
+            let start = chunk_idx * CHUNK_SAMPLES;
+            let end = (start + CHUNK_SAMPLES).min(audio_data.len());
+            let chunk = &audio_data[start..end];
+            // Timestamp offset for this chunk in centiseconds (samples ÷ 160 at 16 kHz)
+            let chunk_offset_cs = (start / 160) as i64;
+
+            let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
+            params.set_language(Some(language_clone.as_str()));
+            params.set_print_progress(false);
+            params.set_print_realtime(false);
+            params.set_print_special(false);
+            params.set_print_timestamps(false);
+
+            // No abort callback and no progress callback.
+            //
+            // whisper-rs 0.15 set_abort_callback_safe has a type-confusion bug:
+            //   stored data:    *mut Box<Box<dyn FnMut() -> bool>>  (double-boxed fat ptr)
+            //   trampoline casts as: *mut F  (original concrete closure type)
+            // These differ in layout → UB → SIGSEGV / SIGABRT during transcription.
+            //
+            // Cancellation is handled between chunks via the token check above.
+            // Progress is sent from Rust after each chunk completes (safe, no FFI).
+
+            // Fresh state per chunk: ctx holds model weights (not re-read from disk),
+            // state holds only the KV cache and runtime buffers — cheap to recreate.
+            let mut whisper_state = ctx
+                .create_state()
+                .map_err(|e| format!("Failed to create Whisper state (chunk {}): {}", chunk_idx + 1, e))?;
+
+            whisper_state
+                .full(params, chunk)
+                .map_err(|e| format!("Whisper failed (chunk {}/{}): {}", chunk_idx + 1, num_chunks, e))?;
+
+            // Collect segments with timestamp offset so they align to the full episode
+            for segment in whisper_state.as_iter() {
+                let text = segment.to_string();
+                let t0 = segment.start_timestamp() + chunk_offset_cs;
+                let t1 = segment.end_timestamp() + chunk_offset_cs;
+                full_text.push_str(&text);
+                segments_arr.push(serde_json::json!({
+                    "text": text,
+                    "start_ms": t0 * 10,
+                    "end_ms": t1 * 10
+                }));
+            }
+            // whisper_state drops here — callbacks + buffers freed cleanly
+
+            // Send progress from Rust (safe — no FFI boundary crossing).
+            // Chunks: 50% → 67% → 83% → 100% for a 3-chunk episode.
+            let progress_pct = 50 + ((chunk_idx + 1) * 50 / num_chunks) as i32;
+            let _ = on_event_for_whisper.send(TranscriptionEvent::Progress { percent: progress_pct });
         }
 
         let segments_json = serde_json::to_string(&segments_arr).unwrap_or_default();
