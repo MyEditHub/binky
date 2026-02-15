@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 ## Current Position
 
 Phase: 3 of 5 (Speaker Analytics)
-Plan: 0 of TBD in current phase
-Status: Planning needed
-Last activity: 2026-02-15 — Completed Phase 02 (Episode Management & Transcription) — 6/6 plans, human QA approved, verification passed
+Plan: 1 of TBD in current phase
+Status: In progress
+Last activity: 2026-02-15 — Completed 03-01-PLAN.md (diarization infrastructure foundation)
 
-Progress: [████████████████░░] ~55% (Phases 1 + 2 complete)
+Progress: [████████████████░░] ~58% (Phases 1 + 2 complete, Phase 3 plan 1 done)
 
 ## Performance Metrics
 
@@ -120,6 +120,12 @@ Progress: [████████████████░░] ~55% (Phases 
 - Episode status progression: queued → downloading → transcribing → done/error/not_started (cancelled)
 - Sequential queue: processing loop dequeues until empty, then sets is_processing=false
 
+**From Plan 03-01 (2026-02-15):**
+- sherpa-rs 0.6.8 features: "diarize" feature does not exist — use default features (download-binaries + tts); diarization is in the core crate
+- DiarizationState mirrors TranscriptionState exactly: Arc<Mutex<DiarizationQueue>> pattern
+- Diarization command prefix: get_diarization_, download_diarization_, cancel_diarization_, get_diarization_queue_status
+- Diarization status progression: queued → processing → done/error/not_started (cancelled)
+
 ### Pending Todos
 
 **CRITICAL - Before first release:**
@@ -142,7 +148,7 @@ Progress: [████████████████░░] ~55% (Phases 
 
 ## Session Continuity
 
-Last session: 2026-02-15
-Stopped at: Completed Phase 02 (all 6 plans + human QA + verification)
+Last session: 2026-02-15T18:40:03Z
+Stopped at: Completed 03-01-PLAN.md (sherpa-rs + migration 003 + diarization infrastructure)
 Resume file: None
-Next: /gsd:discuss-phase 3 — Speaker Analytics
+Next: /gsd:execute-phase 03 — execute 03-02-PLAN.md
