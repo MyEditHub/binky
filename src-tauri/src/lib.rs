@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use tauri::Manager;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
+use state::diarization_queue::DiarizationState;
 
 mod commands;
 mod models;
@@ -32,6 +33,12 @@ pub fn run() {
             sql: include_str!("../migrations/002_episodes_transcripts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "diarization_schema",
+            sql: include_str!("../migrations/003_diarization.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -46,6 +53,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         // Manage Arc<TranscriptionState> so we can clone it into async tasks
         .manage(Arc::new(state::transcription_queue::TranscriptionState::new()))
+        .manage(Arc::new(DiarizationState::new()))
         .setup(|app| {
             // Reset any in-flight transcription statuses left over from a previous
             // crashed/force-quit session. The in-memory queue is empty on every
@@ -56,6 +64,12 @@ pub fn run() {
                         "UPDATE episodes \
                          SET transcription_status = 'not_started', transcription_error = NULL \
                          WHERE transcription_status IN ('queued', 'downloading', 'transcribing')",
+                        [],
+                    );
+                    let _ = conn.execute(
+                        "UPDATE episodes \
+                         SET diarization_status = 'not_started', diarization_error = NULL \
+                         WHERE diarization_status IN ('queued', 'processing')",
                         [],
                     );
                 }
@@ -70,6 +84,12 @@ pub fn run() {
             commands::transcription::start_transcription,
             commands::transcription::cancel_transcription,
             commands::transcription::get_queue_status,
+            commands::diarization::get_diarization_model_status,
+            commands::diarization::download_diarization_models,
+            commands::diarization::delete_diarization_models,
+            commands::diarization::start_diarization,
+            commands::diarization::cancel_diarization,
+            commands::diarization::get_diarization_queue_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
