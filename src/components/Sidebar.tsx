@@ -47,8 +47,7 @@ export default function Sidebar({
       id: 'topics',
       labelKey: 'nav.topics',
       icon: '📝',
-      disabled: true,
-      disabledTooltipKey: 'nav_disabled.topics',
+      disabled: false,
     },
     {
       id: 'bird',

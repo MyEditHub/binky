@@ -1,10 +1,75 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getVersion } from '@tauri-apps/api/app';
+import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
 import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
+
+// ─── OpenAI Settings Section ─────────────────────────────────────────────────
+
+function OpenAISettingsSection() {
+  const { t } = useTranslation();
+  const [apiKey, setApiKey] = useState('');
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    invoke<boolean>('has_openai_key_configured')
+      .then(configured => setIsConfigured(configured))
+      .catch(() => setIsConfigured(false));
+
+    getSetting('openai_api_key').then(val => {
+      setApiKey(val ?? '');
+    });
+  }, []);
+
+  async function handleSave() {
+    await setSetting('openai_api_key', apiKey);
+    setIsConfigured(apiKey.trim().length > 0);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  return (
+    <div className="settings-section">
+      <h3 className="settings-section-title">{t('pages.settings.openai_title')}</h3>
+      <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.openai_desc')}</p>
+
+      <div className="settings-row">
+        <span className="settings-row-label">{t('pages.settings.openai_api_key')}</span>
+        <span className="settings-row-value" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {isConfigured !== null && (
+            <span
+              className={`settings-status-dot ${isConfigured ? 'settings-status-ok' : 'settings-status-error'}`}
+            />
+          )}
+          {isConfigured
+            ? t('pages.settings.openai_key_configured')
+            : t('pages.settings.openai_key_not_configured')}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+        <input
+          type="password"
+          value={apiKey}
+          onChange={e => setApiKey(e.target.value)}
+          placeholder={t('pages.settings.openai_api_key_placeholder')}
+          className="settings-input"
+          style={{ flex: 1 }}
+        />
+        <button className="btn-outline" onClick={handleSave} type="button">
+          {t('pages.settings.openai_key_saved')}
+        </button>
+        {saved && (
+          <span className="host-settings-saved">{t('pages.settings.openai_key_saved')}</span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─── Host Settings Section ──────────────────────────────────────────────────
 
@@ -174,6 +239,9 @@ export default function SettingsPage() {
 
       {/* Diarization Model Manager */}
       <DiarizationModelManager />
+
+      {/* OpenAI Settings */}
+      <OpenAISettingsSection />
 
       {/* Host Settings */}
       <HostSettingsSection />

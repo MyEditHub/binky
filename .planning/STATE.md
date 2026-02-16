@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Podcast hosts can see their speaking balance and track unfinished topics automatically through transcription and AI analysis
-**Current focus:** Phase 3: Speaker Analytics
+**Current focus:** Phase 4: Content Analysis
 
 ## Current Position
 
 Phase: 4 of 5 (Content Analysis)
-Plan: 1 of TBD in current phase
+Plan: 2 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-17 — Completed 04-01-PLAN.md (Rust foundation: async-openai, migration 004, topic command stubs)
+Last activity: 2026-02-17 — Completed 04-02-PLAN.md (LLM analysis: analyze_episode_topics with GPT-4o-mini)
 
-Progress: [██████████████████████░] ~80% (Phases 1-3 complete, Phase 4 plan 1 done)
+Progress: [███████████████████████░] ~83% (Phases 1-3 complete, Phase 4 plans 1-2 done)
 
 ## Performance Metrics
 
@@ -182,9 +182,15 @@ Progress: [██████████████████████░
 - topics AI columns: ai_detected, detected_from_episode_id, ai_reason, confidence — all nullable for existing manual topics
 - openai_api_key: stored in settings table (key-value), never returned to frontend from has_openai_key_configured
 
+**From Plan 04-02 (2026-02-17):**
+- async-openai 0.32 requires explicit feature flag: `features = ["chat-completion"]` — default `rustls` feature only adds transport, not the API client or types
+- async-openai 0.32 chat types path: `async_openai::types::chat::*` (NOT re-exported at `async_openai::types::*`)
+- analyze_episode_topics: reads API key from settings, reads transcript, calls GPT-4o-mini with German prompt, parses JSON, writes topics with ai_detected=1, updates episode_analysis
+- Re-analysis safety: DELETE FROM topics WHERE detected_from_episode_id=? AND ai_detected=1 before INSERT
+
 ## Session Continuity
 
 Last session: 2026-02-17T00:00:00Z
-Stopped at: Completed 04-01-PLAN.md (Rust foundation: async-openai, migration 004, topic command stubs)
+Stopped at: Completed 04-02-PLAN.md (LLM analysis: analyze_episode_topics with GPT-4o-mini)
 Resume file: None
-Next: /gsd:execute-phase 04 — execute plan 04-02 (LLM implementation)
+Next: /gsd:execute-phase 04 — execute plan 04-03 (Topics page UI)
