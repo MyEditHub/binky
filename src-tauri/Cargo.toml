@@ -41,7 +41,7 @@ tokio = { version = "1", features = ["fs", "io-util", "process"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 
 # Phase 4: Content Analysis
-async-openai = { version = "0.32" }
+async-openai = { version = "0.32", features = ["chat-completion"] }
 
 [features]
 default = ["custom-protocol"]
