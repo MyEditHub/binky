@@ -39,6 +39,12 @@ pub fn run() {
             sql: include_str!("../migrations/003_diarization.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 4,
+            description: "topics_enhanced",
+            sql: include_str!("../migrations/004_topics_enhanced.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -90,6 +96,9 @@ pub fn run() {
             commands::diarization::start_diarization,
             commands::diarization::cancel_diarization,
             commands::diarization::get_diarization_queue_status,
+            commands::topics::analyze_episode_topics,
+            commands::topics::get_episode_analysis_status,
+            commands::topics::has_openai_key_configured,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
