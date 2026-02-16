@@ -94,43 +94,41 @@ export default function AnalyticsPage() {
       <div className="page-header">
         <h2 className="page-title">{t('pages.analytics.title')}</h2>
       </div>
-      <div className="page-content" style={{ padding: '16px 20px' }}>
-        {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message">{error}</div>}
 
-        {!hostProfile.confirmed ? (
-          <HostConfirmation hostProfile={hostProfile} onConfirm={saveHostProfile} />
-        ) : (
-          <>
-            {!loading && episodes.length === 0 && !diarization.isProcessing ? (
-              <div className="coming-soon">
-                <div className="coming-soon-title">📊</div>
-                <div className="coming-soon-message">{t('pages.analytics.empty_hint')}</div>
-              </div>
-            ) : (
-              <>
-                <DashboardSummary aggregate={aggregate} hostProfile={hostProfile} />
-                <HostTrendChart
-                  data={trendData}
-                  host0Name={hostProfile.host0Name}
-                  host1Name={hostProfile.host1Name}
-                  host0Color={hostProfile.host0Color}
-                  host1Color={hostProfile.host1Color}
-                />
-                <EpisodeAnalyticsList
-                  episodes={episodes}
-                  hostProfile={hostProfile}
-                  diarization={diarization}
-                  onAnalyzeAll={handleAnalyzeAll}
-                  flipEpisodeSpeakers={flipEpisodeSpeakers}
-                  correctSegment={correctSegment}
-                  loadSegments={loadSegments}
-                  onReanalyze={handleReanalyze}
-                />
-              </>
-            )}
-          </>
-        )}
-      </div>
+      {!hostProfile.confirmed ? (
+        <HostConfirmation hostProfile={hostProfile} onConfirm={saveHostProfile} />
+      ) : (
+        <>
+          {!loading && episodes.length === 0 && !diarization.isProcessing ? (
+            <div className="coming-soon">
+              <div className="coming-soon-title">📊</div>
+              <div className="coming-soon-message">{t('pages.analytics.empty_hint')}</div>
+            </div>
+          ) : (
+            <>
+              <DashboardSummary aggregate={aggregate} hostProfile={hostProfile} />
+              <HostTrendChart
+                data={trendData}
+                host0Name={hostProfile.host0Name}
+                host1Name={hostProfile.host1Name}
+                host0Color={hostProfile.host0Color}
+                host1Color={hostProfile.host1Color}
+              />
+              <EpisodeAnalyticsList
+                episodes={episodes}
+                hostProfile={hostProfile}
+                diarization={diarization}
+                onAnalyzeAll={handleAnalyzeAll}
+                flipEpisodeSpeakers={flipEpisodeSpeakers}
+                correctSegment={correctSegment}
+                loadSegments={loadSegments}
+                onReanalyze={handleReanalyze}
+              />
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
