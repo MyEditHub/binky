@@ -116,10 +116,10 @@ export function useAnalytics() {
       SELECT e.id, e.title, e.publish_date, e.audio_url, e.diarization_status,
              COALESCE(ds.corrected_speaker, ds.speaker_label) AS effective_speaker,
              SUM(ds.end_ms - ds.start_ms) AS speaking_ms,
-             COUNT(*) AS turn_count
+             COUNT(ds.id) AS turn_count
       FROM episodes e
       LEFT JOIN diarization_segments ds ON ds.episode_id = e.id
-      WHERE e.diarization_status IN ('done', 'solo')
+      WHERE e.transcription_status = 'done'
       GROUP BY e.id, effective_speaker
       ORDER BY e.publish_date DESC
     `);

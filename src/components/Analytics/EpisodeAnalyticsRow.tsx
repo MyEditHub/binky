@@ -33,9 +33,21 @@ export default function EpisodeAnalyticsRow({
     });
 
   const isSolo = stats.diarizationStatus === 'solo';
+  const isDone = stats.diarizationStatus === 'done' || isSolo;
+
+  const statusLabel: Record<string, string> = {
+    not_started: t('pages.analytics.status_not_started'),
+    queued: t('pages.analytics.status_queued'),
+    processing: t('pages.analytics.status_processing'),
+    error: t('pages.analytics.status_error'),
+  };
 
   return (
-    <div className="analytics-episode-row" onClick={() => setExpanded(!expanded)}>
+    <div
+      className="analytics-episode-row"
+      onClick={() => isDone && setExpanded(!expanded)}
+      style={{ cursor: isDone ? 'pointer' : 'default' }}
+    >
       <div className="analytics-episode-title">
         {stats.title}
         {isSolo && (
@@ -44,7 +56,7 @@ export default function EpisodeAnalyticsRow({
       </div>
       <div className="analytics-episode-meta">{formatDate(stats.publishDate)}</div>
 
-      {!isSolo ? (
+      {stats.diarizationStatus === 'done' ? (
         <SpeakingBalanceBar
           host0Pct={stats.host0Pct}
           host1Pct={stats.host1Pct}
@@ -53,13 +65,17 @@ export default function EpisodeAnalyticsRow({
           host0Name={hostProfile.host0Name}
           host1Name={hostProfile.host1Name}
         />
-      ) : (
+      ) : isSolo ? (
         <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)' }}>
           {hostProfile.host0Name}: ~100%
         </div>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)', fontStyle: 'italic' }}>
+          {statusLabel[stats.diarizationStatus] ?? stats.diarizationStatus}
+        </div>
       )}
 
-      {expanded && !isSolo && (
+      {expanded && isDone && !isSolo && (
         <div
           className="analytics-episode-expanded"
           onClick={(e) => e.stopPropagation()}
