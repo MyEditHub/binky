@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 ## Current Position
 
-Phase: 3 of 5 (Speaker Analytics)
-Plan: 4 of TBD in current phase
+Phase: 4 of 5 (Content Analysis)
+Plan: 1 of TBD in current phase
 Status: In progress
-Last activity: 2026-02-16 — Completed 03-04-PLAN.md (Analytics page UI: hooks, balance bars, host confirmation, dashboard)
+Last activity: 2026-02-17 — Completed 04-01-PLAN.md (Rust foundation: async-openai, migration 004, topic command stubs)
 
-Progress: [████████████████████░] ~70% (Phases 1 + 2 complete, Phase 3 plans 1-4 done)
+Progress: [██████████████████████░] ~80% (Phases 1-3 complete, Phase 4 plan 1 done)
 
 ## Performance Metrics
 
@@ -133,6 +133,13 @@ Progress: [████████████████████░] ~70%
 - Model paths: app_local_data_dir/models/diarization/segmentation/model.onnx and embedding/wespeaker_en_voxceleb_resnet34_LM.onnx
 - Two-phase progress: segmentation 0–50%, embedding 50–100%
 
+**From Plan 03-05 (2026-02-16):**
+- recharts Tooltip formatter: type as `(value: number | string | undefined)` — recharts strict TS requires nullable value type
+- HostSettingsSection as inline sub-component in SettingsPage: small self-contained section, avoids over-splitting
+- btn-outline CSS class: established as reusable action button pattern across analytics components
+- Segment load-more: paginate at 100 segments per render to avoid DOM bloat for long episodes
+- Optimistic local state on segment click: update SegmentRow state immediately before DB confirm
+
 **From Plan 03-04 (2026-02-16):**
 - HostProfile storage: settings table key-value (host_0_name, host_1_name, host_0_color, host_1_color, hosts_confirmed) — avoids separate host_profiles table
 - Auto-detect host names: German regex patterns (Hallo, Hey, danke, sag mal) + STOPWORD filter; auto-confirm if >=5 occurrences and >=50% match share
@@ -169,9 +176,15 @@ Progress: [████████████████████░] ~70%
 - Memory: streaming decode + 20-min chunks avoids 635MB peak (committed 2026-02-15)
 - macOS sandbox: works in dev; production build verification still pending
 
+**From Plan 04-01 (2026-02-17):**
+- async-openai 0.32 default features: "reqwest" is not an explicit feature (uses dep: syntax) — use default features which include reqwest transport
+- episode_analysis table: separate from topics table — tracks per-episode analysis status (not_started/processing/done/error)
+- topics AI columns: ai_detected, detected_from_episode_id, ai_reason, confidence — all nullable for existing manual topics
+- openai_api_key: stored in settings table (key-value), never returned to frontend from has_openai_key_configured
+
 ## Session Continuity
 
-Last session: 2026-02-15T23:49:44Z
-Stopped at: Completed 03-04-PLAN.md (Analytics page UI: hooks, balance bars, host confirmation, dashboard)
+Last session: 2026-02-17T00:00:00Z
+Stopped at: Completed 04-01-PLAN.md (Rust foundation: async-openai, migration 004, topic command stubs)
 Resume file: None
-Next: /gsd:execute-phase 03 — execute next plan in phase 03 if any
+Next: /gsd:execute-phase 04 — execute plan 04-02 (LLM implementation)
