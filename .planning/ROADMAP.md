@@ -90,10 +90,13 @@ Plans:
   2. User can view compact to-do list of pending/unfinished topics across all episodes
   3. User can manually track topic status (pending, completed, deferred) with cross-episode references
   4. Topics persist in database and can be searched/filtered
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Rust foundation: async-openai dep, migration 004, topics command stubs
+- [ ] 04-02-PLAN.md — LLM analysis: GPT-4o-mini topic detection from transcripts
+- [ ] 04-03-PLAN.md — Topics page UI, useTopics hook, OpenAI settings, enable nav
+- [ ] 04-04-PLAN.md — Human verification checkpoint (full Phase 4 QA)
 
 ### Phase 5: Bird Randomizer & Polish
 **Goal**: Users can access bird-of-the-week randomizer during recording with full NABU data and never see repeated birds
@@ -121,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Foundation & Infrastructure | 6/6 | Complete | 2026-02-13 |
 | 2. Episode Management & Transcription | 6/6 | Complete | 2026-02-15 |
 | 3. Speaker Analytics | 0/6 | Not started | - |
-| 4. Content Analysis | 0/TBD | Not started | - |
+| 4. Content Analysis | 0/4 | Not started | - |
 | 5. Bird Randomizer & Polish | 0/TBD | Not started | - |
 
 ---

@@ -40,6 +40,9 @@ futures-util = "0.3"
 tokio = { version = "1", features = ["fs", "io-util", "process"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 
+# Phase 4: Content Analysis
+async-openai = { version = "0.32", default-features = false, features = ["reqwest"] }
+
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
