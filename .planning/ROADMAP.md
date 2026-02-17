@@ -109,10 +109,13 @@ Plans:
   4. User can mark bird as used with date tracking in database
   5. Previously used birds are excluded from future random selections
   6. Bird randomizer window stays accessible during podcast recording (always-on-top or quick access)
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [ ] 05-01-PLAN.md — Rust foundation: scraper dep, migration 005, bird command stubs and types
+- [ ] 05-02-PLAN.md — All 8 bird Rust commands: NABU scraping, random draw, mark/undo/reset, history
+- [ ] 05-03-PLAN.md — Frontend: useBirds hook, BirdPage with reveal mechanic, info panel, history, sidebar activation
+- [ ] 05-04-PLAN.md — Human verification checkpoint (full Phase 5 QA)
 
 ## Progress
 
@@ -125,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 2. Episode Management & Transcription | 6/6 | Complete | 2026-02-15 |
 | 3. Speaker Analytics | 5/6 | Complete | 2026-02-16 |
 | 4. Content Analysis | 4/4 | Complete | 2026-02-17 |
-| 5. Bird Randomizer & Polish | 0/TBD | Not started | - |
+| 5. Bird Randomizer & Polish | 0/4 | Not started | - |
 
 ---
 

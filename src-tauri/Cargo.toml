@@ -43,6 +43,9 @@ rusqlite = { version = "0.32", features = ["bundled"] }
 # Phase 4: Content Analysis
 async-openai = { version = "0.32", features = ["chat-completion"] }
 
+# Phase 5: Bird Randomizer
+scraper = "0.25"
+
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
