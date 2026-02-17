@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-11)
 
 ## Current Position
 
-Phase: 4 of 5 (Content Analysis) — COMPLETE
-Plan: 4 of 4 — all complete
-Status: Phase complete, awaiting Phase 5
-Last activity: 2026-02-17 — Completed Phase 4 (Content Analysis) — 4/4 plans, human QA approved
+Phase: 5 of 5 (Bird Randomizer & Polish) — In progress
+Plan: 1 of 3 — 05-01 complete
+Status: In progress
+Last activity: 2026-02-17 — Completed 05-01-PLAN.md (Bird randomizer foundation: migration 005, scraper dep, 8 command stubs)
 
-Progress: [█████████████████████████░] ~90% (Phases 1-4 complete)
+Progress: [█████████████████████████░] ~92% (Phases 1-4 complete, Phase 5 plan 1/3 done)
 
 ## Performance Metrics
 
@@ -188,9 +188,16 @@ Progress: [███████████████████████
 - analyze_episode_topics: reads API key from settings, reads transcript, calls GPT-4o-mini with German prompt, parses JSON, writes topics with ai_detected=1, updates episode_analysis
 - Re-analysis safety: DELETE FROM topics WHERE detected_from_episode_id=? AND ai_detected=1 before INSERT
 
+**From Plan 05-01 (2026-02-17):**
+- Migration 005 uses ALTER TABLE ADD COLUMN only (birds table exists from 001, do NOT CREATE TABLE)
+- idx_birds_used index already exists from migration 001 — not recreated in 005
+- scraper 0.25: CSS selector-based HTML parsing crate for NABU bird profile scraping
+- 8 stub bird commands follow same pattern as topics.rs (tauri::AppHandle, Result<T, String>)
+- bird_used_history table: links bird use events to optional episode_title strings (not episode_id FK — episodes may not exist for manual use)
+
 ## Session Continuity
 
-Last session: 2026-02-17T00:00:00Z
-Stopped at: Completed 04-03-PLAN.md (Topics page UI, useTopics hook, OpenAI settings, sidebar enabled)
+Last session: 2026-02-17T06:20:34Z
+Stopped at: Completed 05-01-PLAN.md (Bird randomizer foundation: migration 005, scraper dep, 8 command stubs)
 Resume file: None
-Next: /gsd:execute-phase 04 — execute remaining Phase 4 plans
+Next: Execute 05-02-PLAN.md (implement bird command logic)
