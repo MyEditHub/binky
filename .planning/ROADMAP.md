@@ -14,8 +14,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation & Infrastructure** - Tauri app scaffold, database, permissions, auto-updater setup
 - [x] **Phase 2: Episode Management & Transcription** - RSS feed integration, episode library, German transcription engine
-- [ ] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
-- [ ] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
+- [x] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
+- [x] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
 - [ ] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
 
 ## Phase Details
@@ -93,10 +93,10 @@ Plans:
 **Plans**: 4 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Rust foundation: async-openai dep, migration 004, topics command stubs
-- [ ] 04-02-PLAN.md — LLM analysis: GPT-4o-mini topic detection from transcripts
-- [ ] 04-03-PLAN.md — Topics page UI, useTopics hook, OpenAI settings, enable nav
-- [ ] 04-04-PLAN.md — Human verification checkpoint (full Phase 4 QA)
+- [x] 04-01-PLAN.md — Rust foundation: async-openai dep, migration 004, topics command stubs
+- [x] 04-02-PLAN.md — LLM analysis: GPT-4o-mini topic detection from transcripts
+- [x] 04-03-PLAN.md — Topics page UI, useTopics hook, OpenAI settings, enable nav
+- [x] 04-04-PLAN.md — Human verification checkpoint (full Phase 4 QA)
 
 ### Phase 5: Bird Randomizer & Polish
 **Goal**: Users can access bird-of-the-week randomizer during recording with full NABU data and never see repeated birds
@@ -123,8 +123,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Foundation & Infrastructure | 6/6 | Complete | 2026-02-13 |
 | 2. Episode Management & Transcription | 6/6 | Complete | 2026-02-15 |
-| 3. Speaker Analytics | 0/6 | Not started | - |
-| 4. Content Analysis | 0/4 | Not started | - |
+| 3. Speaker Analytics | 5/6 | Complete | 2026-02-16 |
+| 4. Content Analysis | 4/4 | Complete | 2026-02-17 |
 | 5. Bird Randomizer & Polish | 0/TBD | Not started | - |
 
 ---

@@ -30,9 +30,9 @@
 
 ### Content Analysis
 
-- [ ] **CONTENT-01**: Detect unfinished topics from transcripts (stories mentioned but not completed)
-- [ ] **CONTENT-02**: Track topics across multiple episodes with status
-- [ ] **CONTENT-03**: Display compact to-do list of pending/unfinished topics
+- [x] **CONTENT-01**: Detect unfinished topics from transcripts (stories mentioned but not completed)
+- [x] **CONTENT-02**: Track topics across multiple episodes with status
+- [x] **CONTENT-03**: Display compact to-do list of pending/unfinished topics
 
 ### Bird-of-the-Week Randomizer
 
