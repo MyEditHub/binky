@@ -175,7 +175,31 @@
     },
     "bird": {
       "title": "Vogel-Randomizer",
-      "coming_soon": "Der Vogel-Randomizer kommt in Phase 5."
+      "draw_new": "Neuen Vogel ziehen",
+      "reveal": "Aufdecken",
+      "mark_used": "Als verwendet markieren",
+      "undo_used": "Rückgängig",
+      "refresh_pool": "Aktualisieren",
+      "refreshing": "Aktualisiere...",
+      "drawing": "Ziehe Vogel...",
+      "pool_count": "{{available}} von {{total}} verfügbar",
+      "pool_exhausted": "Alle Vögel wurden bereits verwendet!",
+      "reset": "Alle zurücksetzen",
+      "reset_confirm": "Alle Vögel als unbenutzt markieren und Verlauf löschen?",
+      "confirm_new_draw": "Vogel noch nicht als verwendet markiert. Trotzdem neu ziehen?",
+      "no_bird": "Ziehe einen Vogel!",
+      "no_bird_hint": "Klicke auf \"Neuen Vogel ziehen\" um zu starten.",
+      "history_title": "Verlauf",
+      "history_count": "{{count}} Vögel verwendet",
+      "history_empty": "Noch keine Vögel verwendet.",
+      "without_episode": "Ohne Episode verknüpfen",
+      "select_episode": "Episode auswählen",
+      "scientific_name": "Wissenschaftlich",
+      "loading_profile": "Lade Vogelprofil...",
+      "fetch_error": "Fehler beim Laden der NABU-Daten.",
+      "network_error": "Netzwerkfehler. Zeige gespeicherte Daten.",
+      "first_load": "Lade Vogelliste von NABU...",
+      "first_load_hint": "Beim ersten Start werden alle Vögel geladen."
     }
   },
   "tutorial": {

@@ -32,6 +32,12 @@ export default function Sidebar({
 
   const navItems: NavItem[] = [
     {
+      id: 'bird',
+      labelKey: 'nav.bird',
+      icon: '🦜',
+      disabled: false,
+    },
+    {
       id: 'episodes',
       labelKey: 'nav.episodes',
       icon: '🎙️',
@@ -48,13 +54,6 @@ export default function Sidebar({
       labelKey: 'nav.topics',
       icon: '📝',
       disabled: false,
-    },
-    {
-      id: 'bird',
-      labelKey: 'nav.bird',
-      icon: '🦜',
-      disabled: true,
-      disabledTooltipKey: 'nav_disabled.bird',
     },
     {
       id: 'settings',
