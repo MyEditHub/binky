@@ -45,6 +45,12 @@ pub fn run() {
             sql: include_str!("../migrations/004_topics_enhanced.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "birds_enhanced",
+            sql: include_str!("../migrations/005_birds_enhanced.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -99,6 +105,14 @@ pub fn run() {
             commands::topics::analyze_episode_topics,
             commands::topics::get_episode_analysis_status,
             commands::topics::has_openai_key_configured,
+            commands::birds::fetch_nabu_bird_list,
+            commands::birds::draw_random_bird,
+            commands::birds::fetch_bird_profile,
+            commands::birds::mark_bird_used,
+            commands::birds::undo_mark_bird_used,
+            commands::birds::reset_bird_pool,
+            commands::birds::get_bird_history,
+            commands::birds::get_current_bird,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
