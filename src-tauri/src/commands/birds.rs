@@ -105,6 +105,10 @@ async fn fetch_profile_from_nabu(
             if text.len() < min_len {
                 continue;
             }
+            // Skip NABU photo caption lines (e.g. "Pfeifente – Foto: Frank Derer")
+            if text.contains("Foto:") {
+                continue;
+            }
             let tag = if is_heading { "h4" } else { "p" };
             let escaped = text
                 .replace('&', "&amp;")
