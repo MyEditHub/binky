@@ -87,31 +87,39 @@ async fn fetch_profile_from_nabu(
         })
     };
 
-    // Extract content HTML: try article, then main, then body
+    // Extract content as clean text-only HTML: grab p/h3/h4/li from article or main,
+    // convert to plain text (strips all links, buttons, nav), wrap in safe tags.
+    // This avoids scraped website chrome from appearing in the info panel.
     let content_html = {
-        let sel_article =
-            Selector::parse("article").map_err(|e| format!("Selector error: {:?}", e))?;
-        let sel_main =
-            Selector::parse("main").map_err(|e| format!("Selector error: {:?}", e))?;
-        let sel_body =
-            Selector::parse("body").map_err(|e| format!("Selector error: {:?}", e))?;
+        // Try article first, then main, then fall back to whole document
+        let sel = Selector::parse(
+            "article p, article h3, article h4, article li, \
+             main p, main h3, main h4, main li",
+        )
+        .map_err(|e| format!("Selector error: {:?}", e))?;
 
-        document
-            .select(&sel_article)
-            .next()
-            .map(|el| el.inner_html())
-            .or_else(|| {
-                document
-                    .select(&sel_main)
-                    .next()
-                    .map(|el| el.inner_html())
-            })
-            .or_else(|| {
-                document
-                    .select(&sel_body)
-                    .next()
-                    .map(|el| el.inner_html())
-            })
+        let mut parts: Vec<String> = Vec::new();
+        for el in document.select(&sel) {
+            let text = el.text().collect::<String>();
+            let text = text.trim();
+            // Skip very short fragments — navigation links, labels, etc.
+            if text.len() < 15 {
+                continue;
+            }
+            let tag = match el.value().name() {
+                "h3" | "h4" => "h4",
+                "li" => "li",
+                _ => "p",
+            };
+            // Escape HTML entities in the plain text before wrapping
+            let escaped = text
+                .replace('&', "&amp;")
+                .replace('<', "&lt;")
+                .replace('>', "&gt;");
+            parts.push(format!("<{}>{}</{}>", tag, escaped, tag));
+        }
+
+        if parts.is_empty() { None } else { Some(parts.join("\n")) }
     };
 
     Ok((name_sci, image_url, content_html))
