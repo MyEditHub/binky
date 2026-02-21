@@ -87,6 +87,73 @@ async fn fetch_profile_from_nabu(
         })
     };
 
+    // Extract Steckbrief facts from .vogelartendetail-sidebar-block-single elements.
+    // The block appears twice (desktop + mobile), so deduplicate by label via HashSet.
+    // Structure: <h4>Label</h4> then value in <p>, <div> (first text node), or direct text node.
+    let steckbrief_html = {
+        let block_sel = Selector::parse(".vogelartendetail-sidebar-block-single")
+            .map_err(|e| format!("Selector error: {:?}", e))?;
+        let h4_sel = Selector::parse("h4").map_err(|e| format!("Selector error: {:?}", e))?;
+        let p_sel = Selector::parse("p").map_err(|e| format!("Selector error: {:?}", e))?;
+        let div_sel = Selector::parse("div").map_err(|e| format!("Selector error: {:?}", e))?;
+
+        let mut parts: Vec<String> = Vec::new();
+        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+        for block in document.select(&block_sel) {
+            // Label: only direct text nodes of h4 (ignore icon/button children)
+            let label = block.select(&h4_sel).next()
+                .map(|el| {
+                    el.children()
+                        .filter_map(|c| c.value().as_text())
+                        .map(|t| t.trim())
+                        .filter(|t| !t.is_empty())
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                })
+                .unwrap_or_default();
+
+            if label.is_empty() || seen.contains(&label) {
+                continue;
+            }
+            seen.insert(label.clone());
+
+            // Value: try <p> child, then first text node of <div> child, then direct text node
+            let value = block.select(&p_sel).next()
+                .map(|el| el.text().collect::<String>().trim().to_string())
+                .filter(|s| !s.is_empty())
+                .or_else(|| {
+                    block.select(&div_sel).next().and_then(|d| {
+                        d.children()
+                            .filter_map(|c| c.value().as_text())
+                            .map(|t| t.trim().to_string())
+                            .find(|t| !t.is_empty())
+                    })
+                })
+                .or_else(|| {
+                    block.children()
+                        .filter_map(|c| c.value().as_text())
+                        .map(|t| t.trim().to_string())
+                        .find(|t| !t.is_empty())
+                })
+                .unwrap_or_default();
+
+            if !value.is_empty() {
+                let l = label.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+                let v = value.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+                parts.push(format!("<p><strong>{}:</strong> {}</p>", l, v));
+            }
+        }
+
+        if parts.is_empty() { None } else { Some(format!("<h4>Steckbrief</h4>\n{}", parts.join("\n"))) }
+    };
+
+    // Known steckbrief labels that appear as standalone h3/h4 in main — skip them
+    // since they're now captured above with their values.
+    let steckbrief_labels: std::collections::HashSet<&str> = [
+        "Vorkommen in Deutschland", "Gefährdungsgrad", "Bestandszahl", "Bestandstrend",
+    ].iter().copied().collect();
+
     // Extract clean text-only HTML: only p and h3/h4 from article or main.
     // Skip li entirely (NABU uses lists for navigation menus, not bird facts).
     // Require paragraphs >= 50 chars — filters out breadcrumbs, button labels,
@@ -109,6 +176,10 @@ async fn fetch_profile_from_nabu(
             if text.contains("Foto:") {
                 continue;
             }
+            // Skip steckbrief labels — captured separately with their values above
+            if is_heading && steckbrief_labels.contains(text) {
+                continue;
+            }
             let tag = if is_heading { "h4" } else { "p" };
             let escaped = text
                 .replace('&', "&amp;")
@@ -118,6 +189,14 @@ async fn fetch_profile_from_nabu(
         }
 
         if parts.is_empty() { None } else { Some(parts.join("\n")) }
+    };
+
+    // Combine: steckbrief first, then main content
+    let content_html = match (steckbrief_html, content_html) {
+        (Some(s), Some(c)) => Some(format!("{}\n{}", s, c)),
+        (Some(s), None) => Some(s),
+        (None, Some(c)) => Some(c),
+        (None, None) => None,
     };
 
     Ok((name_sci, image_url, content_html))
