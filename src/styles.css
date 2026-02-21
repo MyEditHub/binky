@@ -69,7 +69,7 @@ body {
 .app-layout {
   display: flex;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -2308,6 +2308,7 @@ body {
 /* bird-page overrides .page defaults: full width, flex column so content fills height */
 .bird-page {
   max-width: none;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
