@@ -87,31 +87,25 @@ async fn fetch_profile_from_nabu(
         })
     };
 
-    // Extract content as clean text-only HTML: grab p/h3/h4/li from article or main,
-    // convert to plain text (strips all links, buttons, nav), wrap in safe tags.
-    // This avoids scraped website chrome from appearing in the info panel.
+    // Extract clean text-only HTML: only p and h3/h4 from article or main.
+    // Skip li entirely (NABU uses lists for navigation menus, not bird facts).
+    // Require paragraphs >= 50 chars — filters out breadcrumbs, button labels,
+    // "Alle Vögel ansehen", "Vorlesen Pfeifente" etc.
+    // Section headings (h3/h4 = "Aussehen", "Verhalten"...) only need >= 3 chars.
     let content_html = {
-        // Try article first, then main, then fall back to whole document
-        let sel = Selector::parse(
-            "article p, article h3, article h4, article li, \
-             main p, main h3, main h4, main li",
-        )
-        .map_err(|e| format!("Selector error: {:?}", e))?;
+        let sel = Selector::parse("article p, article h3, article h4, main p, main h3, main h4")
+            .map_err(|e| format!("Selector error: {:?}", e))?;
 
         let mut parts: Vec<String> = Vec::new();
         for el in document.select(&sel) {
             let text = el.text().collect::<String>();
             let text = text.trim();
-            // Skip very short fragments — navigation links, labels, etc.
-            if text.len() < 15 {
+            let is_heading = matches!(el.value().name(), "h3" | "h4");
+            let min_len = if is_heading { 3 } else { 50 };
+            if text.len() < min_len {
                 continue;
             }
-            let tag = match el.value().name() {
-                "h3" | "h4" => "h4",
-                "li" => "li",
-                _ => "p",
-            };
-            // Escape HTML entities in the plain text before wrapping
+            let tag = if is_heading { "h4" } else { "p" };
             let escaped = text
                 .replace('&', "&amp;")
                 .replace('<', "&lt;")
