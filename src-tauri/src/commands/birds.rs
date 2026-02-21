@@ -87,10 +87,17 @@ async fn fetch_profile_from_nabu(
         })
     };
 
-    // Extract Steckbrief facts from .vogelartendetail-sidebar-block-single elements.
-    // The block appears twice (desktop + mobile), so deduplicate by label via HashSet.
-    // Structure: <h4>Label</h4> then value in <p>, <div> (first text node), or direct text node.
+    // Extract the full Steckbrief section:
+    //   1. Funfact paragraph (.vogelartendetail-section-facts-funfact p)
+    //   2. Factlist bullets (.vogelartendetail-single-factlist li)
+    //   3. Sidebar fields (.vogelartendetail-sidebar-block-single) — deduplicated desktop+mobile
+    // Track funfact text so the main content loop can skip it (avoids duplication).
+    let mut funfact_texts: std::collections::HashSet<String> = std::collections::HashSet::new();
     let steckbrief_html = {
+        let funfact_sel = Selector::parse(".vogelartendetail-section-facts-funfact p")
+            .map_err(|e| format!("Selector error: {:?}", e))?;
+        let factlist_sel = Selector::parse(".vogelartendetail-single-factlist li")
+            .map_err(|e| format!("Selector error: {:?}", e))?;
         let block_sel = Selector::parse(".vogelartendetail-sidebar-block-single")
             .map_err(|e| format!("Selector error: {:?}", e))?;
         let h4_sel = Selector::parse("h4").map_err(|e| format!("Selector error: {:?}", e))?;
@@ -98,8 +105,35 @@ async fn fetch_profile_from_nabu(
         let div_sel = Selector::parse("div").map_err(|e| format!("Selector error: {:?}", e))?;
 
         let mut parts: Vec<String> = Vec::new();
-        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
 
+        // 1. Funfact paragraph
+        if let Some(el) = document.select(&funfact_sel).next() {
+            let text = el.text().collect::<String>();
+            let text = text.trim().to_string();
+            if !text.is_empty() {
+                let escaped = text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+                parts.push(format!("<p>{}</p>", escaped));
+                funfact_texts.insert(text);
+            }
+        }
+
+        // 2. Factlist bullet items (short facts: size, migration type, season, markings)
+        let fact_items: Vec<String> = document.select(&factlist_sel)
+            .filter_map(|el| {
+                let text = el.text().collect::<String>();
+                let text = text.trim().to_string();
+                if text.is_empty() { return None; }
+                let escaped = text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+                Some(format!("<li>{}</li>", escaped))
+            })
+            .collect();
+        if !fact_items.is_empty() {
+            parts.push(format!("<ul>{}</ul>", fact_items.join("")));
+        }
+
+        // 3. Sidebar fields (Gefährdungsgrad, Bestandszahl, Bestandstrend)
+        // Appears twice on page (desktop + mobile) — deduplicate by label.
+        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         for block in document.select(&block_sel) {
             // Label: only direct text nodes of h4 (ignore icon/button children)
             let label = block.select(&h4_sel).next()
@@ -178,6 +212,10 @@ async fn fetch_profile_from_nabu(
             }
             // Skip steckbrief labels — captured separately with their values above
             if is_heading && steckbrief_labels.contains(text) {
+                continue;
+            }
+            // Skip funfact paragraph — already in steckbrief section
+            if !is_heading && funfact_texts.contains(text) {
                 continue;
             }
             let tag = if is_heading { "h4" } else { "p" };
