@@ -126,7 +126,7 @@ export function useBirds() {
   const markAsUsed = useCallback(async (episodeTitle: string | null) => {
     if (!currentBird) return;
     try {
-      await invoke('mark_bird_used', { bird_id: currentBird.id, episode_title: episodeTitle });
+      await invoke('mark_bird_used', { birdId: currentBird.id, episodeTitle: episodeTitle });
       setCurrentBirdMarked(true);
       await loadHistory();
       await loadPoolStatus();
@@ -138,7 +138,7 @@ export function useBirds() {
   const undoMarkUsed = useCallback(async () => {
     if (!currentBird) return;
     try {
-      await invoke('undo_mark_bird_used', { bird_id: currentBird.id });
+      await invoke('undo_mark_bird_used', { birdId: currentBird.id });
       setCurrentBirdMarked(false);
       await loadHistory();
       await loadPoolStatus();
