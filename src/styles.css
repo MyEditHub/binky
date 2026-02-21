@@ -2305,6 +2305,13 @@ body {
    Bird Randomizer Styles
    ============================================================ */
 
+/* bird-page overrides .page defaults: full width, flex column so content fills height */
+.bird-page {
+  max-width: none;
+  display: flex;
+  flex-direction: column;
+}
+
 .bird-page .bird-toolbar {
   display: flex;
   gap: 8px;
@@ -2320,10 +2327,12 @@ body {
 
 .bird-content {
   display: flex;
-  flex: 1;
   overflow: hidden;
   position: relative;
-  min-height: 300px;
+  /* Explicit height: viewport minus content-scroll padding (48px) minus
+     approx page-header + toolbar + history bar (~170px) */
+  height: calc(100vh - 220px);
+  min-height: 350px;
 }
 
 .bird-main {
