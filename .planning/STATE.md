@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-11)
 
 **Core value:** Podcast hosts can see their speaking balance and track unfinished topics automatically through transcription and AI analysis
-**Current focus:** Phase 5: Bird Randomizer & Polish
+**Current focus:** Phase 5: Bird Randomizer & Polish — COMPLETE
 
 ## Current Position
 
-Phase: 5 of 5 (Bird Randomizer & Polish) — In progress
-Plan: 1 of 3 — 05-01 complete
-Status: In progress
-Last activity: 2026-02-17 — Completed 05-01-PLAN.md (Bird randomizer foundation: migration 005, scraper dep, 8 command stubs)
+Phase: 5 of 5 (Bird Randomizer & Polish) — Complete
+Plan: 3 of 3 — 05-03 complete
+Status: ALL PHASES COMPLETE — App feature-complete
+Last activity: 2026-02-17 — Completed 05-03-PLAN.md (Bird randomizer frontend: useBirds hook, BirdPage, slide panel, episode linking, history)
 
-Progress: [█████████████████████████░] ~92% (Phases 1-4 complete, Phase 5 plan 1/3 done)
+Progress: [██████████████████████████] 100% (All 5 phases complete, 15 plans total)
 
 ## Performance Metrics
 
@@ -188,6 +188,19 @@ Progress: [███████████████████████
 - analyze_episode_topics: reads API key from settings, reads transcript, calls GPT-4o-mini with German prompt, parses JSON, writes topics with ai_detected=1, updates episode_analysis
 - Re-analysis safety: DELETE FROM topics WHERE detected_from_episode_id=? AND ai_detected=1 before INSERT
 
+**From Plan 05-03 (2026-02-17):**
+- CSS variables: existing codebase uses --color-* prefix (--color-background, --color-border, etc.) NOT --bg-primary/--border-color aliases
+- drawBird force param: pass force=true after user confirmation to bypass unconfirmed guard (avoids window.location.reload)
+- dompurify@3.3.1 includes TypeScript types natively — no @types/dompurify needed
+
+**From Plan 05-02 (2026-02-17):**
+- fetch_profile_from_nabu: standalone async fn (not method), shared by draw_random_bird and fetch_bird_profile
+- rusqlite connection split pattern: open conn, sync DB work, drop conn before .await, open new conn after HTTP fetch
+- NABU scraping dedup: SELECT COUNT(*) WHERE nabu_url=? check before INSERT (birds table has no UNIQUE constraint)
+- scraper selectors: h2 for scientific name (trim_matches '_'), img[src*='/downloads/vogelportraets/'] for image, article>main>body for content HTML
+- fetch_bird_profile offline fallback: returns cached_content_html from DB if live HTTP fetch fails
+- draw_random_bird pool_exhausted: QueryReturnedNoRows from ORDER BY RANDOM() LIMIT 1 maps to "pool_exhausted" error string
+
 **From Plan 05-01 (2026-02-17):**
 - Migration 005 uses ALTER TABLE ADD COLUMN only (birds table exists from 001, do NOT CREATE TABLE)
 - idx_birds_used index already exists from migration 001 — not recreated in 005
@@ -197,7 +210,7 @@ Progress: [███████████████████████
 
 ## Session Continuity
 
-Last session: 2026-02-17T06:20:34Z
-Stopped at: Completed 05-01-PLAN.md (Bird randomizer foundation: migration 005, scraper dep, 8 command stubs)
+Last session: 2026-02-17T06:32:04Z
+Stopped at: Completed 05-03-PLAN.md (Bird randomizer frontend: useBirds hook, BirdPage, slide panel, episode linking, history)
 Resume file: None
-Next: Execute 05-02-PLAN.md (implement bird command logic)
+Next: All phases complete — ready for pre-release checklist (signing key backup, GitHub Secrets, Gatekeeper docs)
