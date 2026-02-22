@@ -214,8 +214,8 @@ export default function StatsPage() {
         ) : (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={trend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fontSize: 9 }} interval={0} angle={-30} textAnchor="end" height={40} />
-              <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10 }} />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" height={40} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
               <Tooltip formatter={(v: number | string | undefined) => [`${v ?? 0}%`]} />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Bar dataKey="host0Pct" name={host0Name} stackId="a" fill={host0Color} />

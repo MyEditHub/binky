@@ -33,8 +33,8 @@ export default function HostTrendChart({ data, host0Name, host1Name, host0Color,
       </h3>
       <ResponsiveContainer width="100%" height={200}>
         <BarChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-          <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-          <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10 }} />
+          <XAxis dataKey="label" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip formatter={(value: number | string | undefined) => [`${value ?? 0}%`]} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Bar dataKey="host0Pct" name={host0Name} stackId="a" fill={host0Color} />
