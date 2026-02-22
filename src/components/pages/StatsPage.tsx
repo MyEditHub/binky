@@ -56,6 +56,7 @@ export default function StatsPage() {
   const [speech, setSpeech] = useState<SpeechStat[]>([]);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
+  const [_groups, setGroups] = useState<WordGroup[]>([]);
   const [innuendos, setInnuendos] = useState<InnuendoResult[]>([]);
   const [host0Name, setHost0Name] = useState('Sprecher 1');
   const [host1Name, setHost1Name] = useState('Sprecher 2');
@@ -138,12 +139,13 @@ export default function StatsPage() {
 
       // Innuendo counter — word groups
       const wordsRaw = await getSetting('innuendo_words');
-      const groups = parseWordGroups(wordsRaw);
-      if (groups.length > 0) {
+      const loadedGroups = parseWordGroups(wordsRaw);
+      setGroups(loadedGroups);
+      if (loadedGroups.length > 0) {
         const texts = await db.select<{ full_text: string }[]>('SELECT full_text FROM transcripts');
         const allText = texts.map(r => r.full_text).join('\n').toLowerCase();
         setInnuendos(
-          groups.map(group => ({
+          loadedGroups.map(group => ({
             label: group.label,
             count: group.words.reduce((sum, word) => {
               const escaped = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

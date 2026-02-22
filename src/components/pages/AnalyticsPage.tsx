@@ -65,6 +65,7 @@ export default function AnalyticsPage() {
     .reverse()
     .map((e) => ({
       label: `#${e.episodeId}`,
+      title: e.title,
       host0Pct: e.host0Pct,
       host1Pct: e.host1Pct,
     }));

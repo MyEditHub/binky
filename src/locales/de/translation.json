@@ -160,6 +160,7 @@
       "minutes_short": "{{minutes}} Min.",
       "trend_title": "Trend",
       "trend_min_episodes": "Mindestens 2 analysierte Episoden für die Trendanzeige erforderlich.",
+      "trend_empty": "Noch keine Episoden analysiert",
       "flip_speakers": "Sprecher tauschen",
       "correct_segments": "Segmente korrigieren",
       "reanalyze": "Neu analysieren",
