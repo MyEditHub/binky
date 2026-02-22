@@ -1364,6 +1364,12 @@ body {
   cursor: not-allowed;
 }
 
+.btn-reveal {
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .btn-danger {
   padding: 8px 16px;
   background-color: #ef4444;

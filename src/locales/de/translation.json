@@ -8,6 +8,7 @@
     "analytics": "Analytik",
     "topics": "Themen",
     "bird": "Vogel-Randomizer",
+    "stats": "Statistiken",
     "settings": "Einstellungen"
   },
   "nav_disabled": {
@@ -110,7 +111,22 @@
       "openai_api_key_placeholder": "sk-...",
       "openai_key_saved": "Gespeichert",
       "openai_key_configured": "Konfiguriert",
-      "openai_key_not_configured": "Nicht konfiguriert"
+      "openai_key_not_configured": "Nicht konfiguriert",
+      "dev_mode": "Entwicklermodus",
+      "dev_mode_desc": "Zeigt alle Entwickler-Ansichten (Transkription, Analytik, Themen)",
+      "innuendo_title": "Wort-Tracker",
+      "innuendo_desc": "Wörter, die im Podcast gezählt werden",
+      "innuendo_add": "Hinzufügen",
+      "innuendo_placeholder": "z.B. Penis",
+      "innuendo_empty": "Noch keine Wörter konfiguriert."
+    },
+    "stats": {
+      "title": "Statistiken",
+      "speech_title": "Redeanteil",
+      "topics_title": "Offene Themen",
+      "innuendo_title": "Wort-Tracker",
+      "no_data": "Noch keine Analysedaten vorhanden.",
+      "no_topics": "Keine offenen Themen."
     },
     "analytics": {
       "title": "Analytik",

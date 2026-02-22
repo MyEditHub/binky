@@ -153,11 +153,14 @@ function HostSettingsSection() {
   );
 }
 
-export default function SettingsPage() {
+export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v: boolean) => void }) {
   const { t } = useTranslation();
   const [version, setVersion] = useState<string>('...');
   const [dbStatus, setDbStatus] = useState<'ok' | 'error' | 'checking'>('checking');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
+  const [devMode, setDevMode] = useState(false);
+  const [innuendoWords, setInnuendoWords] = useState<string[]>([]);
+  const [innuendoInput, setInnuendoInput] = useState('');
 
   useEffect(() => {
     getVersion()
@@ -171,12 +174,44 @@ export default function SettingsPage() {
     getSetting('launchAtLogin').then((val) => {
       setLaunchAtLogin(val === 'true');
     });
+
+    getSetting('developer_mode').then((val) => {
+      setDevMode(val === 'true');
+    });
+
+    getSetting('innuendo_words').then((val) => {
+      if (val) {
+        try { setInnuendoWords(JSON.parse(val)); } catch { setInnuendoWords([]); }
+      }
+    });
   }, []);
 
   async function handleLaunchAtLoginToggle() {
     const next = !launchAtLogin;
     setLaunchAtLogin(next);
     await setSetting('launchAtLogin', next ? 'true' : 'false');
+  }
+
+  async function handleDevModeToggle() {
+    const next = !devMode;
+    setDevMode(next);
+    await setSetting('developer_mode', next ? 'true' : 'false');
+    onDevModeChange?.(next);
+  }
+
+  async function handleAddInnuendo() {
+    const word = innuendoInput.trim();
+    if (!word || innuendoWords.includes(word)) return;
+    const next = [...innuendoWords, word];
+    setInnuendoWords(next);
+    setInnuendoInput('');
+    await setSetting('innuendo_words', JSON.stringify(next));
+  }
+
+  async function handleRemoveInnuendo(word: string) {
+    const next = innuendoWords.filter(w => w !== word);
+    setInnuendoWords(next);
+    await setSetting('innuendo_words', JSON.stringify(next));
   }
 
   return (
@@ -230,6 +265,68 @@ export default function SettingsPage() {
             type="button"
           >
             <span className="settings-toggle-thumb" />
+          </button>
+        </div>
+
+        <div className="settings-row">
+          <div>
+            <div className="settings-row-label">{t('pages.settings.dev_mode')}</div>
+            <div className="settings-row-desc">{t('pages.settings.dev_mode_desc')}</div>
+          </div>
+          <button
+            className={`settings-toggle${devMode ? ' settings-toggle-on' : ''}`}
+            onClick={handleDevModeToggle}
+            aria-pressed={devMode}
+            type="button"
+          >
+            <span className="settings-toggle-thumb" />
+          </button>
+        </div>
+      </div>
+
+      {/* Wort-Tracker */}
+      <div className="settings-section">
+        <h3 className="settings-section-title">{t('pages.settings.innuendo_title')}</h3>
+        <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_desc')}</p>
+
+        {innuendoWords.length === 0 ? (
+          <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_empty')}</p>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+            {innuendoWords.map(word => (
+              <span
+                key={word}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '3px 10px', background: 'var(--color-border)',
+                  borderRadius: 20, fontSize: '0.85rem',
+                }}
+              >
+                {word}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveInnuendo(word)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.6, fontSize: '1rem' }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            value={innuendoInput}
+            onChange={e => setInnuendoInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAddInnuendo(); }}
+            placeholder={t('pages.settings.innuendo_placeholder')}
+            className="settings-input"
+            style={{ flex: 1 }}
+          />
+          <button className="btn-outline" onClick={handleAddInnuendo} type="button">
+            {t('pages.settings.innuendo_add')}
           </button>
         </div>
       </div>

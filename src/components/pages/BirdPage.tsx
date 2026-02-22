@@ -61,7 +61,7 @@ export default function BirdPage() {
           </button>
           {currentBird && !panelOpen && (
             <button
-              className="btn-outline"
+              className="btn-primary btn-reveal"
               onClick={() => setPanelOpen(true)}
             >
               {t('pages.bird.reveal')}

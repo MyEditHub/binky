@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import QueueBadge from './TranscriptionQueue/QueueBadge';
 
-type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'settings';
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings';
 
 interface SidebarProps {
   activePage: Page;
@@ -10,6 +10,7 @@ interface SidebarProps {
   onToggle: () => void;
   transcriptionActive?: boolean;
   queueCount?: number;
+  devMode?: boolean;
 }
 
 interface NavItem {
@@ -17,6 +18,7 @@ interface NavItem {
   labelKey: string;
   icon: string;
   disabled: boolean;
+  devOnly?: boolean;
   disabledTooltipKey?: string;
 }
 
@@ -27,10 +29,11 @@ export default function Sidebar({
   onToggle,
   transcriptionActive = false,
   queueCount = 0,
+  devMode = false,
 }: SidebarProps) {
   const { t } = useTranslation();
 
-  const navItems: NavItem[] = [
+  const allNavItems: NavItem[] = [
     {
       id: 'bird',
       labelKey: 'nav.bird',
@@ -38,22 +41,32 @@ export default function Sidebar({
       disabled: false,
     },
     {
+      id: 'stats',
+      labelKey: 'nav.stats',
+      icon: '📊',
+      disabled: false,
+      devOnly: false,
+    },
+    {
       id: 'episodes',
       labelKey: 'nav.episodes',
       icon: '🎙️',
       disabled: false,
+      devOnly: true,
     },
     {
       id: 'analytics',
       labelKey: 'nav.analytics',
-      icon: '📊',
+      icon: '📈',
       disabled: false,
+      devOnly: true,
     },
     {
       id: 'topics',
       labelKey: 'nav.topics',
       icon: '📝',
       disabled: false,
+      devOnly: true,
     },
     {
       id: 'settings',
@@ -62,6 +75,8 @@ export default function Sidebar({
       disabled: false,
     },
   ];
+
+  const navItems = allNavItems.filter(item => devMode || !item.devOnly);
 
   const handleClick = (item: NavItem) => {
     if (!item.disabled) {
