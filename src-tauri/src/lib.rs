@@ -51,6 +51,12 @@ pub fn run() {
             sql: include_str!("../migrations/005_birds_enhanced.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "Clear test bird history",
+            sql: include_str!("../migrations/006_clear_test_bird_history.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
