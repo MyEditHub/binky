@@ -6,6 +6,7 @@ import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
 import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
+import { parseWordGroups, type WordGroup } from './StatsPage';
 
 // ─── OpenAI Settings Section ─────────────────────────────────────────────────
 
@@ -159,8 +160,9 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
   const [dbStatus, setDbStatus] = useState<'ok' | 'error' | 'checking'>('checking');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [devMode, setDevMode] = useState(false);
-  const [innuendoWords, setInnuendoWords] = useState<string[]>([]);
-  const [innuendoInput, setInnuendoInput] = useState('');
+  const [groups, setGroups] = useState<WordGroup[]>([]);
+  const [newGroupLabel, setNewGroupLabel] = useState('');
+  const [variantInputs, setVariantInputs] = useState<Record<number, string>>({});
 
   useEffect(() => {
     getVersion()
@@ -180,9 +182,7 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
     });
 
     getSetting('innuendo_words').then((val) => {
-      if (val) {
-        try { setInnuendoWords(JSON.parse(val)); } catch { setInnuendoWords([]); }
-      }
+      setGroups(parseWordGroups(val));
     });
   }, []);
 
@@ -199,19 +199,35 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
     onDevModeChange?.(next);
   }
 
-  async function handleAddInnuendo() {
-    const word = innuendoInput.trim();
-    if (!word || innuendoWords.includes(word)) return;
-    const next = [...innuendoWords, word];
-    setInnuendoWords(next);
-    setInnuendoInput('');
+  async function saveGroups(next: WordGroup[]) {
+    setGroups(next);
     await setSetting('innuendo_words', JSON.stringify(next));
   }
 
-  async function handleRemoveInnuendo(word: string) {
-    const next = innuendoWords.filter(w => w !== word);
-    setInnuendoWords(next);
-    await setSetting('innuendo_words', JSON.stringify(next));
+  async function handleAddGroup() {
+    const label = newGroupLabel.trim();
+    if (!label || groups.some(g => g.label === label)) return;
+    setNewGroupLabel('');
+    await saveGroups([...groups, { label, words: [] }]);
+  }
+
+  async function handleRemoveGroup(idx: number) {
+    await saveGroups(groups.filter((_, i) => i !== idx));
+  }
+
+  async function handleAddVariant(groupIdx: number) {
+    const word = (variantInputs[groupIdx] ?? '').trim();
+    if (!word) return;
+    const g = groups[groupIdx];
+    if (g.words.includes(word)) return;
+    const next = groups.map((gr, i) => i === groupIdx ? { ...gr, words: [...gr.words, word] } : gr);
+    setVariantInputs(v => ({ ...v, [groupIdx]: '' }));
+    await saveGroups(next);
+  }
+
+  async function handleRemoveVariant(groupIdx: number, word: string) {
+    const next = groups.map((gr, i) => i === groupIdx ? { ...gr, words: gr.words.filter(w => w !== word) } : gr);
+    await saveGroups(next);
   }
 
   return (
@@ -289,44 +305,53 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
         <h3 className="settings-section-title">{t('pages.settings.innuendo_title')}</h3>
         <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_desc')}</p>
 
-        {innuendoWords.length === 0 ? (
+        {groups.length === 0 && (
           <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_empty')}</p>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-            {innuendoWords.map(word => (
-              <span
-                key={word}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '3px 10px', background: 'var(--color-border)',
-                  borderRadius: 20, fontSize: '0.85rem',
-                }}
-              >
-                {word}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveInnuendo(word)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.6, fontSize: '1rem' }}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
         )}
 
-        <div style={{ display: 'flex', gap: 8 }}>
+        {groups.map((group, gi) => (
+          <div key={group.label} style={{ marginBottom: 16, padding: '10px 12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <strong style={{ fontSize: '0.9rem' }}>{group.label}</strong>
+              <button type="button" onClick={() => handleRemoveGroup(gi)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '1rem', padding: '0 2px' }}>×</button>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {group.words.map(word => (
+                <span key={word} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'var(--color-border)', borderRadius: 12, fontSize: '0.8rem' }}>
+                  {word}
+                  <button type="button" onClick={() => handleRemoveVariant(gi, word)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.5, fontSize: '0.9rem' }}>×</button>
+                </span>
+              ))}
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                type="text"
+                value={variantInputs[gi] ?? ''}
+                onChange={e => setVariantInputs(v => ({ ...v, [gi]: e.target.value }))}
+                onKeyDown={e => { if (e.key === 'Enter') handleAddVariant(gi); }}
+                placeholder={t('pages.settings.innuendo_word_placeholder')}
+                className="settings-input"
+                style={{ flex: 1, fontSize: '0.85rem', padding: '4px 8px' }}
+              />
+              <button className="btn-outline" onClick={() => handleAddVariant(gi)} type="button" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
+                {t('pages.settings.innuendo_add_variant')}
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
           <input
             type="text"
-            value={innuendoInput}
-            onChange={e => setInnuendoInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAddInnuendo(); }}
-            placeholder={t('pages.settings.innuendo_placeholder')}
+            value={newGroupLabel}
+            onChange={e => setNewGroupLabel(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleAddGroup(); }}
+            placeholder={t('pages.settings.innuendo_group_placeholder')}
             className="settings-input"
             style={{ flex: 1 }}
           />
-          <button className="btn-outline" onClick={handleAddInnuendo} type="button">
-            {t('pages.settings.innuendo_add')}
+          <button className="btn-outline" onClick={handleAddGroup} type="button">
+            {t('pages.settings.innuendo_new_group')}
           </button>
         </div>
       </div>

@@ -53,7 +53,7 @@ export default function BirdPage() {
         <h2 className="page-title">{t('pages.bird.title')}</h2>
         <div className="bird-toolbar">
           <button
-            className="btn-primary"
+            className="btn-outline"
             onClick={handleDrawBird}
             disabled={loading || fetching}
           >
