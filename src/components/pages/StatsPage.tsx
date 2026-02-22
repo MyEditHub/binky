@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
 } from 'recharts';
 import Database from '@tauri-apps/plugin-sql';
-import { getSetting } from '../../lib/settings';
+import { getSetting, setSetting } from '../../lib/settings';
 
 interface SpeechStat {
   speaker: string;
@@ -56,7 +56,7 @@ export default function StatsPage() {
   const [speech, setSpeech] = useState<SpeechStat[]>([]);
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [_groups, setGroups] = useState<WordGroup[]>([]);
+  const [groups, setGroups] = useState<WordGroup[]>([]);
   const [innuendos, setInnuendos] = useState<InnuendoResult[]>([]);
   const [host0Name, setHost0Name] = useState('Sprecher 1');
   const [host1Name, setHost1Name] = useState('Sprecher 2');
@@ -173,6 +173,20 @@ export default function StatsPage() {
     return 'var(--color-primary)';
   };
 
+  async function handleDeleteGroup(label: string) {
+    const previousGroups = groups;
+    const previousInnuendos = innuendos;
+    const nextGroups = groups.filter(g => g.label !== label);
+    setGroups(nextGroups);
+    setInnuendos(prev => prev.filter(i => i.label !== label));
+    try {
+      await setSetting('innuendo_words', JSON.stringify(nextGroups));
+    } catch {
+      setGroups(previousGroups);
+      setInnuendos(previousInnuendos);
+    }
+  }
+
   if (loading) {
     return (
       <div className="page">
@@ -247,16 +261,27 @@ export default function StatsPage() {
       </div>
 
       {/* Innuendo groups */}
-      {innuendos.length > 0 && (
+      {groups.length > 0 && (
         <div className="settings-section">
           <h3 className="settings-section-title">{t('pages.stats.innuendo_title')}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 20px', alignItems: 'center' }}>
-            {innuendos.map(item => (
-              <>
-                <span key={`w-${item.label}`} style={{ fontSize: '0.9rem' }}>{item.label}</span>
-                <strong key={`c-${item.label}`} style={{ fontSize: '1.2rem', color: 'var(--color-primary)' }}>{item.count}×</strong>
-              </>
-            ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '8px 12px', alignItems: 'center' }}>
+            {groups.map(item => {
+              const count = innuendos.find(i => i.label === item.label)?.count ?? 0;
+              return (
+                <React.Fragment key={item.label}>
+                  <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
+                  <strong style={{ fontSize: '1.2rem', color: 'var(--color-primary)' }}>{count}×</strong>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteGroup(item.label)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '1rem', padding: '0 4px' }}
+                    title="Löschen"
+                  >
+                    ×
+                  </button>
+                </React.Fragment>
+              );
+            })}
           </div>
         </div>
       )}
