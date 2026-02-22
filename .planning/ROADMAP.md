@@ -7,7 +7,8 @@ This roadmap delivers **Binky**, a Mac desktop app that automatically transcribe
 ## Phases
 
 **Phase Numbering:**
-- Integer phases (1, 2, 3, 4, 5): Planned milestone work
+- Integer phases (1, 2, 3, 4, 5): Planned milestone work (v0.1)
+- Integer phases (6, 7, 8): Planned milestone work (v0.2 — Release Polish)
 - Decimal phases (e.g., 2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 Decimal phases appear between their surrounding integers in numeric order.
@@ -17,6 +18,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
 - [x] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
 - [ ] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
+- [ ] **Phase 6: UI & Bird Fixes** - Sidebar polish, chart visual fixes, Steckbrief formatting, dev data cleanup
+- [ ] **Phase 7: Analytics & Word Tracker** - Speech trend enhancement, word group deletion
+- [ ] **Phase 8: QA & Release** - End-to-end QA, CI build verification, first release ship
 
 ## Phase Details
 
@@ -117,10 +121,51 @@ Plans:
 - [ ] 05-03-PLAN.md — Frontend: useBirds hook, BirdPage with reveal mechanic, info panel, history, sidebar activation
 - [ ] 05-04-PLAN.md — Human verification checkpoint (full Phase 5 QA)
 
+### Phase 6: UI & Bird Fixes
+**Goal**: All visual polish issues are resolved and bird data is clean for a first release that users can actually use without distraction
+**Depends on**: Phase 5 (all v0.1 features complete)
+**Requirements**: UIPOL-01, UIPOL-02, UIPOL-03, BIRD-FIX-01, BIRD-FIX-02
+**Success Criteria** (what must be TRUE):
+  1. Sidebar navigation shows only text labels with no icon placeholders or blank space where icons were
+  2. Analytics bar chart renders without grey borders on left and right edges
+  3. Episode name label below bar chart is visually large and legible at normal reading distance
+  4. Steckbrief facts in the bird panel each appear on their own line with no words running together across fact boundaries
+  5. Bird history table is empty (zero rows) when app is launched fresh — no test draw records remain
+**Plans**: 2 plans
+
+Plans:
+- [x] 06-01-PLAN.md — UI polish: remove sidebar icons, fix recharts axis borders, increase chart label size
+- [x] 06-02-PLAN.md — Bird fixes: DOMPurify ALLOWED_TAGS for Steckbrief facts, migration 006 to clear test history
+
+### Phase 7: Analytics & Word Tracker
+**Goal**: Speech trend data and word group management are complete so users have full control over their analytics before release
+**Depends on**: Phase 6
+**Requirements**: ANALYTICS-01, WORD-01
+**Success Criteria** (what must be TRUE):
+  1. Speech trend chart shows a data point per episode with both hosts' speaking percentages plotted over time
+  2. User can read episode order on the trend chart and identify shifts in speaking balance across the timeline
+  3. User can click a delete button on any word group in the word tracker and that group is permanently removed
+  4. After deletion the word tracker list updates immediately with no page reload required
+**Plans**: 2 plans
+
+Plans:
+- [ ] 07-01-PLAN.md — Replace BarChart with LineChart in HostTrendChart (scrollable, tooltip, reference line)
+- [ ] 07-02-PLAN.md — Add delete button to StatsPage word groups (optimistic state, setSetting persist)
+
+### Phase 8: QA & Release
+**Goal**: The app is verified end-to-end and the CI pipeline produces a shippable PKG installer that can be distributed
+**Depends on**: Phase 7
+**Requirements**: QA-01, QA-02, RELEASE-01
+**Success Criteria** (what must be TRUE):
+  1. Bird randomizer completes a full draw-reveal-mark-history cycle without errors (human QA sign-off)
+  2. Every page in the app loads without a blank screen, error state, or broken layout under normal use
+  3. GitHub Actions CI run completes successfully and produces a signed PKG artifact for both ARM and Intel
+  4. Downloaded PKG installs and launches the app on a clean macOS machine without a terminal command
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -129,7 +174,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Speaker Analytics | 5/6 | Complete | 2026-02-16 |
 | 4. Content Analysis | 4/4 | Complete | 2026-02-17 |
 | 5. Bird Randomizer & Polish | 0/4 | Not started | - |
+| 6. UI & Bird Fixes | 2/2 | Complete | 2026-02-22 |
+| 7. Analytics & Word Tracker | 0/2 | Not started | - |
+| 8. QA & Release | 0/- | Not started | - |
 
 ---
 
 *Roadmap created: 2026-02-11*
+*v0.2 phases 6-8 added: 2026-02-22*

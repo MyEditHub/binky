@@ -2,19 +2,23 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-02-11)
+See: .planning/PROJECT.md (updated 2026-02-22)
 
 **Core value:** Podcast hosts can see their speaking balance and track unfinished topics automatically through transcription and AI analysis
-**Current focus:** Phase 5: Bird Randomizer & Polish — COMPLETE
+**Current focus:** Milestone v0.2 — Release Polish (Phases 6–8)
 
 ## Current Position
 
-Phase: 5 of 5 (Bird Randomizer & Polish) — Complete
-Plan: 3 of 3 — 05-03 complete
-Status: ALL PHASES COMPLETE — App feature-complete
-Last activity: 2026-02-17 — Completed 05-03-PLAN.md (Bird randomizer frontend: useBirds hook, BirdPage, slide panel, episode linking, history)
+Phase: 7 — Analytics & Word Tracker (not started)
+Plan: —
+Status: Phase 6 complete — ready to begin Phase 7
+Last activity: 2026-02-22 — Phase 6 complete, goal verified (5/5 must-haves)
 
-Progress: [██████████████████████████] 100% (All 5 phases complete, 15 plans total)
+Progress: ███░░░░░░░ ~33% (Phase 6 complete; Phases 7–8 pending)
+
+**Phase numbering:**
+- Phases 1–5: v0.1 milestone (all complete or in progress)
+- Phases 6–8: v0.2 milestone — Release Polish
 
 ## Performance Metrics
 
@@ -156,26 +160,6 @@ Progress: [███████████████████████
 - Diarization chaining: fires after TranscriptionEvent::Done via fire-and-forget spawn; skips if models not downloaded
 - decode_mp3_to_pcm and push_mono_frames are now pub(crate)
 
-### Pending Todos
-
-**CRITICAL - Before first release:**
-- Back up private signing key at ~/.tauri/binky.key to 1Password/BitWarden
-- Configure GitHub Secrets: GPG_PASSPHRASE and TAURI_PRIVATE_KEY_PASSWORD
-- Configure Sentry DSN in production environment (optional)
-- Document Gatekeeper bypass instructions for users
-
-### Blockers/Concerns
-
-**Before First Release:**
-- URGENT: Private signing key at ~/.tauri/binky.key must be backed up before first release
-- GitHub Secrets not configured yet
-- Sentry DSN not configured yet
-
-**Phase 2 — Resolved:**
-- German transcription: working on real podcast audio (human QA 2026-02-15)
-- Memory: streaming decode + 20-min chunks avoids 635MB peak (committed 2026-02-15)
-- macOS sandbox: works in dev; production build verification still pending
-
 **From Plan 04-01 (2026-02-17):**
 - async-openai 0.32 default features: "reqwest" is not an explicit feature (uses dep: syntax) — use default features which include reqwest transport
 - episode_analysis table: separate from topics table — tracks per-episode analysis status (not_started/processing/done/error)
@@ -208,9 +192,41 @@ Progress: [███████████████████████
 - 8 stub bird commands follow same pattern as topics.rs (tauri::AppHandle, Result<T, String>)
 - bird_used_history table: links bird use events to optional episode_title strings (not episode_id FK — episodes may not exist for manual use)
 
+### Pending Todos
+
+**CRITICAL - Before first release:**
+- Back up private signing key at ~/.tauri/binky.key to 1Password/BitWarden
+- Configure GitHub Secrets: GPG_PASSPHRASE and TAURI_PRIVATE_KEY_PASSWORD
+- Configure Sentry DSN in production environment (optional)
+- Document Gatekeeper bypass instructions for users
+
+### Blockers/Concerns
+
+**Before First Release:**
+- URGENT: Private signing key at ~/.tauri/binky.key must be backed up before first release
+- GitHub Secrets not configured yet (RELEASE-01, Phase 8)
+- Sentry DSN not configured yet
+
+**Phase 2 — Resolved:**
+- German transcription: working on real podcast audio (human QA 2026-02-15)
+- Memory: streaming decode + 20-min chunks avoids 635MB peak (committed 2026-02-15)
+- macOS sandbox: works in dev; production build verification still pending
+
+**From Plan 04-01 (2026-02-17):**
+- async-openai 0.32 default features: "reqwest" is not an explicit feature (uses dep: syntax) — use default features which include reqwest transport
+- episode_analysis table: separate from topics table — tracks per-episode analysis status (not_started/processing/done/error)
+- topics AI columns: ai_detected, detected_from_episode_id, ai_reason, confidence — all nullable for existing manual topics
+- openai_api_key: stored in settings table (key-value), never returned to frontend from has_openai_key_configured
+
+**From Plan 04-02 (2026-02-17):**
+- async-openai 0.32 requires explicit feature flag: `features = ["chat-completion"]` — default `rustls` feature only adds transport, not the API client or types
+- async-openai 0.32 chat types path: `async_openai::types::chat::*` (NOT re-exported at `async_openai::types::*`)
+- analyze_episode_topics: reads API key from settings, reads transcript, calls GPT-4o-mini with German prompt, parses JSON, writes topics with ai_detected=1, updates episode_analysis
+- Re-analysis safety: DELETE FROM topics WHERE detected_from_episode_id=? AND ai_detected=1 before INSERT
+
 ## Session Continuity
 
-Last session: 2026-02-17T06:32:04Z
-Stopped at: Completed 05-03-PLAN.md (Bird randomizer frontend: useBirds hook, BirdPage, slide panel, episode linking, history)
+Last session: 2026-02-22
+Stopped at: Phase 6 complete — goal verified (5/5 must-haves passed)
 Resume file: None
-Next: All phases complete — ready for pre-release checklist (signing key backup, GitHub Secrets, Gatekeeper docs)
+Next: Begin Phase 7 — Analytics & Word Tracker
