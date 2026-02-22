@@ -21,7 +21,7 @@ export default function BirdInfoPanel({ bird, isOpen, onClose }: BirdInfoPanelPr
                 className="bird-profile-content"
                 dangerouslySetInnerHTML={{
                   __html: DOMPurify.sanitize(bird.content_html, {
-                    ALLOWED_TAGS: ['p', 'h4', 'strong', 'em', 'br'],
+                    ALLOWED_TAGS: ['p', 'h4', 'strong', 'em', 'br', 'ul', 'li'],
                     ALLOWED_ATTR: [],
                   }) as string,
                 }}
