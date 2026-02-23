@@ -280,7 +280,20 @@ async fn poll_until_done(transcript_id: &str, api_key: &str) -> Result<PollRespo
         transcript_id
     );
 
+    // Max ~30 minutes (600 × 3s). Prevents a stuck job from holding a semaphore slot forever.
+    let mut attempts = 0u32;
+    let max_attempts = 600;
+    // Max 5 consecutive 429s before giving up (avoids infinite rate-limit loop)
+    let mut rate_limit_count = 0u32;
+
     loop {
+        if attempts >= max_attempts {
+            return Err(format!(
+                "Timeout: Job {} nach {} Versuchen nicht abgeschlossen",
+                transcript_id, max_attempts
+            ));
+        }
+
         let response = client
             .get(&url)
             .header("Authorization", api_key)
@@ -289,10 +302,14 @@ async fn poll_until_done(transcript_id: &str, api_key: &str) -> Result<PollRespo
             .map_err(|e| format!("Poll-Anfrage fehlgeschlagen: {}", e))?;
 
         if response.status() == 429 {
-            // Rate limited — wait 60 seconds and retry
+            rate_limit_count += 1;
+            if rate_limit_count > 5 {
+                return Err("Rate-Limit überschritten (429) — zu viele Versuche".to_string());
+            }
             sleep(Duration::from_secs(60)).await;
             continue;
         }
+        rate_limit_count = 0;
 
         let poll: PollResponse = response
             .json()
@@ -308,6 +325,7 @@ async fn poll_until_done(transcript_id: &str, api_key: &str) -> Result<PollRespo
             }
             _ => {
                 // "queued" or "processing" — wait and retry
+                attempts += 1;
                 sleep(Duration::from_secs(3)).await;
             }
         }
