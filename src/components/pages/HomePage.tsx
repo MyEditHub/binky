@@ -7,7 +7,6 @@ interface Props {
 }
 
 interface FeatureCard {
-  icon: string;
   titleKey: string;
   descKey: string;
   page: Page;
@@ -16,28 +15,12 @@ interface FeatureCard {
 
 const FEATURE_CARDS: FeatureCard[] = [
   {
-    icon: '🎙️',
-    titleKey: 'pages.home.card_episodes_title',
-    descKey: 'pages.home.card_episodes_desc',
-    page: 'episodes',
-    labelKey: 'pages.home.card_episodes_action',
-  },
-  {
-    icon: '📊',
-    titleKey: 'pages.home.card_analytics_title',
-    descKey: 'pages.home.card_analytics_desc',
-    page: 'analytics',
-    labelKey: 'pages.home.card_analytics_action',
-  },
-  {
-    icon: '📈',
     titleKey: 'pages.home.card_stats_title',
     descKey: 'pages.home.card_stats_desc',
     page: 'stats',
     labelKey: 'pages.home.card_stats_action',
   },
   {
-    icon: '🐦',
     titleKey: 'pages.home.card_bird_title',
     descKey: 'pages.home.card_bird_desc',
     page: 'bird',
@@ -55,7 +38,7 @@ export default function HomePage({ onNavigate }: Props) {
       </div>
 
       {/* Intro */}
-      <div style={{ padding: '0 24px 24px' }}>
+      <div style={{ padding: '0 24px 32px', textAlign: 'center' }}>
         <p style={{ fontSize: '0.95rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.6 }}>
           {t('pages.home.intro')}
         </p>
@@ -81,7 +64,6 @@ export default function HomePage({ onNavigate }: Props) {
               gap: 8,
             }}
           >
-            <div style={{ fontSize: '1.6rem', lineHeight: 1 }}>{card.icon}</div>
             <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t(card.titleKey)}</div>
             <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, flex: 1 }}>
               {t(card.descKey)}
