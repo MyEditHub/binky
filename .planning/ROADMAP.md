@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [ ] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
 - [ ] **Phase 6: UI & Bird Fixes** - Sidebar polish, chart visual fixes, Steckbrief formatting, dev data cleanup
 - [ ] **Phase 7: Analytics & Word Tracker** - Speech trend enhancement, word group deletion
+- [ ] **Phase 7.1: AssemblyAI Backlog Processing** - Dev-only bulk transcription + diarization via AssemblyAI API (INSERTED)
 - [ ] **Phase 8: QA & Release** - End-to-end QA, CI build verification, first release ship
 
 ## Phase Details
@@ -152,6 +153,24 @@ Plans:
 - [ ] 07-01-PLAN.md — Replace BarChart with LineChart in HostTrendChart (scrollable, tooltip, reference line)
 - [ ] 07-02-PLAN.md — Add delete button to StatsPage word groups (optimistic state, setSetting persist)
 
+### Phase 7.1: AssemblyAI Backlog Processing (INSERTED)
+
+**Goal**: Developer can submit all unprocessed backlog episodes to AssemblyAI in one action to populate transcripts and diarization data before shipping to hosts
+**Depends on**: Phase 7
+**Plans**: 2 plans
+
+**Details:**
+- Dev-mode only feature (gated behind keyboard shortcut, never visible to end users)
+- AssemblyAI processes both transcription + speaker diarization in a single API call
+- Developer submits all `not_started` episodes, app polls until complete, results written to existing `transcripts` + `diarization_segments` tables
+- AssemblyAI API key stored as dev-only setting (separate from user-facing OpenAI key)
+- "Send and forget": submit all → background polling → data appears as jobs complete
+- One-time operation to seed the app with historical data before first release
+
+Plans:
+- [ ] 07.1-01-PLAN.md — Rust backend: assemblyai_process_backlog command (submit, poll, write DB, emit progress)
+- [ ] 07.1-02-PLAN.md — Frontend: AssemblyAIDevPanel modal + Layout integration + human verification
+
 ### Phase 8: QA & Release
 **Goal**: The app is verified end-to-end and the CI pipeline produces a shippable PKG installer that can be distributed
 **Depends on**: Phase 7
@@ -165,7 +184,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -175,7 +194,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Content Analysis | 4/4 | Complete | 2026-02-17 |
 | 5. Bird Randomizer & Polish | 0/4 | Not started | - |
 | 6. UI & Bird Fixes | 2/2 | Complete | 2026-02-22 |
-| 7. Analytics & Word Tracker | 0/2 | Not started | - |
+| 7. Analytics & Word Tracker | 2/2 | Complete | 2026-02-23 |
+| 7.1. AssemblyAI Backlog Processing | 0/2 | Not started | - |
 | 8. QA & Release | 0/- | Not started | - |
 
 ---

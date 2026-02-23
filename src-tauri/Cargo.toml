@@ -37,7 +37,8 @@ symphonia = { version = "0.5", features = ["mp3"] }
 rubato = "0.15"
 chrono = { version = "0.4", features = ["serde"] }
 futures-util = "0.3"
-tokio = { version = "1", features = ["fs", "io-util", "process"] }
+# Phase 7.1: AssemblyAI Backlog Processing (sync for Semaphore)
+tokio = { version = "1", features = ["fs", "io-util", "process", "sync"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 
 # Phase 4: Content Analysis
