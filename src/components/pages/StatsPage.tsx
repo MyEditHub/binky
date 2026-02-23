@@ -88,11 +88,13 @@ export default function StatsPage() {
       );
       const totalMs = rows.reduce((s, r) => s + r.total_ms, 0);
       setSpeech(
-        rows.map(r => ({
-          speaker: r.spk,
-          ms: r.total_ms,
-          percent: totalMs > 0 ? Math.round((r.total_ms / totalMs) * 100) : 0,
-        }))
+        rows
+          .map(r => ({
+            speaker: r.spk,
+            ms: r.total_ms,
+            percent: totalMs > 0 ? Math.round((r.total_ms / totalMs) * 100) : 0,
+          }))
+          .filter(s => s.percent >= 1)
       );
 
       // Per-episode trend
