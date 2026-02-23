@@ -131,7 +131,7 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
 
   return (
     <div
-      onClick={() => { if (!processing) onClose(); }}
+      onClick={onClose}
       style={{
         position: 'fixed',
         inset: 0,
@@ -254,7 +254,6 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={onClose}
-            disabled={processing}
             style={{
               padding: '7px 14px',
               borderRadius: 6,
@@ -262,11 +261,10 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
               background: 'transparent',
               color: 'var(--color-text)',
               fontSize: 13,
-              cursor: processing ? 'not-allowed' : 'pointer',
-              opacity: processing ? 0.5 : 1,
+              cursor: 'pointer',
             }}
           >
-            Schließen
+            {processing ? 'Schließen (läuft im Hintergrund)' : 'Schließen'}
           </button>
         </div>
       </div>
