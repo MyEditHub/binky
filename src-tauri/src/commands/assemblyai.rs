@@ -81,13 +81,13 @@ pub async fn assemblyai_process_backlog(
             .map_err(|e| e.to_string())?;
         }
 
-        // Get all not_started episodes with audio_url
+        // Get all not_started or error episodes with audio_url (includes retry of previous failures)
         let episodes: Vec<(i64, String, String)> = {
             let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
             let mut stmt = conn
                 .prepare(
                     "SELECT id, title, audio_url FROM episodes \
-                     WHERE transcription_status = 'not_started' \
+                     WHERE transcription_status IN ('not_started', 'error') \
                      AND audio_url IS NOT NULL AND audio_url != '' \
                      ORDER BY publish_date ASC",
                 )
