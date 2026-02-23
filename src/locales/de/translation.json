@@ -19,11 +19,20 @@
   },
   "pages": {
     "home": {
-      "title": "Startseite",
-      "speaking_balance": "Redeanteil",
-      "episodes_analyzed": "{{count}} Episode analysiert",
-      "episodes_analyzed_plural": "{{count}} Episoden analysiert",
-      "no_data": "Noch keine Episoden analysiert"
+      "title": "Willkommen",
+      "intro": "Binky hilft euch, Podcast-Episoden automatisch zu transkribieren, den Redeanteil beider Hosts zu analysieren und den Vogel der Woche zu bestimmen.",
+      "card_episodes_title": "Episoden",
+      "card_episodes_desc": "RSS-Feed laden und Episoden automatisch mit Whisper transkribieren.",
+      "card_episodes_action": "Zu den Episoden",
+      "card_analytics_title": "Analytik",
+      "card_analytics_desc": "Redeanteil beider Hosts pro Episode analysieren und Sprecher manuell korrigieren.",
+      "card_analytics_action": "Zur Analytik",
+      "card_stats_title": "Statistiken",
+      "card_stats_desc": "Sprechtrends über alle Episoden, offene Themen und Wortgruppen im Überblick.",
+      "card_stats_action": "Zu den Statistiken",
+      "card_bird_title": "Vogel der Woche",
+      "card_bird_desc": "Zufälligen Vogel aus der NABU-Datenbank auswählen und direkt in der Sendung vorstellen.",
+      "card_bird_action": "Zum Vogel"
     },
     "episodes": {
       "title": "Episoden",

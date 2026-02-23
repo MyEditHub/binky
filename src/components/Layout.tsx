@@ -58,7 +58,7 @@ export default function Layout() {
       case 'topics':
         return <TopicsPage />;
       case 'home':
-        return <HomePage />;
+        return <HomePage onNavigate={setActivePage} />;
       case 'bird':
         return <BirdPage />;
       case 'stats':
@@ -66,7 +66,7 @@ export default function Layout() {
       case 'settings':
         return <SettingsPage onDevModeChange={handleDevModeChange} />;
       default:
-        return <HomePage />;
+        return <HomePage onNavigate={setActivePage} />;
     }
   };
 

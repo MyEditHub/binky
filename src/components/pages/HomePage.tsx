@@ -1,83 +1,52 @@
-import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import Database from '@tauri-apps/plugin-sql';
-import { getSetting } from '../../lib/settings';
 
-interface HostStat {
-  speaker: string;
-  percent: number;
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home';
+
+interface Props {
+  onNavigate: (page: Page) => void;
 }
 
-export default function HomePage() {
+interface FeatureCard {
+  icon: string;
+  titleKey: string;
+  descKey: string;
+  page: Page;
+  labelKey: string;
+}
+
+const FEATURE_CARDS: FeatureCard[] = [
+  {
+    icon: '🎙️',
+    titleKey: 'pages.home.card_episodes_title',
+    descKey: 'pages.home.card_episodes_desc',
+    page: 'episodes',
+    labelKey: 'pages.home.card_episodes_action',
+  },
+  {
+    icon: '📊',
+    titleKey: 'pages.home.card_analytics_title',
+    descKey: 'pages.home.card_analytics_desc',
+    page: 'analytics',
+    labelKey: 'pages.home.card_analytics_action',
+  },
+  {
+    icon: '📈',
+    titleKey: 'pages.home.card_stats_title',
+    descKey: 'pages.home.card_stats_desc',
+    page: 'stats',
+    labelKey: 'pages.home.card_stats_action',
+  },
+  {
+    icon: '🐦',
+    titleKey: 'pages.home.card_bird_title',
+    descKey: 'pages.home.card_bird_desc',
+    page: 'bird',
+    labelKey: 'pages.home.card_bird_action',
+  },
+];
+
+export default function HomePage({ onNavigate }: Props) {
   const { t } = useTranslation();
-  const [hostStats, setHostStats] = useState<HostStat[]>([]);
-  const [episodeCount, setEpisodeCount] = useState(0);
-  const [host0Name, setHost0Name] = useState('Sprecher 1');
-  const [host1Name, setHost1Name] = useState('Sprecher 2');
-  const [host0Color, setHost0Color] = useState('#d97757');
-  const [host1Color, setHost1Color] = useState('#5B8C5A');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function load() {
-      const db = await Database.load('sqlite:binky.db');
-
-      const [h0, h1, c0, c1] = await Promise.all([
-        getSetting('host_0_name'),
-        getSetting('host_1_name'),
-        getSetting('host_0_color'),
-        getSetting('host_1_color'),
-      ]);
-      setHost0Name(h0 ?? 'Sprecher 1');
-      setHost1Name(h1 ?? 'Sprecher 2');
-      setHost0Color(c0 ?? '#d97757');
-      setHost1Color(c1 ?? '#5B8C5A');
-
-      const rows = await db.select<{ spk: string; total_ms: number }[]>(
-        `SELECT COALESCE(corrected_speaker, speaker_label) as spk,
-                SUM(end_ms - start_ms) as total_ms
-         FROM diarization_segments GROUP BY spk`
-      );
-      const totalMs = rows.reduce((s, r) => s + r.total_ms, 0);
-      if (totalMs > 0) {
-        setHostStats(
-          rows.map(r => ({
-            speaker: r.spk,
-            percent: Math.round((r.total_ms / totalMs) * 100),
-          }))
-        );
-      }
-
-      const countRows = await db.select<{ cnt: number }[]>(
-        `SELECT COUNT(*) as cnt FROM episodes WHERE diarization_status = 'done'`
-      );
-      setEpisodeCount(countRows[0]?.cnt ?? 0);
-
-      setLoading(false);
-    }
-    load().catch(console.error);
-  }, []);
-
-  const getHostName = (speaker: string) => {
-    if (speaker === 'SPEAKER_0') return host0Name;
-    if (speaker === 'SPEAKER_1') return host1Name;
-    return speaker;
-  };
-
-  const getHostColor = (speaker: string) => {
-    if (speaker === 'SPEAKER_0') return host0Color;
-    if (speaker === 'SPEAKER_1') return host1Color;
-    return 'var(--color-primary)';
-  };
-
-  if (loading) {
-    return (
-      <div className="page">
-        <div className="page-header"><h2 className="page-title">{t('pages.home.title')}</h2></div>
-        <div style={{ padding: '20px' }}>{t('common.loading')}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="page">
@@ -85,31 +54,57 @@ export default function HomePage() {
         <h2 className="page-title">{t('pages.home.title')}</h2>
       </div>
 
-      <div className="settings-section">
-        <h3 className="settings-section-title">{t('pages.home.speaking_balance')}</h3>
+      {/* Intro */}
+      <div style={{ padding: '0 24px 24px' }}>
+        <p style={{ fontSize: '0.95rem', color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.6 }}>
+          {t('pages.home.intro')}
+        </p>
+      </div>
 
-        {hostStats.length === 0 ? (
-          <p className="settings-row-desc">{t('pages.home.no_data')}</p>
-        ) : (
-          <>
-            {hostStats.map(s => (
-              <div key={s.speaker} style={{ marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5, fontSize: '0.9rem' }}>
-                  <span>{getHostName(s.speaker)}</span>
-                  <strong>{s.percent}%</strong>
-                </div>
-                <div style={{ height: 10, background: 'var(--color-border)', borderRadius: 5, overflow: 'hidden' }}>
-                  <div style={{ width: `${s.percent}%`, height: '100%', background: getHostColor(s.speaker), borderRadius: 5, transition: 'width 0.4s ease' }} />
-                </div>
-              </div>
-            ))}
-            {episodeCount > 0 && (
-              <p className="settings-row-desc" style={{ marginTop: 8 }}>
-                {t('pages.home.episodes_analyzed', { count: episodeCount })}
-              </p>
-            )}
-          </>
-        )}
+      {/* Feature card grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: 16,
+        padding: '0 24px 24px',
+      }}>
+        {FEATURE_CARDS.map(card => (
+          <div
+            key={card.page}
+            style={{
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 8,
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+            }}
+          >
+            <div style={{ fontSize: '1.6rem', lineHeight: 1 }}>{card.icon}</div>
+            <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{t(card.titleKey)}</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', lineHeight: 1.5, flex: 1 }}>
+              {t(card.descKey)}
+            </div>
+            <button
+              type="button"
+              onClick={() => onNavigate(card.page)}
+              style={{
+                marginTop: 4,
+                alignSelf: 'flex-start',
+                background: 'none',
+                border: '1px solid var(--color-border)',
+                borderRadius: 4,
+                padding: '5px 12px',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                color: 'var(--color-text)',
+              }}
+            >
+              {t(card.labelKey)} →
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
