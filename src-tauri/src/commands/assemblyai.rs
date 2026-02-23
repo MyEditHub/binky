@@ -245,6 +245,7 @@ async fn submit_episode(audio_url: &str, api_key: &str) -> Result<String, String
     let body = serde_json::json!({
         "audio_url": audio_url,
         "speaker_labels": true,
+        "speech_models": ["universal-3-pro"],
         "language_code": "de"
     });
 
