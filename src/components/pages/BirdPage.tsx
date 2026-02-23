@@ -59,14 +59,6 @@ export default function BirdPage() {
           >
             {loading ? t('pages.bird.drawing') : t('pages.bird.draw_new')}
           </button>
-          {currentBird && !panelOpen && (
-            <button
-              className="btn-primary btn-reveal"
-              onClick={() => setPanelOpen(true)}
-            >
-              {t('pages.bird.reveal')}
-            </button>
-          )}
           {currentBird && (
             <div style={{ position: 'relative' }}>
               {currentBirdMarked ? (
@@ -121,7 +113,11 @@ export default function BirdPage() {
               </button>
             </div>
           ) : (
-            <BirdCard imageUrl={currentBird?.image_url ?? null} loading={loading || fetching} />
+            <BirdCard
+              imageUrl={currentBird?.image_url ?? null}
+              loading={loading || fetching}
+              onClick={currentBird && !panelOpen ? () => setPanelOpen(true) : undefined}
+            />
           )}
         </div>
         <BirdInfoPanel
