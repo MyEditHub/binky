@@ -6,9 +6,10 @@ import TopicsPage from './pages/TopicsPage';
 import BirdPage from './pages/BirdPage';
 import SettingsPage from './pages/SettingsPage';
 import StatsPage from './pages/StatsPage';
+import HomePage from './pages/HomePage';
 import { getSetting } from '../lib/settings';
 
-type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings';
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home';
 
 export default function Layout() {
   const [devMode, setDevMode] = useState(false);
@@ -24,7 +25,7 @@ export default function Layout() {
       const isDev = v === 'true';
       setDevMode(isDev);
       // Default landing page depends on mode
-      setActivePage(isDev ? 'episodes' : 'bird');
+      setActivePage(isDev ? 'episodes' : 'home');
     });
   }, []);
 
@@ -32,7 +33,7 @@ export default function Layout() {
     setDevMode(next);
     // When switching to host mode, redirect away from dev-only pages
     if (!next && (activePage === 'episodes' || activePage === 'analytics' || activePage === 'topics')) {
-      setActivePage('bird');
+      setActivePage('home');
     }
   }, [activePage]);
 
@@ -56,6 +57,8 @@ export default function Layout() {
         return <AnalyticsPage />;
       case 'topics':
         return <TopicsPage />;
+      case 'home':
+        return <HomePage />;
       case 'bird':
         return <BirdPage />;
       case 'stats':
@@ -63,7 +66,7 @@ export default function Layout() {
       case 'settings':
         return <SettingsPage onDevModeChange={handleDevModeChange} />;
       default:
-        return <BirdPage />;
+        return <HomePage />;
     }
   };
 

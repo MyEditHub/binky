@@ -4,6 +4,7 @@
     "version": "Version {{version}}"
   },
   "nav": {
+    "home": "Startseite",
     "episodes": "Episoden",
     "analytics": "Analytik",
     "topics": "Themen",
@@ -17,6 +18,13 @@
     "bird": "Vogel-Randomizer (kommt bald)"
   },
   "pages": {
+    "home": {
+      "title": "Startseite",
+      "speaking_balance": "Redeanteil",
+      "episodes_analyzed": "{{count}} Episode analysiert",
+      "episodes_analyzed_plural": "{{count}} Episoden analysiert",
+      "no_data": "Noch keine Episoden analysiert"
+    },
     "episodes": {
       "title": "Episoden",
       "sync": "Synchronisieren",

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import QueueBadge from './TranscriptionQueue/QueueBadge';
 
-type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings';
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home';
 
 interface SidebarProps {
   activePage: Page;
@@ -33,6 +33,11 @@ export default function Sidebar({
   const { t } = useTranslation();
 
   const allNavItems: NavItem[] = [
+    {
+      id: 'home',
+      labelKey: 'nav.home',
+      disabled: false,
+    },
     {
       id: 'bird',
       labelKey: 'nav.bird',
