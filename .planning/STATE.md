@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 7 — Analytics & Word Tracker (in progress)
-Plan: 07-01 of ? (plan 1 complete)
+Phase: 7.1 — AssemblyAI Backlog Processing (in progress)
+Plan: 07.1-01 of ? (plan 1 complete)
 Status: In progress
-Last activity: 2026-02-22 — Completed 07-01-PLAN.md
+Last activity: 2026-02-23 — Completed 07.1-01-PLAN.md
 
-Progress: ████░░░░░░ ~36% (Phase 7 plan 1 complete; more Phase 7 plans + Phase 8 pending)
+Progress: ████░░░░░░ ~38% (Phase 7.1 plan 1 complete; frontend panel plan pending)
 
 **Phase numbering:**
 - Phases 1–5: v0.1 milestone (all complete or in progress)
@@ -224,9 +224,22 @@ Progress: ████░░░░░░ ~36% (Phase 7 plan 1 complete; more Pha
 - analyze_episode_topics: reads API key from settings, reads transcript, calls GPT-4o-mini with German prompt, parses JSON, writes topics with ai_detected=1, updates episode_analysis
 - Re-analysis safety: DELETE FROM topics WHERE detected_from_episode_id=? AND ai_detected=1 before INSERT
 
+### Roadmap Evolution
+
+- Phase 7.1 inserted after Phase 7 (2026-02-23): AssemblyAI Backlog Processing — dev-only bulk transcription + diarization to seed historical data before first release. Uses AssemblyAI API (single call = transcription + diarization). Gated behind ⌘⇧D dev mode. One-time operation.
+
+**From Plan 07.1-01 (2026-02-23):**
+- AssemblyAI auth: Authorization: {api_key} (no Bearer prefix)
+- assemblyai_process_backlog: dev-only command (#[cfg(not(debug_assertions))] early return guard)
+- tokio sync feature added to Cargo.toml for Semaphore support
+- Both transcription_status and diarization_status updated to 'done' in single DB statement (AssemblyAI provides both)
+- whisper_model column set to 'assemblyai' to distinguish from local Whisper transcripts
+- Speaker label mapping: alphabetical index A->SPEAKER_0, B->SPEAKER_1 via char arithmetic
+- rusqlite borrow fix: collect into named variable before block closes (avoids stmt/conn E0597 lifetime error)
+
 ## Session Continuity
 
-Last session: 2026-02-22
-Stopped at: Completed 07-01-PLAN.md (HostTrendChart LineChart rewrite)
+Last session: 2026-02-23
+Stopped at: Completed 07.1-01-PLAN.md (AssemblyAI Rust backend command)
 Resume file: None
-Next: Continue Phase 7 — Analytics & Word Tracker (plan 02+)
+Next: Continue Phase 7.1 — AssemblyAI Backlog Processing (plan 02: frontend dev-mode panel)
