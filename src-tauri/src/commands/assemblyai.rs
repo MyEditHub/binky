@@ -262,7 +262,8 @@ async fn submit_episode(audio_url: &str, api_key: &str) -> Result<String, String
         return Err("Ungültiger API-Schlüssel (401)".to_string());
     }
     if !status.is_success() {
-        return Err(format!("AssemblyAI Fehler: {}", status));
+        let body = response.text().await.unwrap_or_default();
+        return Err(format!("AssemblyAI Fehler {}: {}", status, body));
     }
 
     let resp: SubmitResponse = response
