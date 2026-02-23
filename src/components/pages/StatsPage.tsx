@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend,
-} from 'recharts';
+import HostTrendChart from '../Analytics/HostTrendChart';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 
@@ -14,6 +12,7 @@ interface SpeechStat {
 
 interface TrendPoint {
   label: string;
+  title: string;
   host0Pct: number;
   host1Pct: number;
 }
@@ -123,6 +122,7 @@ export default function StatsPage() {
         const label = ep.title.length > 20 ? ep.title.slice(0, 18) + '…' : ep.title;
         trendPoints.push({
           label,
+          title: ep.title,
           host0Pct: Math.round((ep.s0 / total) * 100),
           host1Pct: Math.round((ep.s1 / total) * 100),
         });
@@ -223,23 +223,13 @@ export default function StatsPage() {
       </div>
 
       {/* Per-episode trend chart */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">{t('pages.stats.trend_title')}</h3>
-        {trend.length < 2 ? (
-          <p className="settings-row-desc">{t('pages.stats.trend_min')}</p>
-        ) : (
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={trend} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} interval={0} angle={-30} textAnchor="end" height={40} axisLine={false} tickLine={false} />
-              <YAxis domain={[0, 100]} tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-              <Tooltip formatter={(v: number | string | undefined) => [`${v ?? 0}%`]} />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="host0Pct" name={host0Name} stackId="a" fill={host0Color} />
-              <Bar dataKey="host1Pct" name={host1Name} stackId="a" fill={host1Color} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
+      <HostTrendChart
+        data={trend}
+        host0Name={host0Name}
+        host1Name={host1Name}
+        host0Color={host0Color}
+        host1Color={host1Color}
+      />
 
       {/* Open topics */}
       <div className="settings-section">

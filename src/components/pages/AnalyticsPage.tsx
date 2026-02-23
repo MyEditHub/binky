@@ -6,7 +6,6 @@ import { useDiarization } from '../../hooks/useDiarization';
 import HostConfirmation from '../Analytics/HostConfirmation';
 import DashboardSummary from '../Analytics/DashboardSummary';
 import EpisodeAnalyticsList from '../Analytics/EpisodeAnalyticsList';
-import HostTrendChart from '../Analytics/HostTrendChart';
 
 export default function AnalyticsPage() {
   const { t } = useTranslation();
@@ -60,16 +59,6 @@ export default function AnalyticsPage() {
     await refresh();
   };
 
-  const trendData = [...episodes]
-    .filter((e) => e.diarizationStatus === 'done')
-    .reverse()
-    .map((e) => ({
-      label: `#${e.episodeId}`,
-      title: e.title,
-      host0Pct: e.host0Pct,
-      host1Pct: e.host1Pct,
-    }));
-
   const handleAnalyzeAll = () => {
     Database.load('sqlite:binky.db')
       .then((db) =>
@@ -109,13 +98,6 @@ export default function AnalyticsPage() {
           ) : (
             <>
               <DashboardSummary aggregate={aggregate} hostProfile={hostProfile} />
-              <HostTrendChart
-                data={trendData}
-                host0Name={hostProfile.host0Name}
-                host1Name={hostProfile.host1Name}
-                host0Color={hostProfile.host0Color}
-                host1Color={hostProfile.host1Color}
-              />
               <EpisodeAnalyticsList
                 episodes={episodes}
                 hostProfile={hostProfile}
