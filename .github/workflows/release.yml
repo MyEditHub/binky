@@ -64,6 +64,9 @@ jobs:
         with:
           workspaces: './src-tauri -> target'
 
+      - name: Install cmake (required by whisper-rs)
+        run: brew install cmake || true
+
       - name: Decrypt Tauri signing key
         run: |
           gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.GPG_PASSPHRASE }}" \
@@ -88,3 +91,39 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      - name: Build PKG installer
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
+            TARGET_TRIPLE="aarch64-apple-darwin"
+            PKG_ARCH="aarch64"
+          else
+            TARGET_TRIPLE="x86_64-apple-darwin"
+            PKG_ARCH="x64"
+          fi
+          APP_PATH="src-tauri/target/${TARGET_TRIPLE}/release/bundle/macos/Binky.app"
+          mkdir -p /tmp/pkg-scripts
+          cp .github/scripts/postinstall /tmp/pkg-scripts/postinstall
+          chmod +x /tmp/pkg-scripts/postinstall
+          pkgbuild \
+            --component "$APP_PATH" \
+            --install-location /Applications \
+            --scripts /tmp/pkg-scripts \
+            --identifier de.binky.app \
+            --version "$VERSION" \
+            "Binky_${VERSION}_${PKG_ARCH}.pkg"
+
+      - name: Upload PKG to release
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
+            PKG_ARCH="aarch64"
+          else
+            PKG_ARCH="x64"
+          fi
+          gh release upload "${{ github.ref_name }}" "Binky_${VERSION}_${PKG_ARCH}.pkg"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

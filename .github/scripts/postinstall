@@ -1,0 +1,2 @@
+#!/bin/bash
+xattr -rd com.apple.quarantine /Applications/Binky.app 2>/dev/null || true
