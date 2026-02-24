@@ -16,6 +16,7 @@ interface SidebarProps {
 interface NavItem {
   id: Page;
   labelKey: string;
+  collapsedLabel: string;
   disabled: boolean;
   devOnly?: boolean;
   disabledTooltipKey?: string;
@@ -36,40 +37,47 @@ export default function Sidebar({
     {
       id: 'home',
       labelKey: 'nav.home',
+      collapsedLabel: 'Ho',
       disabled: false,
     },
     {
       id: 'bird',
       labelKey: 'nav.bird',
+      collapsedLabel: 'Vo',
       disabled: false,
     },
     {
       id: 'stats',
       labelKey: 'nav.stats',
+      collapsedLabel: 'St',
       disabled: false,
       devOnly: false,
     },
     {
       id: 'episodes',
       labelKey: 'nav.episodes',
+      collapsedLabel: 'Ep',
       disabled: false,
       devOnly: true,
     },
     {
       id: 'analytics',
       labelKey: 'nav.analytics',
+      collapsedLabel: 'An',
       disabled: false,
       devOnly: true,
     },
     {
       id: 'topics',
       labelKey: 'nav.topics',
+      collapsedLabel: 'Th',
       disabled: false,
       devOnly: true,
     },
     {
       id: 'settings',
       labelKey: 'nav.settings',
+      collapsedLabel: 'Ei',
       disabled: false,
     },
   ];
@@ -113,7 +121,7 @@ export default function Sidebar({
             disabled={item.disabled}
           >
             {!isCollapsed && <span className="nav-item-label">{t(item.labelKey)}</span>}
-            {isCollapsed && <span className="nav-item-label nav-item-label-collapsed">{t(item.labelKey).slice(0, 1)}</span>}
+            {isCollapsed && <span className="nav-item-label nav-item-label-collapsed">{item.collapsedLabel}</span>}
             {item.id === 'episodes' && (transcriptionActive || queueCount > 0) && (
               <QueueBadge isActive={transcriptionActive} count={queueCount} />
             )}

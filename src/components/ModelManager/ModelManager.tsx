@@ -11,8 +11,6 @@ interface WhisperModel {
 }
 
 const WHISPER_MODELS: WhisperModel[] = [
-  { name: 'tiny', sizeLabel: '75 MB', descKey: 'model_tiny_desc' },
-  { name: 'base', sizeLabel: '142 MB', descKey: 'model_base_desc' },
   {
     name: 'small',
     sizeLabel: '466 MB',

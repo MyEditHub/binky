@@ -5,7 +5,6 @@ import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
-import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
 import { parseWordGroups, type WordGroup } from './StatsPage';
 
 // ─── OpenAI Settings Section ─────────────────────────────────────────────────
@@ -238,7 +237,6 @@ function extractTopWords(
 export default function SettingsPage() {
   const { t } = useTranslation();
   const [version, setVersion] = useState<string>('...');
-  const [dbStatus, setDbStatus] = useState<'ok' | 'error' | 'checking'>('checking');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [groups, setGroups] = useState<WordGroup[]>([]);
   const [newGroupLabel, setNewGroupLabel] = useState('');
@@ -253,10 +251,6 @@ export default function SettingsPage() {
     getVersion()
       .then((v) => setVersion(v))
       .catch(() => setVersion('?'));
-
-    Database.load('sqlite:binky.db')
-      .then(() => setDbStatus('ok'))
-      .catch(() => setDbStatus('error'));
 
     getSetting('launchAtLogin').then((val) => {
       setLaunchAtLogin(val === 'true');
@@ -357,35 +351,6 @@ export default function SettingsPage() {
     <div className="page">
       <div className="page-header">
         <h2 className="page-title">{t('pages.settings.title')}</h2>
-      </div>
-
-      {/* App Information */}
-      <div className="settings-section">
-        <h3 className="settings-section-title">{t('pages.settings.app_info')}</h3>
-
-        <div className="settings-row">
-          <span className="settings-row-label">{t('pages.settings.version_label')}</span>
-          <span className="settings-row-value">v{version}</span>
-        </div>
-
-        <div className="settings-row">
-          <span className="settings-row-label">{t('pages.settings.database_label')}</span>
-          <span className="settings-row-value">
-            {dbStatus === 'checking' && t('common.loading')}
-            {dbStatus === 'ok' && (
-              <>
-                <span className="settings-status-dot settings-status-ok" />
-                {t('pages.settings.database_connected')}
-              </>
-            )}
-            {dbStatus === 'error' && (
-              <>
-                <span className="settings-status-dot settings-status-error" />
-                {t('pages.settings.database_error')}
-              </>
-            )}
-          </span>
-        </div>
       </div>
 
       {/* Preferences */}
@@ -556,8 +521,6 @@ export default function SettingsPage() {
       {/* Transcription / Model Manager */}
       <ModelManager />
 
-      {/* Diarization Model Manager */}
-      <DiarizationModelManager />
 
       {/* OpenAI Settings */}
       <OpenAISettingsSection />
