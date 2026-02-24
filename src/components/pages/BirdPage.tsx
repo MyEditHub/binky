@@ -22,6 +22,8 @@ export default function BirdPage() {
     undoMarkUsed,
     resetPool,
     refreshPool,
+    loadHistory,
+    loadPoolStatus,
   } = useBirds();
 
   const [panelOpen, setPanelOpen] = useState(false);
@@ -127,7 +129,7 @@ export default function BirdPage() {
         />
       </div>
 
-      <BirdHistory history={history} onReset={resetPool} />
+      <BirdHistory history={history} onReset={resetPool} onRefresh={async () => { await loadHistory(); await loadPoolStatus(); }} />
     </div>
   );
 }
