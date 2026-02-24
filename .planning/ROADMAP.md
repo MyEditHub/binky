@@ -17,10 +17,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Episode Management & Transcription** - RSS feed integration, episode library, German transcription engine
 - [x] **Phase 3: Speaker Analytics** - Speaker diarization, speaking balance metrics, conversation flow visualization
 - [x] **Phase 4: Content Analysis** - Unfinished topics detection, topic tracking, AI-powered content insights
-- [ ] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
-- [ ] **Phase 6: UI & Bird Fixes** - Sidebar polish, chart visual fixes, Steckbrief formatting, dev data cleanup
-- [ ] **Phase 7: Analytics & Word Tracker** - Speech trend enhancement, word group deletion
-- [ ] **Phase 7.1: AssemblyAI Backlog Processing** - Dev-only bulk transcription + diarization via AssemblyAI API (INSERTED)
+- [x] **Phase 5: Bird Randomizer & Polish** - Bird-of-the-week randomizer, final UI refinements, distribution
+- [x] **Phase 6: UI & Bird Fixes** - Sidebar polish, chart visual fixes, Steckbrief formatting, dev data cleanup
+- [x] **Phase 7: Analytics & Word Tracker** - Speech trend enhancement, word group deletion
+- [x] **Phase 7.1: AssemblyAI Backlog Processing** - Dev-only bulk transcription + diarization via AssemblyAI API (INSERTED)
 - [ ] **Phase 8: QA & Release** - End-to-end QA, CI build verification, first release ship
 
 ## Phase Details
@@ -168,18 +168,24 @@ Plans:
 - One-time operation to seed the app with historical data before first release
 
 Plans:
-- [ ] 07.1-01-PLAN.md — Rust backend: assemblyai_process_backlog command (submit, poll, write DB, emit progress)
-- [ ] 07.1-02-PLAN.md — Frontend: AssemblyAIDevPanel modal + Layout integration + human verification
+- [x] 07.1-01-PLAN.md — Rust backend: assemblyai_process_backlog command (submit, poll, write DB, emit progress)
+- [x] 07.1-02-PLAN.md — Frontend: AssemblyAIDevPanel modal + Layout integration + human verification
 
 ### Phase 8: QA & Release
-**Goal**: The app is verified end-to-end and the CI pipeline produces a shippable PKG installer that can be distributed
+**Goal**: The app is verified end-to-end and the CI pipeline produces a shippable DMG installer that can be distributed
 **Depends on**: Phase 7
 **Requirements**: QA-01, QA-02, RELEASE-01
 **Success Criteria** (what must be TRUE):
   1. Bird randomizer completes a full draw-reveal-mark-history cycle without errors (human QA sign-off)
   2. Every page in the app loads without a blank screen, error state, or broken layout under normal use
-  3. GitHub Actions CI run completes successfully and produces a signed PKG artifact for both ARM and Intel
-  4. Downloaded PKG installs and launches the app on a clean macOS machine without a terminal command
+  3. GitHub Actions CI run completes successfully and produces a signed DMG artifact for both ARM and Intel
+  4. Downloaded DMG installs and launches the app on a clean macOS machine without a terminal command
+**Plans**: 3 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Human QA verification of all production pages and bird randomizer
+- [ ] 08-02-PLAN.md — Pre-release: CI hardening, signing key backup, private repo decision
+- [ ] 08-03-PLAN.md — Release trigger: tag, push, monitor CI, verify DMG installation
 
 ## Progress
 
@@ -192,11 +198,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8
 | 2. Episode Management & Transcription | 6/6 | Complete | 2026-02-15 |
 | 3. Speaker Analytics | 5/6 | Complete | 2026-02-16 |
 | 4. Content Analysis | 4/4 | Complete | 2026-02-17 |
-| 5. Bird Randomizer & Polish | 0/4 | Not started | - |
+| 5. Bird Randomizer & Polish | 4/4 | Complete | 2026-02-23 |
 | 6. UI & Bird Fixes | 2/2 | Complete | 2026-02-22 |
 | 7. Analytics & Word Tracker | 2/2 | Complete | 2026-02-23 |
-| 7.1. AssemblyAI Backlog Processing | 0/2 | Not started | - |
-| 8. QA & Release | 0/- | Not started | - |
+| 7.1. AssemblyAI Backlog Processing | 2/2 | Complete | 2026-02-23 |
+| 8. QA & Release | 0/3 | Not started | - |
 
 ---
 

@@ -117,6 +117,9 @@ export default function Sidebar({
             {item.id === 'episodes' && (transcriptionActive || queueCount > 0) && (
               <QueueBadge isActive={transcriptionActive} count={queueCount} />
             )}
+            {item.id === 'settings' && devMode && (
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--color-primary)', marginLeft: 'auto', flexShrink: 0 }} />
+            )}
           </button>
         ))}
       </nav>

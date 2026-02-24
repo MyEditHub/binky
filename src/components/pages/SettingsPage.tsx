@@ -154,15 +154,100 @@ function HostSettingsSection() {
   );
 }
 
-export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v: boolean) => void }) {
+// ─── Stop words ──────────────────────────────────────────────────────────────
+
+/** German grammar words — articles, pronouns, prepositions, conjunctions, auxiliaries, fillers */
+const DE_STOP_WORDS = new Set([
+  // articles & determiners
+  'der', 'die', 'das', 'dem', 'den', 'des', 'ein', 'eine', 'einer', 'einen', 'einem', 'eines',
+  'dieser', 'diese', 'dieses', 'diesem', 'diesen', 'jeder', 'jede', 'jedes', 'alle', 'kein', 'keine',
+  // pronouns
+  'ich', 'du', 'er', 'sie', 'es', 'wir', 'ihr', 'ihnen', 'uns', 'mich', 'mir', 'dich', 'dir',
+  'ihn', 'ihm', 'sich', 'man', 'wer', 'was', 'euch', 'mein', 'dein', 'sein', 'unser', 'euer',
+  // conjunctions
+  'und', 'oder', 'aber', 'weil', 'wenn', 'dass', 'ob', 'als', 'seit', 'bevor', 'nachdem',
+  'während', 'obwohl', 'damit', 'sodass', 'denn', 'noch', 'zwar', 'entweder', 'sowohl',
+  // prepositions
+  'in', 'an', 'auf', 'bei', 'durch', 'für', 'gegen', 'hinter', 'mit', 'nach', 'neben',
+  'ohne', 'über', 'um', 'unter', 'von', 'vor', 'wegen', 'zu', 'zwischen', 'aus', 'bis',
+  'ab', 'außer', 'entlang', 'gegenüber', 'innerhalb', 'außerhalb', 'trotz',
+  // auxiliaries & modal verbs
+  'ist', 'war', 'sind', 'waren', 'hat', 'haben', 'hatte', 'hatten', 'bin', 'bist', 'wird',
+  'wurde', 'wurden', 'worden', 'sein', 'werden', 'habe', 'kann', 'muss', 'soll',
+  'will', 'darf', 'konnte', 'sollte', 'wollte', 'durfte', 'musste',
+  // filler & discourse particles
+  'ja', 'nein', 'nicht', 'auch', 'schon', 'mal', 'dann', 'da', 'hier', 'so', 'wie', 'mehr',
+  'immer', 'nur', 'jetzt', 'sehr', 'eigentlich', 'einfach', 'halt', 'eben', 'doch', 'also',
+  'okay', 'genau', 'ach', 'gar', 'ganz', 'wieder', 'viel', 'wenig', 'etwas',
+  'nichts', 'alles', 'wirklich', 'total', 'mega', 'super', 'krass', 'irgendwie',
+  'irgendwas', 'irgendwann', 'irgendwo', 'sozusagen', 'quasi', 'nämlich', 'übrigens',
+  // common high-frequency verbs
+  'sagen', 'sagt', 'sage', 'gesagt', 'machen', 'macht', 'mache', 'gemacht',
+  'gehen', 'geht', 'gehe', 'gegangen', 'kommen', 'kommt', 'komme', 'gekommen',
+  'denken', 'denkt', 'glaube', 'glauben', 'glaubt', 'finden', 'findet', 'wissen', 'weiß',
+  'sehen', 'hören', 'hört', 'geben', 'gibt', 'nehmen', 'nimmt', 'stehen', 'steht',
+  'liegen', 'liegt', 'bringen', 'lassen', 'lässt', 'halten', 'hält', 'zeigen', 'zeigt',
+  // temporal / quantity adverbs
+  'heute', 'morgen', 'gestern', 'nie', 'oft', 'manchmal', 'selten', 'bald',
+  'früher', 'später', 'gerade', 'gleich', 'lange', 'kurz',
+]);
+
+/** Podcast-specific words — show name, host names, recurring segments, meta-language */
+const PODCAST_STOP_WORDS = new Set([
+  // show identity
+  'nettgeflüster', 'nettgefluester', 'binky', 'podcast',
+  // host names
+  'philipp', 'nadine',
+  // recurring segments
+  'folge', 'folgen', 'episode', 'staffel', 'ausgabe',
+  'vogel', 'vögel', 'vogels', 'vögeln', 'woche',
+  // generic podcast meta-language
+  'hören', 'hörer', 'hörerin', 'hörerinnen', 'hört', 'abonnieren', 'abonniert',
+  'kanal', 'spotify', 'apple', 'feed', 'reinhören', 'reinhört',
+  'intro', 'outro', 'teaser', 'thema', 'themen', 'segment', 'rubrik',
+]);
+
+function extractTopWords(
+  texts: string[],
+  existingWords: Set<string>,
+  customExcluded: Set<string>,
+  topN = 20,
+): { word: string; count: number }[] {
+  const freq = new Map<string, number>();
+  for (const text of texts) {
+    const tokens = text.toLowerCase().split(/[\s,.:;!?()\[\]{}"'«»–—\-\/\\|]+/);
+    for (const token of tokens) {
+      if (token.length < 4) continue;
+      if (/^\d+$/.test(token)) continue;
+      if (DE_STOP_WORDS.has(token)) continue;
+      if (PODCAST_STOP_WORDS.has(token)) continue;
+      if (customExcluded.has(token)) continue;
+      if (existingWords.has(token)) continue;
+      freq.set(token, (freq.get(token) ?? 0) + 1);
+    }
+  }
+  return Array.from(freq.entries())
+    .filter(([, c]) => c >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([word, count]) => ({ word, count }));
+}
+
+// ─── Main Settings Page ───────────────────────────────────────────────────────
+
+export default function SettingsPage() {
   const { t } = useTranslation();
   const [version, setVersion] = useState<string>('...');
   const [dbStatus, setDbStatus] = useState<'ok' | 'error' | 'checking'>('checking');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
-  const [devMode, setDevMode] = useState(false);
   const [groups, setGroups] = useState<WordGroup[]>([]);
   const [newGroupLabel, setNewGroupLabel] = useState('');
   const [variantInputs, setVariantInputs] = useState<Record<number, string>>({});
+  const [suggestions, setSuggestions] = useState<{ word: string; count: number }[] | null>(null);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [customExcluded, setCustomExcluded] = useState<string[]>([]);
+  const [excludeInput, setExcludeInput] = useState('');
+  const [showExcluded, setShowExcluded] = useState(false);
 
   useEffect(() => {
     getVersion()
@@ -177,12 +262,14 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
       setLaunchAtLogin(val === 'true');
     });
 
-    getSetting('developer_mode').then((val) => {
-      setDevMode(val === 'true');
-    });
-
     getSetting('innuendo_words').then((val) => {
       setGroups(parseWordGroups(val));
+    });
+
+    getSetting('suggestion_excluded_words').then((val) => {
+      if (val) {
+        try { setCustomExcluded(JSON.parse(val)); } catch { /* ignore */ }
+      }
     });
   }, []);
 
@@ -190,13 +277,6 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
     const next = !launchAtLogin;
     setLaunchAtLogin(next);
     await setSetting('launchAtLogin', next ? 'true' : 'false');
-  }
-
-  async function handleDevModeToggle() {
-    const next = !devMode;
-    setDevMode(next);
-    await setSetting('developer_mode', next ? 'true' : 'false');
-    onDevModeChange?.(next);
   }
 
   async function saveGroups(next: WordGroup[]) {
@@ -228,6 +308,49 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
   async function handleRemoveVariant(groupIdx: number, word: string) {
     const next = groups.map((gr, i) => i === groupIdx ? { ...gr, words: gr.words.filter(w => w !== word) } : gr);
     await saveGroups(next);
+  }
+
+  async function saveCustomExcluded(next: string[]) {
+    setCustomExcluded(next);
+    await setSetting('suggestion_excluded_words', JSON.stringify(next));
+    // Re-run suggestions if visible so excluded word disappears immediately
+    setSuggestions(prev => prev ? prev.filter(s => !next.includes(s.word)) : prev);
+  }
+
+  async function handleAddExcluded() {
+    const word = excludeInput.trim().toLowerCase();
+    if (!word || customExcluded.includes(word)) return;
+    setExcludeInput('');
+    await saveCustomExcluded([...customExcluded, word]);
+  }
+
+  async function handleRemoveExcluded(word: string) {
+    await saveCustomExcluded(customExcluded.filter(w => w !== word));
+  }
+
+  async function handleLoadSuggestions() {
+    setSuggestionsLoading(true);
+    setSuggestions(null);
+    try {
+      const db = await Database.load('sqlite:binky.db');
+      const rows = await db.select<{ full_text: string }[]>('SELECT full_text FROM transcripts');
+      const texts = rows.map(r => r.full_text);
+      const existingWords = new Set(groups.flatMap(g => [g.label.toLowerCase(), ...g.words.map(w => w.toLowerCase())]));
+      const excluded = new Set(customExcluded);
+      setSuggestions(extractTopWords(texts, existingWords, excluded));
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }
+
+  async function handleAddSuggestion(word: string) {
+    setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
+    await saveGroups([...groups, { label: word, words: [word] }]);
+  }
+
+  async function handleExcludeSuggestion(word: string) {
+    setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
+    await saveCustomExcluded([...customExcluded, word]);
   }
 
   return (
@@ -284,20 +407,6 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
           </button>
         </div>
 
-        <div className="settings-row">
-          <div>
-            <div className="settings-row-label">{t('pages.settings.dev_mode')}</div>
-            <div className="settings-row-desc">{t('pages.settings.dev_mode_desc')}</div>
-          </div>
-          <button
-            className={`settings-toggle${devMode ? ' settings-toggle-on' : ''}`}
-            onClick={handleDevModeToggle}
-            aria-pressed={devMode}
-            type="button"
-          >
-            <span className="settings-toggle-thumb" />
-          </button>
-        </div>
       </div>
 
       {/* Wort-Tracker */}
@@ -353,6 +462,94 @@ export default function SettingsPage({ onDevModeChange }: { onDevModeChange?: (v
           <button className="btn-outline" onClick={handleAddGroup} type="button">
             {t('pages.settings.innuendo_new_group')}
           </button>
+        </div>
+
+        {/* Auto-suggest from transcripts */}
+        <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--color-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>{t('pages.settings.innuendo_suggest_title')}</span>
+            <button
+              className="btn-outline"
+              onClick={handleLoadSuggestions}
+              disabled={suggestionsLoading}
+              type="button"
+              style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+            >
+              {suggestionsLoading ? t('pages.settings.innuendo_suggest_loading') : t('pages.settings.innuendo_suggest_btn')}
+            </button>
+          </div>
+
+          {suggestions !== null && suggestions.length === 0 && (
+            <p className="settings-row-desc">{t('pages.settings.innuendo_suggest_none')}</p>
+          )}
+
+          {suggestions !== null && suggestions.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {suggestions.map(({ word, count }) => (
+                <span
+                  key={word}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 0, border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', overflow: 'hidden' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleAddSuggestion(word)}
+                    title={t('pages.settings.innuendo_suggest_add_title')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px 8px', lineHeight: 1 }}
+                  >
+                    {word} <span style={{ opacity: 0.45 }}>{count}×</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExcludeSuggestion(word)}
+                    title={t('pages.settings.innuendo_suggest_exclude_title')}
+                    style={{ background: 'none', border: 'none', borderLeft: '1px solid var(--color-border)', cursor: 'pointer', padding: '3px 6px', lineHeight: 1, opacity: 0.45, fontSize: '0.75rem' }}
+                  >
+                    —
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Excluded words management */}
+        <div style={{ marginTop: 16 }}>
+          <button
+            type="button"
+            onClick={() => setShowExcluded(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', opacity: 0.55, padding: 0, textDecoration: 'underline' }}
+          >
+            {showExcluded ? t('pages.settings.innuendo_exclude_hide') : t('pages.settings.innuendo_exclude_toggle')}
+            {customExcluded.length > 0 && ` (${customExcluded.length})`}
+          </button>
+
+          {showExcluded && (
+            <div style={{ marginTop: 10 }}>
+              <p className="settings-row-desc" style={{ marginBottom: 8 }}>{t('pages.settings.innuendo_exclude_desc')}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {customExcluded.map(word => (
+                  <span key={word} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'var(--color-border)', borderRadius: 12, fontSize: '0.8rem', opacity: 0.7 }}>
+                    {word}
+                    <button type="button" onClick={() => handleRemoveExcluded(word)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.6, fontSize: '0.9rem' }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <input
+                  type="text"
+                  value={excludeInput}
+                  onChange={e => setExcludeInput(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddExcluded(); }}
+                  placeholder={t('pages.settings.innuendo_exclude_placeholder')}
+                  className="settings-input"
+                  style={{ flex: 1, fontSize: '0.85rem', padding: '4px 8px' }}
+                />
+                <button className="btn-outline" onClick={handleAddExcluded} type="button" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
+                  {t('pages.settings.innuendo_exclude_add')}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

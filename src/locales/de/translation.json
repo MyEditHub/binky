@@ -131,7 +131,18 @@
       "innuendo_group_placeholder": "Kategoriename (z.B. Peniswitze)",
       "innuendo_word_placeholder": "Variante (z.B. Schwanz)",
       "innuendo_add_variant": "+ Variante",
-      "innuendo_empty": "Noch keine Kategorien konfiguriert."
+      "innuendo_empty": "Noch keine Kategorien konfiguriert.",
+      "innuendo_suggest_title": "Vorschläge aus Transkripten",
+      "innuendo_suggest_btn": "Analysieren",
+      "innuendo_suggest_loading": "Analysiere…",
+      "innuendo_suggest_none": "Keine neuen Vorschläge gefunden.",
+      "innuendo_suggest_add_title": "Als neue Kategorie hinzufügen",
+      "innuendo_suggest_exclude_title": "Dauerhaft aus Vorschlägen ausschließen",
+      "innuendo_exclude_toggle": "Ausschlussliste verwalten",
+      "innuendo_exclude_hide": "Ausschlussliste ausblenden",
+      "innuendo_exclude_desc": "Diese Wörter erscheinen nie in den Vorschlägen.",
+      "innuendo_exclude_placeholder": "Wort ausschließen…",
+      "innuendo_exclude_add": "Ausschließen"
     },
     "stats": {
       "title": "Statistiken",
