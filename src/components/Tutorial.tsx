@@ -47,7 +47,6 @@ export default function Tutorial({ onClose }: TutorialProps) {
 
         {screen === 0 && (
           <div className="tutorial-screen">
-            <div className="tutorial-icon">🎙️</div>
             <h2 className="tutorial-title">{t('tutorial.welcome_title')}</h2>
             <p className="tutorial-text">{t('tutorial.welcome_text')}</p>
           </div>
@@ -55,7 +54,6 @@ export default function Tutorial({ onClose }: TutorialProps) {
 
         {screen === 1 && (
           <div className="tutorial-screen">
-            <div className="tutorial-icon">🐦</div>
             <h2 className="tutorial-title">{t('tutorial.bird_title')}</h2>
             <p className="tutorial-text">{t('tutorial.bird_text')}</p>
           </div>
@@ -63,7 +61,6 @@ export default function Tutorial({ onClose }: TutorialProps) {
 
         {screen === 2 && (
           <div className="tutorial-screen">
-            <div className="tutorial-icon">📊</div>
             <h2 className="tutorial-title">{t('tutorial.tracker_title')}</h2>
             <p className="tutorial-text">{t('tutorial.tracker_text')}</p>
           </div>
@@ -71,7 +68,6 @@ export default function Tutorial({ onClose }: TutorialProps) {
 
         {screen === 3 && (
           <div className="tutorial-screen">
-            <div className="tutorial-icon">⚙️</div>
             <h2 className="tutorial-title">{t('tutorial.setup_title')}</h2>
             <div className="tutorial-setting-row">
               <span className="tutorial-setting-label">{t('tutorial.launch_at_login')}</span>
