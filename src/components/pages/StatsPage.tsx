@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import HostTrendChart from '../Analytics/HostTrendChart';
 import Database from '@tauri-apps/plugin-sql';
@@ -252,28 +252,52 @@ export default function StatsPage() {
         )}
       </div>
 
-      {/* Innuendo groups */}
+      {/* Innuendo groups — bubble visualization */}
       {groups.length > 0 && (
         <div className="settings-section">
           <h3 className="settings-section-title">{t('pages.stats.innuendo_title')}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '8px 12px', alignItems: 'center' }}>
-            {groups.map(item => {
-              const count = innuendos.find(i => i.label === item.label)?.count ?? 0;
-              return (
-                <React.Fragment key={item.label}>
-                  <span style={{ fontSize: '0.9rem' }}>{item.label}</span>
-                  <strong style={{ fontSize: '1.2rem', color: 'var(--color-primary)' }}>{count}×</strong>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteGroup(item.label)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '1rem', padding: '0 4px' }}
-                    title="Löschen"
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', paddingTop: 8 }}>
+            {(() => {
+              const maxCount = Math.max(...innuendos.map(i => i.count), 1);
+              return groups.map(item => {
+                const count = innuendos.find(i => i.label === item.label)?.count ?? 0;
+                const size = 72 + Math.round((count / maxCount) * 68);
+                return (
+                  <div
+                    key={item.label}
+                    style={{
+                      position: 'relative',
+                      width: size,
+                      height: size,
+                      borderRadius: '50%',
+                      background: 'var(--color-primary)',
+                      opacity: 0.15 + Math.min(0.75, (count / maxCount) * 0.75),
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'default',
+                      flexShrink: 0,
+                    }}
                   >
-                    ×
-                  </button>
-                </React.Fragment>
-              );
-            })}
+                    <span style={{ fontSize: Math.max(10, Math.round(size * 0.18)), fontWeight: 600, color: 'var(--color-text)', textAlign: 'center', lineHeight: 1.2, padding: '0 8px', wordBreak: 'break-word' }}>
+                      {item.label}
+                    </span>
+                    <strong style={{ fontSize: Math.max(9, Math.round(size * 0.16)), color: 'var(--color-primary)', filter: 'brightness(0.6)' }}>
+                      {count}×
+                    </strong>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteGroup(item.label)}
+                      style={{ position: 'absolute', top: 4, right: 4, background: 'none', border: 'none', cursor: 'pointer', opacity: 0.4, fontSize: '0.75rem', padding: '2px 4px', lineHeight: 1, color: 'var(--color-text)' }}
+                      title="Löschen"
+                    >
+                      ×
+                    </button>
+                  </div>
+                );
+              });
+            })()}
           </div>
         </div>
       )}
