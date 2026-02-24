@@ -9,12 +9,6 @@ interface TopicRowProps {
 export default function TopicRow({ topic, onStatusChange }: TopicRowProps) {
   const { t } = useTranslation();
 
-  const statusButtons: { key: TopicStatus; label: string }[] = [
-    { key: 'offen', label: t('pages.topics.status_offen') },
-    { key: 'erledigt', label: t('pages.topics.status_erledigt') },
-    { key: 'zurückgestellt', label: t('pages.topics.status_zurückgestellt') },
-  ];
-
   const confidencePercent =
     topic.confidence !== null ? Math.round(topic.confidence * 100) : null;
 
@@ -46,16 +40,23 @@ export default function TopicRow({ topic, onStatusChange }: TopicRowProps) {
       </div>
 
       <div className="topic-status-bar">
-        {statusButtons.map(btn => (
+        {topic.status === 'offen' ? (
           <button
-            key={btn.key}
             type="button"
-            className={`topic-status-btn topic-status-btn-${btn.key === topic.status ? 'active-' + btn.key : 'inactive'}`}
-            onClick={() => onStatusChange(topic.id, btn.key)}
+            className="topic-status-btn topic-status-btn-inactive"
+            onClick={() => onStatusChange(topic.id, 'erledigt')}
           >
-            {btn.label}
+            {t('pages.topics.status_erledigt')}
           </button>
-        ))}
+        ) : (
+          <button
+            type="button"
+            className="topic-status-btn topic-status-btn-inactive"
+            onClick={() => onStatusChange(topic.id, 'offen')}
+          >
+            {t('pages.topics.status_offen')}
+          </button>
+        )}
       </div>
     </div>
   );

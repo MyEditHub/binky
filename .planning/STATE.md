@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 ## Current Position
 
 Phase: 8.2 — Pre-Release UX Completion
-Plan: 01 of 4 complete
+Plan: 02 of 4 complete
 Status: In progress
-Last activity: 2026-02-24 — Completed 08.2-01-PLAN.md (suggestion exclusion)
+Last activity: 2026-02-24 — Completed 08.2-02-PLAN.md (tutorial rewrite, reopen button)
 
-Progress: ████████░░ ~82% (Phases 1–7.1 all complete; Phase 8.2 plan 1/4 done)
+Progress: ████████░░ ~84% (Phases 1–7.1 all complete; Phase 8.2 plan 2/4 done)
 
 **Phase numbering:**
 - Phases 1–5: v0.1 milestone (all complete or in progress)
@@ -232,6 +232,10 @@ Progress: ████████░░ ~82% (Phases 1–7.1 all complete; Phas
 - Phase 8.1 inserted after Phase 8 08-01 (2026-02-24): Word Tracker UX Redesign — bubble visualization on Stats page (circles scale with count), simplified flat-tag management in Settings. QA feedback from 08-01 checkpoint.
 - Phase 7.1 inserted after Phase 7 (2026-02-23): AssemblyAI Backlog Processing — dev-only bulk transcription + diarization to seed historical data before first release. Uses AssemblyAI API (single call = transcription + diarization). Gated behind ⌘⇧D dev mode. One-time operation.
 
+**From Plan 08.2-02 (2026-02-24):**
+- CustomEvent pattern for cross-tree UI triggers: window.dispatchEvent(new CustomEvent('open-tutorial')) in SettingsPage, useEffect listener in App.tsx — avoids prop drilling across unrelated component trees
+- Tutorial rewrite: removed all dev-phase roadmap keys (phase1-phase5), replaced with 4 end-user screens (welcome, bird, tracker, setup)
+
 **From Plan 07.1-02 (2026-02-23):**
 - DEV panel pattern: import.meta.env.DEV guard in JSX render; Cmd+Shift+A shortcut in Layout; tree-shaken from production bundles
 - Progress map pattern: Map<number, ProgressEntry> keyed by episode_id for in-place status updates from Tauri events
@@ -250,6 +254,6 @@ Progress: ████████░░ ~82% (Phases 1–7.1 all complete; Phas
 ## Session Continuity
 
 Last session: 2026-02-24
-Stopped at: Completed 08.2-01-PLAN.md (word tracker suggestion exclusion)
+Stopped at: Completed 08.2-02-PLAN.md (tutorial rewrite for end users, reopen button in Settings)
 Resume file: None
-Next: 08.2-02-PLAN.md
+Next: 08.2-03-PLAN.md

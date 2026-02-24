@@ -72,7 +72,7 @@ export default function Sidebar({
       labelKey: 'nav.topics',
       collapsedLabel: 'Th',
       disabled: false,
-      devOnly: true,
+      devOnly: false,
     },
     {
       id: 'settings',
