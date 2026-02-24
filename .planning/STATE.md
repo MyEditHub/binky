@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-22)
 
 ## Current Position
 
-Phase: 7.1 — AssemblyAI Backlog Processing (in progress)
-Plan: 07.1-01 of ? (plan 1 complete)
+Phase: 8.2 — Pre-Release UX Completion
+Plan: 01 of 4 complete
 Status: In progress
-Last activity: 2026-02-23 — Completed 07.1-01-PLAN.md
+Last activity: 2026-02-24 — Completed 08.2-01-PLAN.md (suggestion exclusion)
 
-Progress: ████░░░░░░ ~38% (Phase 7.1 plan 1 complete; frontend panel plan pending)
+Progress: ████████░░ ~82% (Phases 1–7.1 all complete; Phase 8.2 plan 1/4 done)
 
 **Phase numbering:**
 - Phases 1–5: v0.1 milestone (all complete or in progress)
@@ -194,6 +194,9 @@ Progress: ████░░░░░░ ~38% (Phase 7.1 plan 1 complete; fronte
 
 ### Pending Todos
 
+**Future features (post-release):**
+- Formatted transcript storage: save AssemblyAI utterances as speaker-labeled conversation in full_text (e.g. "SPEAKER_0: text...\nSPEAKER_1: text...") instead of wall of text. Requires re-running backlog after fix to get reformatted transcripts.
+
 **CRITICAL - Before first release:**
 - Back up private signing key at ~/.tauri/binky.key to 1Password/BitWarden
 - Configure GitHub Secrets: GPG_PASSPHRASE and TAURI_PRIVATE_KEY_PASSWORD
@@ -226,7 +229,14 @@ Progress: ████░░░░░░ ~38% (Phase 7.1 plan 1 complete; fronte
 
 ### Roadmap Evolution
 
+- Phase 8.1 inserted after Phase 8 08-01 (2026-02-24): Word Tracker UX Redesign — bubble visualization on Stats page (circles scale with count), simplified flat-tag management in Settings. QA feedback from 08-01 checkpoint.
 - Phase 7.1 inserted after Phase 7 (2026-02-23): AssemblyAI Backlog Processing — dev-only bulk transcription + diarization to seed historical data before first release. Uses AssemblyAI API (single call = transcription + diarization). Gated behind ⌘⇧D dev mode. One-time operation.
+
+**From Plan 07.1-02 (2026-02-23):**
+- DEV panel pattern: import.meta.env.DEV guard in JSX render; Cmd+Shift+A shortcut in Layout; tree-shaken from production bundles
+- Progress map pattern: Map<number, ProgressEntry> keyed by episode_id for in-place status updates from Tauri events
+- API key persisted via setSetting('assemblyai_api_key') — survives panel close/reopen without re-entry
+- Overlay close guard: clicking backdrop only closes when processing===false to prevent accidental dismissal mid-run
 
 **From Plan 07.1-01 (2026-02-23):**
 - AssemblyAI auth: Authorization: {api_key} (no Bearer prefix)
@@ -239,7 +249,7 @@ Progress: ████░░░░░░ ~38% (Phase 7.1 plan 1 complete; fronte
 
 ## Session Continuity
 
-Last session: 2026-02-23
-Stopped at: Completed 07.1-01-PLAN.md (AssemblyAI Rust backend command)
+Last session: 2026-02-24
+Stopped at: Completed 08.2-01-PLAN.md (word tracker suggestion exclusion)
 Resume file: None
-Next: Continue Phase 7.1 — AssemblyAI Backlog Processing (plan 02: frontend dev-mode panel)
+Next: 08.2-02-PLAN.md
