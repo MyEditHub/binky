@@ -38,6 +38,14 @@ function App() {
     init();
   }, []);
 
+  useEffect(() => {
+    function handleOpenTutorial() {
+      setShowTutorial(true);
+    }
+    window.addEventListener('open-tutorial', handleOpenTutorial);
+    return () => window.removeEventListener('open-tutorial', handleOpenTutorial);
+  }, []);
+
   // Don't render until we know whether to show the tutorial
   if (!tutorialChecked) {
     return null;

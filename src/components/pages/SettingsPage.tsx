@@ -462,6 +462,17 @@ export default function SettingsPage() {
             {t('pages.settings.about_desc')}
           </span>
         </div>
+
+        <div className="settings-row">
+          <span className="settings-row-label">{t('tutorial.reopen_btn')}</span>
+          <button
+            className="btn-outline"
+            type="button"
+            onClick={() => window.dispatchEvent(new CustomEvent('open-tutorial'))}
+          >
+            {t('tutorial.reopen_btn')}
+          </button>
+        </div>
       </div>
     </div>
   );
