@@ -239,13 +239,9 @@ export default function SettingsPage() {
   const [version, setVersion] = useState<string>('...');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [groups, setGroups] = useState<WordGroup[]>([]);
-  const [newGroupLabel, setNewGroupLabel] = useState('');
-  const [variantInputs, setVariantInputs] = useState<Record<number, string>>({});
+  const [newWord, setNewWord] = useState('');
   const [suggestions, setSuggestions] = useState<{ word: string; count: number }[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [customExcluded, setCustomExcluded] = useState<string[]>([]);
-  const [excludeInput, setExcludeInput] = useState('');
-  const [showExcluded, setShowExcluded] = useState(false);
 
   useEffect(() => {
     getVersion()
@@ -260,11 +256,6 @@ export default function SettingsPage() {
       setGroups(parseWordGroups(val));
     });
 
-    getSetting('suggestion_excluded_words').then((val) => {
-      if (val) {
-        try { setCustomExcluded(JSON.parse(val)); } catch { /* ignore */ }
-      }
-    });
   }, []);
 
   async function handleLaunchAtLoginToggle() {
@@ -278,48 +269,15 @@ export default function SettingsPage() {
     await setSetting('innuendo_words', JSON.stringify(next));
   }
 
-  async function handleAddGroup() {
-    const label = newGroupLabel.trim();
-    if (!label || groups.some(g => g.label === label)) return;
-    setNewGroupLabel('');
-    await saveGroups([...groups, { label, words: [] }]);
+  async function handleAddWord() {
+    const word = newWord.trim().toLowerCase();
+    if (!word || groups.some(g => g.label.toLowerCase() === word)) return;
+    setNewWord('');
+    await saveGroups([...groups, { label: word, words: [word] }]);
   }
 
   async function handleRemoveGroup(idx: number) {
     await saveGroups(groups.filter((_, i) => i !== idx));
-  }
-
-  async function handleAddVariant(groupIdx: number) {
-    const word = (variantInputs[groupIdx] ?? '').trim();
-    if (!word) return;
-    const g = groups[groupIdx];
-    if (g.words.includes(word)) return;
-    const next = groups.map((gr, i) => i === groupIdx ? { ...gr, words: [...gr.words, word] } : gr);
-    setVariantInputs(v => ({ ...v, [groupIdx]: '' }));
-    await saveGroups(next);
-  }
-
-  async function handleRemoveVariant(groupIdx: number, word: string) {
-    const next = groups.map((gr, i) => i === groupIdx ? { ...gr, words: gr.words.filter(w => w !== word) } : gr);
-    await saveGroups(next);
-  }
-
-  async function saveCustomExcluded(next: string[]) {
-    setCustomExcluded(next);
-    await setSetting('suggestion_excluded_words', JSON.stringify(next));
-    // Re-run suggestions if visible so excluded word disappears immediately
-    setSuggestions(prev => prev ? prev.filter(s => !next.includes(s.word)) : prev);
-  }
-
-  async function handleAddExcluded() {
-    const word = excludeInput.trim().toLowerCase();
-    if (!word || customExcluded.includes(word)) return;
-    setExcludeInput('');
-    await saveCustomExcluded([...customExcluded, word]);
-  }
-
-  async function handleRemoveExcluded(word: string) {
-    await saveCustomExcluded(customExcluded.filter(w => w !== word));
   }
 
   async function handleLoadSuggestions() {
@@ -330,8 +288,7 @@ export default function SettingsPage() {
       const rows = await db.select<{ full_text: string }[]>('SELECT full_text FROM transcripts');
       const texts = rows.map(r => r.full_text);
       const existingWords = new Set(groups.flatMap(g => [g.label.toLowerCase(), ...g.words.map(w => w.toLowerCase())]));
-      const excluded = new Set(customExcluded);
-      setSuggestions(extractTopWords(texts, existingWords, excluded));
+      setSuggestions(extractTopWords(texts, existingWords, new Set<string>()));
     } finally {
       setSuggestionsLoading(false);
     }
@@ -340,11 +297,6 @@ export default function SettingsPage() {
   async function handleAddSuggestion(word: string) {
     setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
     await saveGroups([...groups, { label: word, words: [word] }]);
-  }
-
-  async function handleExcludeSuggestion(word: string) {
-    setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
-    await saveCustomExcluded([...customExcluded, word]);
   }
 
   return (
@@ -379,52 +331,42 @@ export default function SettingsPage() {
         <h3 className="settings-section-title">{t('pages.settings.innuendo_title')}</h3>
         <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_desc')}</p>
 
+        {/* Flat chip list */}
         {groups.length === 0 && (
           <p className="settings-row-desc" style={{ marginBottom: 12 }}>{t('pages.settings.innuendo_empty')}</p>
         )}
-
-        {groups.map((group, gi) => (
-          <div key={group.label} style={{ marginBottom: 16, padding: '10px 12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <strong style={{ fontSize: '0.9rem' }}>{group.label}</strong>
-              <button type="button" onClick={() => handleRemoveGroup(gi)} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '1rem', padding: '0 2px' }}>×</button>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {group.words.map(word => (
-                <span key={word} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'var(--color-border)', borderRadius: 12, fontSize: '0.8rem' }}>
-                  {word}
-                  <button type="button" onClick={() => handleRemoveVariant(gi, word)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.5, fontSize: '0.9rem' }}>×</button>
-                </span>
-              ))}
-            </div>
-            <div style={{ display: 'flex', gap: 6 }}>
-              <input
-                type="text"
-                value={variantInputs[gi] ?? ''}
-                onChange={e => setVariantInputs(v => ({ ...v, [gi]: e.target.value }))}
-                onKeyDown={e => { if (e.key === 'Enter') handleAddVariant(gi); }}
-                placeholder={t('pages.settings.innuendo_word_placeholder')}
-                className="settings-input"
-                style={{ flex: 1, fontSize: '0.85rem', padding: '4px 8px' }}
-              />
-              <button className="btn-outline" onClick={() => handleAddVariant(gi)} type="button" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
-                {t('pages.settings.innuendo_add_variant')}
-              </button>
-            </div>
+        {groups.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            {groups.map((group, gi) => (
+              <span
+                key={group.label}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'var(--color-border)', borderRadius: 14, fontSize: '0.85rem' }}
+              >
+                {group.label}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveGroup(gi)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.5, fontSize: '0.9rem' }}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
           </div>
-        ))}
+        )}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        {/* Add new word */}
+        <div style={{ display: 'flex', gap: 8 }}>
           <input
             type="text"
-            value={newGroupLabel}
-            onChange={e => setNewGroupLabel(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') handleAddGroup(); }}
+            value={newWord}
+            onChange={e => setNewWord(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') void handleAddWord(); }}
             placeholder={t('pages.settings.innuendo_group_placeholder')}
             className="settings-input"
             style={{ flex: 1 }}
           />
-          <button className="btn-outline" onClick={handleAddGroup} type="button">
+          <button className="btn-outline" onClick={() => void handleAddWord()} type="button">
             {t('pages.settings.innuendo_new_group')}
           </button>
         </div>
@@ -451,68 +393,16 @@ export default function SettingsPage() {
           {suggestions !== null && suggestions.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {suggestions.map(({ word, count }) => (
-                <span
+                <button
                   key={word}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 0, border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', overflow: 'hidden' }}
+                  type="button"
+                  onClick={() => handleAddSuggestion(word)}
+                  title={t('pages.settings.innuendo_suggest_add_title')}
+                  style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', background: 'none', cursor: 'pointer', padding: '3px 8px', lineHeight: 1 }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => handleAddSuggestion(word)}
-                    title={t('pages.settings.innuendo_suggest_add_title')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px 8px', lineHeight: 1 }}
-                  >
-                    {word} <span style={{ opacity: 0.45 }}>{count}×</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleExcludeSuggestion(word)}
-                    title={t('pages.settings.innuendo_suggest_exclude_title')}
-                    style={{ background: 'none', border: 'none', borderLeft: '1px solid var(--color-border)', cursor: 'pointer', padding: '3px 6px', lineHeight: 1, opacity: 0.45, fontSize: '0.75rem' }}
-                  >
-                    —
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Excluded words management */}
-        <div style={{ marginTop: 16 }}>
-          <button
-            type="button"
-            onClick={() => setShowExcluded(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', opacity: 0.55, padding: 0, textDecoration: 'underline' }}
-          >
-            {showExcluded ? t('pages.settings.innuendo_exclude_hide') : t('pages.settings.innuendo_exclude_toggle')}
-            {customExcluded.length > 0 && ` (${customExcluded.length})`}
-          </button>
-
-          {showExcluded && (
-            <div style={{ marginTop: 10 }}>
-              <p className="settings-row-desc" style={{ marginBottom: 8 }}>{t('pages.settings.innuendo_exclude_desc')}</p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-                {customExcluded.map(word => (
-                  <span key={word} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', background: 'var(--color-border)', borderRadius: 12, fontSize: '0.8rem', opacity: 0.7 }}>
-                    {word}
-                    <button type="button" onClick={() => handleRemoveExcluded(word)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.6, fontSize: '0.9rem' }}>×</button>
-                  </span>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                <input
-                  type="text"
-                  value={excludeInput}
-                  onChange={e => setExcludeInput(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleAddExcluded(); }}
-                  placeholder={t('pages.settings.innuendo_exclude_placeholder')}
-                  className="settings-input"
-                  style={{ flex: 1, fontSize: '0.85rem', padding: '4px 8px' }}
-                />
-                <button className="btn-outline" onClick={handleAddExcluded} type="button" style={{ fontSize: '0.8rem', padding: '4px 10px' }}>
-                  {t('pages.settings.innuendo_exclude_add')}
+                  {word} <span style={{ opacity: 0.45, marginLeft: 4 }}>{count}×</span>
                 </button>
-              </div>
+              ))}
             </div>
           )}
         </div>
