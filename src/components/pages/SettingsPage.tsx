@@ -242,6 +242,7 @@ export default function SettingsPage() {
   const [newWord, setNewWord] = useState('');
   const [suggestions, setSuggestions] = useState<{ word: string; count: number }[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [excludedSuggestions, setExcludedSuggestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     getVersion()
@@ -254,6 +255,15 @@ export default function SettingsPage() {
 
     getSetting('innuendo_words').then((val) => {
       setGroups(parseWordGroups(val));
+    });
+
+    getSetting('suggestion_excluded_words').then((val) => {
+      if (val) {
+        try {
+          const arr = JSON.parse(val) as string[];
+          setExcludedSuggestions(new Set(arr));
+        } catch { /* ignore */ }
+      }
     });
 
   }, []);
@@ -288,7 +298,7 @@ export default function SettingsPage() {
       const rows = await db.select<{ full_text: string }[]>('SELECT full_text FROM transcripts');
       const texts = rows.map(r => r.full_text);
       const existingWords = new Set(groups.flatMap(g => [g.label.toLowerCase(), ...g.words.map(w => w.toLowerCase())]));
-      setSuggestions(extractTopWords(texts, existingWords, new Set<string>()));
+      setSuggestions(extractTopWords(texts, existingWords, excludedSuggestions));
     } finally {
       setSuggestionsLoading(false);
     }
@@ -297,6 +307,14 @@ export default function SettingsPage() {
   async function handleAddSuggestion(word: string) {
     setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
     await saveGroups([...groups, { label: word, words: [word] }]);
+  }
+
+  async function handleExcludeSuggestion(word: string) {
+    const next = new Set(excludedSuggestions);
+    next.add(word);
+    setExcludedSuggestions(next);
+    setSuggestions(prev => prev ? prev.filter(s => s.word !== word) : prev);
+    await setSetting('suggestion_excluded_words', JSON.stringify([...next]));
   }
 
   return (
@@ -393,15 +411,27 @@ export default function SettingsPage() {
           {suggestions !== null && suggestions.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {suggestions.map(({ word, count }) => (
-                <button
+                <span
                   key={word}
-                  type="button"
-                  onClick={() => handleAddSuggestion(word)}
-                  title={t('pages.settings.innuendo_suggest_add_title')}
-                  style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', background: 'none', cursor: 'pointer', padding: '3px 8px', lineHeight: 1 }}
+                  style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', background: 'none', padding: '3px 8px', gap: 4, lineHeight: 1 }}
                 >
-                  {word} <span style={{ opacity: 0.45, marginLeft: 4 }}>{count}×</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleAddSuggestion(word)}
+                    title={t('pages.settings.innuendo_suggest_add_title')}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                  >
+                    {word} <span style={{ opacity: 0.45, marginLeft: 4 }}>{count}×</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExcludeSuggestion(word)}
+                    title="Nicht vorschlagen"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.35, fontSize: '0.85rem' }}
+                  >
+                    ×
+                  </button>
+                </span>
               ))}
             </div>
           )}
