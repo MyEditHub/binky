@@ -1,27 +1,16 @@
 # GitHub Actions CI/CD Pipeline for Binky
 #
-# This workflow builds, signs, and releases the macOS app for both ARM and Intel architectures.
+# Trigger: push tags matching v* (e.g. v0.1.0) or manual workflow_dispatch
 #
-# Trigger:
-#   - Push tags matching v* (e.g., v0.1.0, v0.2.0)
-#   - Manual workflow_dispatch (for emergency hotfix releases)
+# Why manual build instead of tauri-action:
+#   - TAURI_SIGNING_PRIVATE_KEY is multi-line; GITHUB_ENV truncates it
+#   - Only inline `export KEY="$(cat file)"` reliably passes it to the build
 #
-# Artifacts produced:
-#   - PKG installer (macOS package for easy installation)
-#   - DMG (disk image for manual installation)
-#   - Updater artifacts (latest.json, .tar.gz, .sig files for auto-updater)
-#
-# Signing approach:
-#   - Uses GPG-encrypted Tauri signing key stored in .github/signing.key.gpg
-#   - NO Apple Developer account required
-#   - NO Apple notarization required
-#   - Users bypass Gatekeeper via System Settings > Privacy & Security > "Open Anyway"
-#
-# Required GitHub Secrets:
-#   - GPG_PASSPHRASE: Password for decrypting .github/signing.key.gpg (e.g., "tauri")
-#   - TAURI_PRIVATE_KEY_PASSWORD: Password for Tauri signing key (e.g., "tauri")
-#   - SENTRY_DSN: Sentry DSN for Rust backend crash reporting (optional)
-#   - VITE_SENTRY_DSN: Sentry DSN for frontend error tracking (optional)
+# Artifacts produced per architecture:
+#   - DMG (disk image)
+#   - PKG installer (wraps the .app via pkgbuild)
+#   - Updater tar.gz + .sig (for auto-updater)
+#   - latest.json (generated after both builds complete)
 
 name: Release
 
@@ -32,7 +21,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish-tauri:
+  build:
     permissions:
       contents: write
     strategy:
@@ -41,8 +30,12 @@ jobs:
         include:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
+            triple: 'aarch64-apple-darwin'
+            arch: 'aarch64'
           - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
+            triple: 'x86_64-apple-darwin'
+            arch: 'x64'
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -69,13 +62,12 @@ jobs:
 
       - name: Decrypt Tauri signing key
         run: |
-          gpg --quiet --batch --yes --decrypt --passphrase="${{ secrets.GPG_PASSPHRASE }}" \
+          gpg --quiet --batch --yes --decrypt \
+            --passphrase="${{ secrets.GPG_PASSPHRASE }}" \
             --output /tmp/signing.key .github/signing.key.gpg
-          echo "TAURI_SIGNING_PRIVATE_KEY=$(cat /tmp/signing.key)" >> $GITHUB_ENV
-          echo "Signing key decrypted and loaded"
 
       - name: Set ARM compiler flags (required by whisper-rs ggml i8mm)
-        if: contains(matrix.args, 'aarch64')
+        if: matrix.arch == 'aarch64'
         run: |
           echo "CFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
           echo "CXXFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
@@ -83,33 +75,53 @@ jobs:
       - name: Install frontend dependencies
         run: npm install
 
-      - name: Build and release Tauri app
-        uses: tauri-apps/tauri-action@v0
+      - name: Build Tauri app
+        run: |
+          export TAURI_SIGNING_PRIVATE_KEY="$(cat /tmp/signing.key)"
+          export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_PRIVATE_KEY_PASSWORD }}"
+          npm run tauri build -- ${{ matrix.args }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_PRIVATE_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
-        with:
-          tagName: ${{ github.ref_name }}
-          releaseName: 'Binky ${{ github.ref_name }}'
-          releaseBody: 'Neue Version verfügbar. Details im Changelog.'
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
+
+      - name: Create GitHub Release (idempotent)
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "Binky ${{ github.ref_name }}" \
+            --notes "Neue Version verfügbar. Details im Changelog." \
+            --draft=false --prerelease=false 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload DMG
+        run: |
+          DMG=$(find src-tauri/target/${{ matrix.triple }}/release/bundle/dmg -name "*.dmg" | head -1)
+          [ -n "$DMG" ] && gh release upload "${{ github.ref_name }}" "$DMG" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload updater artifacts
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"
+          BUNDLE="src-tauri/target/${{ matrix.triple }}/release/bundle/macos"
+          TAR="$BUNDLE/Binky.app.tar.gz"
+          SIG="$BUNDLE/Binky.app.tar.gz.sig"
+          # Rename with arch suffix so both builds can coexist in the same release
+          cp "$TAR" "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz"
+          cp "$SIG" "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig"
+          gh release upload "${{ github.ref_name }}" \
+            "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz" \
+            "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig" \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build PKG installer
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
-            TARGET_TRIPLE="aarch64-apple-darwin"
-            PKG_ARCH="aarch64"
-          else
-            TARGET_TRIPLE="x86_64-apple-darwin"
-            PKG_ARCH="x64"
-          fi
-          APP_PATH="src-tauri/target/${TARGET_TRIPLE}/release/bundle/macos/Binky.app"
+          APP_PATH="src-tauri/target/${{ matrix.triple }}/release/bundle/macos/Binky.app"
           mkdir -p /tmp/pkg-scripts
           cp .github/scripts/postinstall /tmp/pkg-scripts/postinstall
           chmod +x /tmp/pkg-scripts/postinstall
@@ -119,17 +131,55 @@ jobs:
             --scripts /tmp/pkg-scripts \
             --identifier de.binky.app \
             --version "$VERSION" \
-            "Binky_${VERSION}_${PKG_ARCH}.pkg"
+            "Binky_${VERSION}_${{ matrix.arch }}.pkg"
 
-      - name: Upload PKG to release
+      - name: Upload PKG
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          if [[ "${{ matrix.args }}" == *"aarch64"* ]]; then
-            PKG_ARCH="aarch64"
-          else
-            PKG_ARCH="x64"
-          fi
-          gh release upload "${{ github.ref_name }}" "Binky_${VERSION}_${PKG_ARCH}.pkg"
+          gh release upload "${{ github.ref_name }}" "Binky_${VERSION}_${{ matrix.arch }}.pkg" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-updater:
+    needs: build
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate and upload latest.json
+        run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION_CLEAN="${VERSION#v}"
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
+
+          # Download sig files uploaded by build jobs
+          gh release download "${{ github.ref_name }}" --pattern "*.sig" --dir /tmp/sigs
+
+          ARM_SIG=$(cat "/tmp/sigs/Binky_${VERSION_CLEAN}_aarch64.app.tar.gz.sig")
+          X64_SIG=$(cat "/tmp/sigs/Binky_${VERSION_CLEAN}_x64.app.tar.gz.sig")
+
+          cat > /tmp/latest.json << JSON
+          {
+            "version": "${VERSION}",
+            "notes": "Neue Version verfügbar.",
+            "pub_date": "${PUB_DATE}",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "${ARM_SIG}",
+                "url": "${BASE_URL}/Binky_${VERSION_CLEAN}_aarch64.app.tar.gz"
+              },
+              "darwin-x86_64": {
+                "signature": "${X64_SIG}",
+                "url": "${BASE_URL}/Binky_${VERSION_CLEAN}_x64.app.tar.gz"
+              }
+            }
+          }
+          JSON
+
+          gh release upload "${{ github.ref_name }}" /tmp/latest.json --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
