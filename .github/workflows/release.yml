@@ -101,13 +101,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload DMG
-        run: |
-          DMG=$(find src-tauri/target/${{ matrix.triple }}/release/bundle/dmg -name "*.dmg" | head -1)
-          [ -n "$DMG" ] && gh release upload "${{ github.ref_name }}" "$DMG" --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload updater artifacts
         run: |
           VERSION="${{ github.ref_name }}"

@@ -1,6 +1,6 @@
 {
   "name": "binky-app",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Binky Podcast Manager - Desktop App",
   "type": "module",
   "scripts": {
@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri dev": "tauri dev",
-    "tauri build": "tauri build"
+    "tauri build": "tauri build",
+    "bump": "bash scripts/bump-version.sh",
+    "release": "bash scripts/bump-version.sh --release",
+    "retag": "bash scripts/bump-version.sh --retag"
   },
   "dependencies": {
     "@sentry/browser": "^10.38.0",
