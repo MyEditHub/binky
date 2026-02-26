@@ -56,6 +56,8 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          cache-on-failure: false
+          key: 'arm-i8mm-v2'
 
       - name: Install cmake (required by whisper-rs)
         run: brew install cmake || true
@@ -66,11 +68,17 @@ jobs:
             --passphrase="${{ secrets.GPG_PASSPHRASE }}" \
             --output /tmp/signing.key .github/signing.key.gpg
 
+      - name: Clear whisper-rs-sys cmake cache
+        if: matrix.arch == 'aarch64'
+        run: |
+          find src-tauri/target -path "*whisper*" -name "CMakeCache.txt" -delete 2>/dev/null || true
+          find src-tauri/target -path "*whisper*" -name "*.o" -delete 2>/dev/null || true
+
       - name: Set ARM compiler flags (required by whisper-rs ggml i8mm)
         if: matrix.arch == 'aarch64'
         run: |
-          echo "CFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
-          echo "CXXFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
+          echo "CFLAGS=-march=armv8.5-a+i8mm" >> $GITHUB_ENV
+          echo "CXXFLAGS=-march=armv8.5-a+i8mm" >> $GITHUB_ENV
 
       - name: Install frontend dependencies
         run: npm install
