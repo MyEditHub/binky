@@ -74,6 +74,12 @@ jobs:
           echo "TAURI_SIGNING_PRIVATE_KEY=$(cat /tmp/signing.key)" >> $GITHUB_ENV
           echo "Signing key decrypted and loaded"
 
+      - name: Set ARM compiler flags (required by whisper-rs ggml i8mm)
+        if: contains(matrix.args, 'aarch64')
+        run: |
+          echo "CFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
+          echo "CXXFLAGS=-mcpu=apple-m1" >> $GITHUB_ENV
+
       - name: Install frontend dependencies
         run: npm install
 
