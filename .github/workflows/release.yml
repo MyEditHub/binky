@@ -86,7 +86,7 @@ jobs:
       - name: Build Tauri app
         run: |
           export TAURI_SIGNING_PRIVATE_KEY="$(cat /tmp/signing.key)"
-          export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="${{ secrets.TAURI_PRIVATE_KEY_PASSWORD }}"
+          export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tauri"
           npm run tauri build -- ${{ matrix.args }}
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
