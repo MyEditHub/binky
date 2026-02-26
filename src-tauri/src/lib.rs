@@ -57,6 +57,30 @@ pub fn run() {
             sql: include_str!("../migrations/006_clear_test_bird_history.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 7,
+            description: "Clean test birds mark eisente",
+            sql: include_str!("../migrations/007_clean_test_birds_mark_eisente.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 8,
+            description: "Fix bird history",
+            sql: include_str!("../migrations/008_fix_bird_history.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 9,
+            description: "Reset episodes for AssemblyAI re-transcription",
+            sql: include_str!("../migrations/009_reset_diarization_episodes.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 10,
+            description: "Clean test bird history entries",
+            sql: include_str!("../migrations/010_clean_test_birds.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -118,6 +142,7 @@ pub fn run() {
             commands::birds::undo_mark_bird_used,
             commands::birds::reset_bird_pool,
             commands::birds::get_bird_history,
+            commands::birds::delete_bird_history_entry,
             commands::birds::get_current_bird,
             commands::assemblyai::assemblyai_process_backlog,
         ])

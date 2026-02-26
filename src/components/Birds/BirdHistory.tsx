@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import type { UsedBirdEntry } from '../../hooks/useBirds';
 
@@ -20,6 +21,15 @@ export default function BirdHistory({ history, onReset, onRefresh }: BirdHistory
       onReset();
     }
   };
+
+  async function handleDeleteEntry(historyId: number, birdId: number) {
+    try {
+      await invoke('delete_bird_history_entry', { historyId, birdId });
+      onRefresh();
+    } catch (e) {
+      console.error('Failed to delete history entry', e);
+    }
+  }
 
   async function handleManualAdd() {
     const name = manualName.trim();
@@ -73,6 +83,27 @@ export default function BirdHistory({ history, onReset, onRefresh }: BirdHistory
                   <span className="bird-history-entry-episode">{entry.episode_title}</span>
                 )}
                 <span className="bird-history-entry-date">{entry.used_date}</span>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteEntry(entry.id, entry.bird_id)}
+                  title="Eintrag löschen"
+                  style={{
+                    marginLeft: 'auto',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    opacity: 0.4,
+                    fontSize: '1rem',
+                    padding: '0 4px',
+                    lineHeight: 1,
+                    color: 'var(--color-text)',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+                >
+                  ×
+                </button>
               </div>
             ))
           )}

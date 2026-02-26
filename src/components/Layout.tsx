@@ -36,6 +36,14 @@ export default function Layout() {
 
   // ⌘⇧D — toggle developer mode (hidden shortcut, not shown in UI)
   useEffect(() => {
+    function handleNavigateTopics() {
+      setActivePage('topics');
+    }
+    window.addEventListener('navigate-topics', handleNavigateTopics);
+    return () => window.removeEventListener('navigate-topics', handleNavigateTopics);
+  }, []);
+
+  useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.metaKey && e.shiftKey && e.key.toLowerCase() === 'd') {
         setDevMode(prev => {

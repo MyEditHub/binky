@@ -4,11 +4,12 @@
 
 **Binky** - Desktop Mac app for podcast management with automated transcription, speaking balance analytics, unfinished topic tracking, and bird-of-the-week randomizer.
 
-*(Originally named "Nettgeflüster Podcast Management App", rebranded to "Binky" on 2026-02-11)*
+_(Originally named "Nettgeflüster Podcast Management App", rebranded to "Binky" on 2026-02-11)_
 
 ## Why It Needs to Exist
 
 **The Problem:**
+
 - Podcast hosts don't know if one person dominates the conversation
 - They start stories but forget to finish them
 - They mention topics they want to discuss but never get to them
@@ -21,6 +22,7 @@ Automatically transcribe episodes, analyze speaking patterns, detect unfinished 
 ## Who It's For
 
 **Primary Users:** Two podcast hosts (married couple)
+
 - Need easy installation (no terminal)
 - Mac users
 - German-speaking
@@ -28,6 +30,7 @@ Automatically transcribe episodes, analyze speaking patterns, detect unfinished 
 - Want to improve their podcast through data
 
 **Builder:** Friend of the podcast hosts building this for them
+
 - Has Tauri experience (Editor-Workshop project)
 - Will handle initial setup and testing
 - Hosts need auto-updates for future features
@@ -37,28 +40,33 @@ Automatically transcribe episodes, analyze speaking patterns, detect unfinished 
 ### Core Features
 
 **1. Episode Management**
+
 - Auto-fetches new episodes from podcast RSS feed (https://cdn.julephosting.de/podcasts/1188-nettgefluster-der-podcast-eines-ehepaars/feed.rss)
 - Focuses on 2024-2025 episodes only
 - Transcribes using local Whisper (German)
 - Runs in background automatically
 
 **2. Speaking Analytics**
+
 - Automatic speaker diarization (distinguishes between both hosts)
 - Speech share percentage (Person A: 52%, Person B: 48%)
 - Per-episode and aggregate statistics
 
 **3. Content Analysis**
+
 - AI-generated topic summary for each episode
 - Keyword/theme extraction across episodes
 - Unfinished topics tracker - detects stories started but not finished, topics mentioned but not discussed
 
 **4. Bird-of-the-Week Randomizer**
+
 - Displays random bird from NABU database (https://www.nabu.de/tiere-und-pflanzen/voegel/portraets/index.html)
 - Shows: German name, scientific name, description, image, bird call audio
 - Tracks which birds have been used
 - Hosts access this during recording
 
 **5. Distribution**
+
 - Easy PKG installer for Mac
 - Auto-updater for future features (based on Editor-Workshop setup)
 - German UI throughout
@@ -69,6 +77,7 @@ Automatically transcribe episodes, analyze speaking patterns, detect unfinished 
 Podcast hosts can see their speaking balance and track unfinished topics automatically through transcription and AI analysis.
 
 This helps them improve their podcast by:
+
 - Ensuring balanced conversation (neither person dominates)
 - Remembering to finish stories across episodes
 - Addressing topics they promised to cover
@@ -90,6 +99,7 @@ The codebase already has these working in web app form:
 These are new capabilities needed for the desktop app:
 
 **Desktop App Foundation**
+
 - [ ] **APP-01**: Desktop Mac app built with Tauri
 - [ ] **APP-02**: German language UI (all buttons, labels, text)
 - [ ] **APP-03**: Minimal design using podcast website brand colors, no gradients
@@ -97,17 +107,20 @@ These are new capabilities needed for the desktop app:
 - [ ] **APP-05**: Auto-updater using Tauri plugin (GitHub Pages + Releases)
 
 **Episode Transcription**
+
 - [ ] **TRANS-01**: Auto-fetch new episodes from RSS feed in background
 - [ ] **TRANS-02**: Transcribe episodes using local Whisper (German language model)
 - [ ] **TRANS-03**: Store transcripts in SQLite database
 - [ ] **TRANS-04**: Only process 2024-2025 episodes
 
 **Speaking Analytics**
+
 - [ ] **SPEAK-01**: Speaker diarization - distinguish between both hosts automatically
 - [ ] **SPEAK-02**: Calculate speech share percentage per episode
 - [ ] **SPEAK-03**: Display percentage in UI (Person A: X%, Person B: Y%)
 
 **Content Analysis**
+
 - [ ] **CONT-01**: Generate AI topic summary for each episode
 - [ ] **CONT-02**: Extract keywords/themes across episodes
 - [ ] **CONT-03**: Detect unfinished topics - stories started but not finished
@@ -115,6 +128,7 @@ These are new capabilities needed for the desktop app:
 - [ ] **CONT-05**: Display compact to-do list of pending topics
 
 **Bird Randomizer Enhancement**
+
 - [ ] **BIRD-01**: Display bird data in desktop app (name, scientific name, description, image)
 - [ ] **BIRD-02**: Play bird call audio in app
 - [ ] **BIRD-03**: Accessible during recording (window stays open)
@@ -123,6 +137,7 @@ These are new capabilities needed for the desktop app:
 ### Out of Scope
 
 **Explicitly NOT building (at least for v1):**
+
 - Listener-facing features - This is a tool for hosts only
 - Episodes before 2024 - Too many episodes, focus on recent content
 - Cloud/web version - Desktop app only
@@ -137,32 +152,38 @@ These are new capabilities needed for the desktop app:
 ## Constraints
 
 **Platform:**
+
 - Mac only (macOS 11+)
 - Apple Silicon and Intel support (universal binary)
 
 **Cost:**
+
 - Free/low cost priority
 - Local Whisper (no API costs)
 - No cloud services for transcription
 - GitHub free tier (Pages, Releases, Actions)
 
 **Language:**
+
 - German UI and content throughout
 - German language model for Whisper
 
 **Design:**
+
 - Minimal aesthetic
 - Use colors from podcast website (https://www.podcast.de/podcast/3391341/nettgefluester-der-podcast-eines-ehepaars and https://www.newbase.de/podcasts/Nettgefl%C3%BCster)
 - No gradients
 - Not comical/playful - clean and functional
 
 **User Experience:**
+
 - No terminal required
 - Easy installation (PKG installer)
 - Automatic updates
 - Background transcription (don't block UI)
 
 **Technical:**
+
 - Tauri-based (reuse Editor-Workshop infrastructure)
 - Local Whisper (whisper-rs or Python subprocess)
 - SQLite for data storage
@@ -170,16 +191,16 @@ These are new capabilities needed for the desktop app:
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| **Tech stack: Tauri** | User has proven setup from Editor-Workshop with auto-updater, signing keys, CI/CD pipeline | Pending |
-| **Transcription: Local Whisper** | Free (no API costs), works offline, good German support, no privacy concerns | Pending |
-| **Language: German UI** | Podcast and users are German-speaking | Pending |
-| **Scope: 2024-2025 episodes** | Keep dataset manageable (~50-100 episodes), focus on recent content | Pending |
-| **Distribution: PKG with auto-updater** | Proven approach from Editor-Workshop (GitHub Pages + Releases + Actions) | Pending |
-| **Design: Minimal with brand colors** | User explicitly requested no gradients, use existing website colors | Pending |
-| **Speaker diarization: Automatic** | Must distinguish speakers without manual tagging for speech share calculation | Pending |
-| **Bird data: NABU website** | Already implemented in existing code, scrapes https://www.nabu.de/tiere-und-pflanzen/voegel/portraets/index.html | Pending |
+| Decision                                | Rationale                                                                                                        | Outcome |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------- |
+| **Tech stack: Tauri**                   | User has proven setup from Editor-Workshop with auto-updater, signing keys, CI/CD pipeline                       | Pending |
+| **Transcription: Local Whisper**        | Free (no API costs), works offline, good German support, no privacy concerns                                     | Pending |
+| **Language: German UI**                 | Podcast and users are German-speaking                                                                            | Pending |
+| **Scope: 2024-2025 episodes**           | Keep dataset manageable (~50-100 episodes), focus on recent content                                              | Pending |
+| **Distribution: PKG with auto-updater** | Proven approach from Editor-Workshop (GitHub Pages + Releases + Actions)                                         | Pending |
+| **Design: Minimal with brand colors**   | User explicitly requested no gradients, use existing website colors                                              | Pending |
+| **Speaker diarization: Automatic**      | Must distinguish speakers without manual tagging for speech share calculation                                    | Pending |
+| **Bird data: NABU website**             | Already implemented in existing code, scrapes https://www.nabu.de/tiere-und-pflanzen/voegel/portraets/index.html | Pending |
 
 ## Success Criteria
 
@@ -214,12 +235,14 @@ These are new capabilities needed for the desktop app:
 ## Technical Context
 
 **Existing Codebase:**
+
 - Python/FastAPI backend with SQLite
 - React frontend (via CDN)
 - Already implements: bird database, topic tracking, episode management, RSS parsing
 - Provides reference logic for rewrite
 
 **Tauri Infrastructure (from Editor-Workshop):**
+
 - Tauri v2 with TypeScript frontend + Rust backend
 - Auto-updater: GitHub Pages (tar.gz, sig, latest.json) + GitHub Releases (PKG installers)
 - Signing keys: `~/.tauri/signing.key` + `.github/signing.key.gpg`
@@ -228,6 +251,7 @@ These are new capabilities needed for the desktop app:
 - Version bump automation: `bump-version.sh`
 
 **Technology Stack (Planned):**
+
 - Tauri v2 for desktop app
 - Rust backend (rewrite Python logic)
 - TypeScript/React or Svelte frontend
@@ -237,6 +261,7 @@ These are new capabilities needed for the desktop app:
 - GitHub Pages + Releases for distribution
 
 **Repository Structure:**
+
 ```
 nettgefluester-app/
 ├── backend/           # Existing Python code (reference)
@@ -248,4 +273,22 @@ nettgefluester-app/
 
 ---
 
-*Last updated: 2026-02-11 after initialization*
+## Current Milestone: v0.2 — Release Polish
+
+**Goal:** Fix known UI issues, complete QA, and ship the first release to the podcast hosts.
+
+**Target features:**
+
+- Remove sidebar navigation icons (they look cheap)
+- Fix bird Steckbrief text formatting (line breaks missing between scraped facts)
+- Clean test bird history from database before release
+- Fix grey border on analytics bar chart
+- Improve episode name readability under bar chart
+- Enhance speech trend chart with per-episode detail and percentages
+- Add delete button to word tracker word groups
+- Complete Phase 5 QA (bird randomizer verification)
+- Configure GitHub Secrets and verify release build
+
+---
+
+_Last updated: 2026-02-22 after v0.2 milestone initialization_

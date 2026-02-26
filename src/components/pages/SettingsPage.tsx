@@ -239,10 +239,12 @@ export default function SettingsPage() {
   const [version, setVersion] = useState<string>('...');
   const [launchAtLogin, setLaunchAtLogin] = useState(false);
   const [groups, setGroups] = useState<WordGroup[]>([]);
+  const [groupCounts, setGroupCounts] = useState<Record<string, number>>({});
   const [newWord, setNewWord] = useState('');
   const [suggestions, setSuggestions] = useState<{ word: string; count: number }[] | null>(null);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [excludedSuggestions, setExcludedSuggestions] = useState<Set<string>>(new Set());
+  const [showExcluded, setShowExcluded] = useState(false);
 
   useEffect(() => {
     getVersion()
@@ -253,8 +255,24 @@ export default function SettingsPage() {
       setLaunchAtLogin(val === 'true');
     });
 
-    getSetting('innuendo_words').then((val) => {
-      setGroups(parseWordGroups(val));
+    getSetting('innuendo_words').then(async (val) => {
+      const loadedGroups = parseWordGroups(val);
+      setGroups(loadedGroups);
+      if (loadedGroups.length > 0) {
+        try {
+          const db = await Database.load('sqlite:binky.db');
+          const rows = await db.select<{ full_text: string }[]>('SELECT full_text FROM transcripts');
+          const allText = rows.map(r => r.full_text).join('\n').toLowerCase();
+          const counts: Record<string, number> = {};
+          for (const group of loadedGroups) {
+            counts[group.label] = group.words.reduce((sum, word) => {
+              const escaped = word.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              return sum + (allText.match(new RegExp(escaped, 'g')) ?? []).length;
+            }, 0);
+          }
+          setGroupCounts(counts);
+        } catch { /* non-fatal */ }
+      }
     });
 
     getSetting('suggestion_excluded_words').then((val) => {
@@ -317,6 +335,13 @@ export default function SettingsPage() {
     await setSetting('suggestion_excluded_words', JSON.stringify([...next]));
   }
 
+  async function handleReincludeSuggestion(word: string) {
+    const next = new Set(excludedSuggestions);
+    next.delete(word);
+    setExcludedSuggestions(next);
+    await setSetting('suggestion_excluded_words', JSON.stringify([...next]));
+  }
+
   return (
     <div className="page">
       <div className="page-header">
@@ -355,21 +380,45 @@ export default function SettingsPage() {
         )}
         {groups.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-            {groups.map((group, gi) => (
-              <span
-                key={group.label}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'var(--color-border)', borderRadius: 14, fontSize: '0.85rem' }}
-              >
-                {group.label}
-                <button
-                  type="button"
-                  onClick={() => handleRemoveGroup(gi)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.5, fontSize: '0.9rem' }}
+            {groups.map((group, gi) => {
+              const count = groupCounts[group.label];
+              return (
+                <span
+                  key={group.label}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '5px 10px 5px 12px',
+                    background: 'var(--color-border)',
+                    borderRadius: 14,
+                    fontSize: '0.85rem',
+                    lineHeight: 1.2,
+                  }}
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  <span style={{ fontWeight: 500 }}>{group.label}</span>
+                  {count !== undefined && (
+                    <span style={{
+                      fontSize: '0.72rem',
+                      opacity: 0.6,
+                      background: 'rgba(255,255,255,0.08)',
+                      borderRadius: 8,
+                      padding: '1px 5px',
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {count}×
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveGroup(gi)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.45, fontSize: '0.9rem', marginLeft: 2 }}
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
 
@@ -413,26 +462,57 @@ export default function SettingsPage() {
               {suggestions.map(({ word, count }) => (
                 <span
                   key={word}
-                  style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.8rem', background: 'none', padding: '3px 8px', gap: 4, lineHeight: 1 }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 0, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border)', borderRadius: 14, fontSize: '0.82rem', overflow: 'hidden' }}
                 >
                   <button
                     type="button"
                     onClick={() => handleAddSuggestion(word)}
                     title={t('pages.settings.innuendo_suggest_add_title')}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px', lineHeight: 1.3, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: 5 }}
                   >
-                    {word} <span style={{ opacity: 0.45, marginLeft: 4 }}>{count}×</span>
+                    <span style={{ color: '#4ade80', fontWeight: 700, fontSize: '0.9em' }}>+</span>
+                    <span>{word}</span>
+                    <span style={{ opacity: 0.5, fontSize: '0.85em' }}>{count}×</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleExcludeSuggestion(word)}
-                    title="Nicht vorschlagen"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, opacity: 0.35, fontSize: '0.85rem' }}
+                    title={t('pages.settings.innuendo_suggest_exclude_title')}
+                    style={{ background: 'none', border: 'none', borderLeft: '1px solid var(--color-border)', cursor: 'pointer', padding: '4px 7px', lineHeight: 1, opacity: 0.5, fontSize: '0.9rem', color: 'var(--color-text)', alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}
                   >
                     ×
                   </button>
                 </span>
               ))}
+            </div>
+          )}
+
+          {excludedSuggestions.size > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <button
+                type="button"
+                onClick={() => setShowExcluded(v => !v)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '0.75rem', opacity: 0.45, color: 'var(--color-text)' }}
+              >
+                {showExcluded ? '▾' : '▸'} {excludedSuggestions.size} {t('pages.settings.innuendo_exclude_desc')}
+              </button>
+              {showExcluded && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                  {[...excludedSuggestions].sort().map(word => (
+                    <span key={word} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--color-border)', borderRadius: 10, fontSize: '0.75rem', padding: '2px 6px 2px 8px', opacity: 0.6 }}>
+                      {word}
+                      <button
+                        type="button"
+                        onClick={() => handleReincludeSuggestion(word)}
+                        title="Wieder vorschlagen"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: '0.8rem', opacity: 0.7, color: 'var(--color-text)' }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -151,8 +151,11 @@
       "trend_min": "Mindestens 2 analysierte Episoden erforderlich.",
       "topics_title": "Offene Themen",
       "innuendo_title": "Wort-Tracker",
+      "innuendo_count": "Treffer",
       "no_data": "Noch keine Analysedaten vorhanden.",
-      "no_topics": "Keine offenen Themen."
+      "no_topics": "Keine offenen Themen.",
+      "topics_open_all": "Alle öffnen",
+      "topics_more": "weitere"
     },
     "analytics": {
       "title": "Analytik",
@@ -198,6 +201,9 @@
       "filter_all": "Alle",
       "no_topics": "Keine Themen gefunden",
       "no_topics_hint": "Analysiere Episoden, um offene Themen zu erkennen.",
+      "view_grouped": "Gruppiert",
+      "view_list": "Liste",
+      "group_no_episode": "Ohne Episode",
       "api_key_missing": "OpenAI API-Schlüssel fehlt",
       "api_key_missing_hint": "Konfiguriere den API-Schlüssel in den Einstellungen.",
       "analyze": "Analysieren",

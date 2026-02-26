@@ -33,7 +33,8 @@ export default function EpisodeAnalyticsRow({
     });
 
   const isSolo = stats.diarizationStatus === 'solo';
-  const isDone = stats.diarizationStatus === 'done' || isSolo;
+  const isDone = stats.diarizationStatus === 'done';
+  const isExpandable = isDone || isSolo;
 
   const statusLabel: Record<string, string> = {
     not_started: t('pages.analytics.status_not_started'),
@@ -45,8 +46,8 @@ export default function EpisodeAnalyticsRow({
   return (
     <div
       className="analytics-episode-row"
-      onClick={() => isDone && setExpanded(!expanded)}
-      style={{ cursor: isDone ? 'pointer' : 'default' }}
+      onClick={() => isExpandable && setExpanded(!expanded)}
+      style={{ cursor: isExpandable ? 'pointer' : 'default' }}
     >
       <div className="analytics-episode-title">
         {stats.title}
@@ -75,7 +76,26 @@ export default function EpisodeAnalyticsRow({
         </div>
       )}
 
-      {expanded && isDone && !isSolo && (
+      {expanded && isSolo && (
+        <div
+          className="analytics-episode-expanded"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="analytics-episode-actions">
+            <button
+              className="btn-outline btn-danger-outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onReanalyze(stats.episodeId, stats.audioUrl);
+              }}
+            >
+              {t('pages.analytics.reanalyze')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {expanded && isDone && (
         <div
           className="analytics-episode-expanded"
           onClick={(e) => e.stopPropagation()}

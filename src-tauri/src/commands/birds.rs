@@ -599,6 +599,47 @@ pub async fn reset_bird_pool(
     Ok(())
 }
 
+/// Delete a specific history entry by its ID.
+/// If the bird has no remaining history entries, resets it to unused.
+#[tauri::command]
+pub async fn delete_bird_history_entry(
+    history_id: i64,
+    bird_id: i64,
+    app: tauri::AppHandle,
+) -> Result<(), String> {
+    let db_path = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?
+        .join("binky.db");
+    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+
+    conn.execute(
+        "DELETE FROM bird_used_history WHERE id = ?1",
+        [history_id],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // Reset bird to unused only if no remaining history entries exist
+    let remaining: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM bird_used_history WHERE bird_id = ?1",
+            [bird_id],
+            |row| row.get(0),
+        )
+        .unwrap_or(0);
+
+    if remaining == 0 {
+        conn.execute(
+            "UPDATE birds SET used = 0, used_date = NULL WHERE id = ?1",
+            [bird_id],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 /// Return the bird use history sorted newest first.
 #[tauri::command]
 pub async fn get_bird_history(

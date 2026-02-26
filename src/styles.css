@@ -2238,6 +2238,55 @@ body {
   flex-direction: column;
 }
 
+/* Grouped topics view */
+.topics-group {
+  margin-bottom: 6px;
+}
+
+.topics-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--color-surface, rgba(255,255,255,0.04));
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.topics-group-header:hover {
+  background: var(--color-surface-hover, rgba(255,255,255,0.07));
+}
+
+.topics-group-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topics-group-count {
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: 10px;
+  padding: 1px 7px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.topics-group-chevron {
+  font-size: 0.65rem;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
 .api-key-warning {
   display: flex;
   align-items: flex-start;
@@ -2536,3 +2585,22 @@ body {
 /* ============================================================
    End Bird Randomizer Styles
    ============================================================ */
+
+/* ============================================================
+   Recharts — dark mode fixes
+   ============================================================ */
+.recharts-wrapper,
+.recharts-surface {
+  background: transparent !important;
+}
+
+/* Axis lines and ticks inherit app color */
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--color-border) !important;
+}
+
+.recharts-cartesian-grid line {
+  stroke: var(--color-border) !important;
+  opacity: 0.4;
+}

@@ -59,7 +59,7 @@ pub async fn assemblyai_process_backlog(
     app: tauri::AppHandle,
     api_key: String,
 ) -> Result<String, String> {
-    // Release build guard — this command is dev-only
+    // Release build guard — this command is dev/internal only
     #[cfg(not(debug_assertions))]
     return Err("Dev-only command".to_string());
 

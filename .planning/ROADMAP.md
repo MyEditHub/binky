@@ -183,14 +183,48 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Human QA verification of all production pages and bird randomizer
+- [x] 08-01-PLAN.md — Human QA verification of all production pages and bird randomizer
 - [ ] 08-02-PLAN.md — Pre-release: CI hardening, signing key backup, private repo decision
 - [ ] 08-03-PLAN.md — Release trigger: tag, push, monitor CI, verify DMG installation
+
+### Phase 8.1: Word Tracker UX Redesign (INSERTED)
+
+**Goal**: Word tracker is visually engaging and easy to manage — bubbles on Stats page that scale with frequency, simplified flat-list management in Settings
+**Depends on**: Phase 8 (08-01 QA complete)
+**Plans**: 2 plans
+
+**Details:**
+- Stats page: replace word+number grid with bubble/circle visualization where size scales with count
+- Settings page: replace group+variants hierarchy with simple flat tag list — type a word, press Enter, it's tracked; delete with ×
+- Data model stays the same (innuendo_words setting JSON), only presentation changes
+- Each word is its own group; variants remain optional and managed inline
+
+Plans:
+- [x] 08.1-01-PLAN.md — Stats page bubble visualization for word tracker (replace grid with scaled circles)
+- [x] 08.1-02-PLAN.md — Settings word tracker simplified management (flat tag list, streamlined add/delete)
+
+### Phase 8.2: Pre-Release UX Completion (INSERTED)
+
+**Goal**: All end-user UX gaps closed before release — suggestion exclusion, rewritten tutorial with reopen, Topics visible and simplified, bird history verified clean
+**Depends on**: Phase 8.1
+**Plans**: 4 plans
+
+**Details:**
+- Word tracker: add × button on suggestion chips to permanently exclude from future suggestions
+- Tutorial: rewrite 4 screens for actual end-user features (Bird, Word Tracker, Topics, Setup); add reopen button in Settings
+- Topics: remove devOnly, auto-trigger analysis on page load, simplified done/reopen workflow per topic
+- Bird DB: human verification that history only contains legitimate episode draws
+
+Plans:
+- [ ] 08.2-01-PLAN.md — Word tracker suggestion exclusion (persistent × dismiss per suggestion)
+- [ ] 08.2-02-PLAN.md — Tutorial rewrite + reopen button in Settings
+- [ ] 08.2-03-PLAN.md — Topics page: visible to users, auto-analysis, simplified two-action UI
+- [ ] 08.2-04-PLAN.md — Bird DB verification checkpoint (human confirms history is clean)
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8 (08-01) -> 8.1 -> 8.2 -> 8 (08-02, 08-03)
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -202,7 +236,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 7.1 -> 8
 | 6. UI & Bird Fixes | 2/2 | Complete | 2026-02-22 |
 | 7. Analytics & Word Tracker | 2/2 | Complete | 2026-02-23 |
 | 7.1. AssemblyAI Backlog Processing | 2/2 | Complete | 2026-02-23 |
-| 8. QA & Release | 0/3 | Not started | - |
+| 8. QA & Release (08-01) | 1/3 | Complete | 2026-02-24 |
+| 8.1. Word Tracker UX Redesign | 2/2 | Complete | 2026-02-24 |
+| 8.2. Pre-Release UX Completion | 0/4 | In Progress | - |
+| 8. QA & Release (08-02, 08-03) | 1/3 | Pending | - |
 
 ---
 

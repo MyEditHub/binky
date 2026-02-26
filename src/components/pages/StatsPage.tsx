@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import HostTrendChart from '../Analytics/HostTrendChart';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
@@ -233,72 +234,137 @@ export default function StatsPage() {
         host1Color={host1Color}
       />
 
-      {/* Open topics */}
+      {/* Open topics — capped at 10, link to full Topics page */}
       <div className="settings-section">
-        <h3 className="settings-section-title">
+        <h3 className="settings-section-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {t('pages.stats.topics_title')}
           {topics.length > 0 && (
-            <span style={{ marginLeft: 8, fontSize: '0.85rem', fontWeight: 400, opacity: 0.6 }}>({topics.length})</span>
+            <span style={{ fontSize: '0.85rem', fontWeight: 400, opacity: 0.6 }}>({topics.length})</span>
+          )}
+          {topics.length > 0 && (
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('navigate-topics'))}
+              style={{ marginLeft: 'auto', fontSize: '0.75rem', background: 'none', border: '1px solid var(--color-border)', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', color: 'var(--color-text)', opacity: 0.7 }}
+            >
+              {t('pages.stats.topics_open_all')}
+            </button>
           )}
         </h3>
         {topics.length === 0 ? (
           <p className="settings-row-desc">{t('pages.stats.no_topics')}</p>
         ) : (
-          <ul style={{ margin: 0, padding: '0 0 0 18px' }}>
-            {topics.map(topic => (
-              <li key={topic.id} style={{ marginBottom: 6, fontSize: '0.9rem' }}>{topic.title}</li>
-            ))}
-          </ul>
+          <>
+            <ul style={{ margin: 0, padding: '0 0 0 18px' }}>
+              {topics.slice(0, 10).map(topic => (
+                <li key={topic.id} style={{ marginBottom: 5, fontSize: '0.875rem' }}>{topic.title}</li>
+              ))}
+            </ul>
+            {topics.length > 10 && (
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate-topics'))}
+                style={{ marginTop: 8, fontSize: '0.8rem', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-primary)', padding: 0, opacity: 0.85 }}
+              >
+                + {topics.length - 10} {t('pages.stats.topics_more')}
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      {/* Innuendo groups — bubble visualization */}
+      {/* Word-Tracker — horizontal bar chart sorted by count */}
       {groups.length > 0 && (
         <div className="settings-section">
           <h3 className="settings-section-title">{t('pages.stats.innuendo_title')}</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center', paddingTop: 8 }}>
-            {(() => {
-              const maxCount = Math.max(...innuendos.map(i => i.count), 1);
-              return groups.map(item => {
-                const count = innuendos.find(i => i.label === item.label)?.count ?? 0;
-                const size = 72 + Math.round((count / maxCount) * 68);
-                return (
-                  <div
-                    key={item.label}
-                    style={{
-                      position: 'relative',
-                      width: size,
-                      height: size,
-                      borderRadius: '50%',
-                      background: 'var(--color-primary)',
-                      opacity: 0.15 + Math.min(0.75, (count / maxCount) * 0.75),
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'default',
-                      flexShrink: 0,
-                    }}
+          {(() => {
+            const chartData = groups
+              .map(item => ({
+                label: item.label,
+                count: innuendos.find(i => i.label === item.label)?.count ?? 0,
+              }))
+              .sort((a, b) => b.count - a.count);
+
+            const barColors = [
+              '#d97757', '#5B8C5A', '#5B7BA8', '#A8835B', '#8B5BA8',
+              '#5BA8A2', '#A85B6B', '#A8A25B', '#5B8CA8', '#A87C5B',
+            ];
+
+            const barHeight = 36;
+            const chartHeight = Math.max(120, chartData.length * barHeight + 40);
+
+            return (
+              <>
+                <ResponsiveContainer width="100%" height={chartHeight} style={{ background: 'transparent' }}>
+                  <BarChart
+                    data={chartData}
+                    layout="vertical"
+                    margin={{ top: 4, right: 48, left: 8, bottom: 4 }}
+                    barSize={20}
+                    style={{ background: 'transparent' }}
                   >
-                    <span style={{ fontSize: Math.max(10, Math.round(size * 0.18)), fontWeight: 600, color: 'var(--color-text)', textAlign: 'center', lineHeight: 1.2, padding: '0 8px', wordBreak: 'break-word' }}>
-                      {item.label}
-                    </span>
-                    <strong style={{ fontSize: Math.max(9, Math.round(size * 0.16)), color: 'var(--color-primary)', filter: 'brightness(0.6)' }}>
-                      {count}×
-                    </strong>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteGroup(item.label)}
-                      style={{ position: 'absolute', top: 4, right: 4, background: 'none', border: 'none', cursor: 'pointer', opacity: 0.4, fontSize: '0.75rem', padding: '2px 4px', lineHeight: 1, color: 'var(--color-text)' }}
-                      title="Löschen"
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11, fill: 'var(--color-text-secondary, #aaa)' }}
+                      axisLine={{ stroke: 'var(--color-border)' }}
+                      tickLine={{ stroke: 'var(--color-border)' }}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="label"
+                      width={110}
+                      tick={{ fontSize: 12, fill: 'var(--color-text)' }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`${value ?? 0}×`, t('pages.stats.innuendo_count')]}
+                      contentStyle={{ background: 'var(--color-surface, #1a1a1a)', border: '1px solid var(--color-border)', borderRadius: 6, fontSize: 12 }}
+                      labelStyle={{ color: 'var(--color-text)' }}
+                      itemStyle={{ color: 'var(--color-text)' }}
+                      cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                    />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={entry.label} fill={barColors[index % barColors.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+
+                {/* Delete buttons below chart */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {chartData.map((item, index) => (
+                    <span
+                      key={item.label}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '2px 8px 2px 6px',
+                        borderRadius: 12,
+                        background: barColors[index % barColors.length] + '22',
+                        border: `1px solid ${barColors[index % barColors.length]}44`,
+                        fontSize: 12,
+                      }}
                     >
-                      ×
-                    </button>
-                  </div>
-                );
-              });
-            })()}
-          </div>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: barColors[index % barColors.length], flexShrink: 0 }} />
+                      {item.label}
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteGroup(item.label)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5, fontSize: '0.8rem', padding: '0 2px', lineHeight: 1, color: 'var(--color-text)' }}
+                        title="Löschen"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
     </div>
