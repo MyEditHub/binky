@@ -89,14 +89,14 @@ if ! grep -q "### v$NEW_VERSION" README.md; then
 
   HAS_CONTENT=false
   if [ -f "NEXT_RELEASE.md" ]; then
-    REAL_NOTES=$(grep "^- " NEXT_RELEASE.md 2>/dev/null | grep -v "^- TODO$" | grep -v "^- Neue Features$" | grep -v "^- Änderungen$" | grep -v "^- Bugfixes$")
+    REAL_NOTES=$(grep "^- " NEXT_RELEASE.md 2>/dev/null | grep -v "^- (none)$" | grep -v "^- TODO$")
     if [ -n "$REAL_NOTES" ]; then
       HAS_CONTENT=true
     fi
   fi
 
   if [ "$HAS_CONTENT" = true ]; then
-    RELEASE_NOTES=$(tail -n +2 NEXT_RELEASE.md | grep -v "^# " | grep -v "^Trag" | grep -v "^- TODO$" | grep -v "^- Neue Features$" | grep -v "^- Änderungen$" | grep -v "^- Bugfixes$" | sed '/^$/N;/^\n$/d')
+    RELEASE_NOTES=$(tail -n +2 NEXT_RELEASE.md | grep -v "^# " | grep -v "^- TODO$" | sed '/^$/N;/^\n$/d' | sed '/./,$!d')
 
     CHANGELOG_LINE=$(grep -n "^## 📝 Changelog" README.md | head -1 | cut -d: -f1)
     {
@@ -113,9 +113,14 @@ if ! grep -q "### v$NEW_VERSION" README.md; then
     cat > NEXT_RELEASE.md << 'TEMPLATE'
 # Nächste Version
 
-Trag deine Änderungen hier ein, bevor du bump-version.sh ausführst.
+### Added
+- (none)
 
-- TODO
+### Changed
+- (none)
+
+### Fixed
+- (none)
 TEMPLATE
 
     echo "  Updated README.md (from NEXT_RELEASE.md)"

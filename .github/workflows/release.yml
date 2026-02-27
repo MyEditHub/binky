@@ -57,6 +57,12 @@ jobs:
           cache-on-failure: false
           key: 'arm-i8mm-v2'
 
+      - name: Cache sherpa-onnx downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/sherpa-rs
+          key: sherpa-onnx-${{ matrix.arch }}-v1
+
       - name: Install cmake (required by whisper-rs)
         run: brew install cmake || true
 
