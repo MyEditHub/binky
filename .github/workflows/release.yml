@@ -58,10 +58,15 @@ jobs:
           key: 'arm-i8mm-v2'
 
       - name: Cache sherpa-onnx downloads
+        id: sherpa-cache
         uses: actions/cache@v4
         with:
           path: ~/Library/Caches/sherpa-rs
           key: sherpa-onnx-${{ matrix.arch }}-v1
+
+      - name: Force sherpa-rs-sys rebuild on ONNX cache miss
+        if: steps.sherpa-cache.outputs.cache-hit != 'true'
+        run: find src-tauri/target -name "sherpa-rs-sys-*" -path "*/build/*" -type d | xargs rm -rf 2>/dev/null || true
 
       - name: Install cmake (required by whisper-rs)
         run: brew install cmake || true
