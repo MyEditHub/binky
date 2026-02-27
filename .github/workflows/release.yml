@@ -1,16 +1,16 @@
 # GitHub Actions CI/CD Pipeline for Binky
 #
-# Trigger: push tags matching v* (e.g. v0.1.0) or manual workflow_dispatch
+# Trigger: push tags matching v* (e.g. v0.1.0)
 #
-# Why manual build instead of tauri-action:
-#   - TAURI_SIGNING_PRIVATE_KEY is multi-line; GITHUB_ENV truncates it
-#   - Only inline `export KEY="$(cat file)"` reliably passes it to the build
+# Build job (matrix: aarch64 + x64):
+#   - Builds Tauri app
+#   - Creates PKG installer → uploaded directly to GitHub Release
+#   - Updater artifacts (.app.tar.gz + .sig) → uploaded as Actions artifacts
 #
-# Artifacts produced per architecture:
-#   - DMG (disk image)
-#   - PKG installer (wraps the .app via pkgbuild)
-#   - Updater tar.gz + .sig (for auto-updater)
-#   - latest.json (generated after both builds complete)
+# Publish job (after both builds):
+#   - Deploys updater artifacts + latest.json to GitHub Pages (myedithub.github.io/binky/)
+#   - Updates release description with notes, download table, installation guide
+#   - Result: release only shows .pkg files; updater files live on gh-pages
 
 name: Release
 
@@ -29,13 +29,11 @@ jobs:
       matrix:
         include:
           - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            triple: 'aarch64-apple-darwin'
-            arch: 'aarch64'
+            target: aarch64-apple-darwin
+            arch: aarch64
           - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            triple: 'x86_64-apple-darwin'
-            arch: 'x64'
+            target: x86_64-apple-darwin
+            arch: x64
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -87,100 +85,139 @@ jobs:
         run: |
           export TAURI_SIGNING_PRIVATE_KEY="$(cat /tmp/signing.key)"
           export TAURI_SIGNING_PRIVATE_KEY_PASSWORD="tauri"
-          npm run tauri build -- ${{ matrix.args }}
+          npm run tauri build -- --target ${{ matrix.target }}
         env:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
-      - name: Create GitHub Release (idempotent)
+      - name: Collect artifacts
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "Binky ${{ github.ref_name }}" \
-            --notes "Neue Version verfügbar. Details im Changelog." \
-            --draft=false --prerelease=false 2>/dev/null || true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION=${GITHUB_REF#refs/tags/v}
+          BUNDLE="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
 
-      - name: Upload updater artifacts
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          BUNDLE="src-tauri/target/${{ matrix.triple }}/release/bundle/macos"
-          TAR="$BUNDLE/Binky.app.tar.gz"
-          SIG="$BUNDLE/Binky.app.tar.gz.sig"
-          # Rename with arch suffix so both builds can coexist in the same release
-          cp "$TAR" "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz"
-          cp "$SIG" "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig"
-          gh release upload "${{ github.ref_name }}" \
-            "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz" \
-            "Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig" \
-            --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          mkdir -p artifacts/release artifacts/updater
 
-      - name: Build PKG installer
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          APP_PATH="src-tauri/target/${{ matrix.triple }}/release/bundle/macos/Binky.app"
+          # PKG → release
           mkdir -p /tmp/pkg-scripts
           cp .github/scripts/postinstall /tmp/pkg-scripts/postinstall
           chmod +x /tmp/pkg-scripts/postinstall
           pkgbuild \
-            --component "$APP_PATH" \
+            --component "$BUNDLE/Binky.app" \
             --install-location /Applications \
             --scripts /tmp/pkg-scripts \
             --identifier de.binky.app \
             --version "$VERSION" \
-            "Binky_${VERSION}_${{ matrix.arch }}.pkg"
+            "artifacts/release/Binky_${VERSION}_${{ matrix.arch }}.pkg"
 
-      - name: Upload PKG
-        run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION="${VERSION#v}"
-          gh release upload "${{ github.ref_name }}" "Binky_${VERSION}_${{ matrix.arch }}.pkg" --clobber
+          # Updater → gh-pages
+          cp "$BUNDLE/Binky.app.tar.gz"     "artifacts/updater/Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz"
+          cp "$BUNDLE/Binky.app.tar.gz.sig" "artifacts/updater/Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig"
+
+      - name: Upload PKG to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/release/*.pkg
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-updater:
+      - name: Upload updater artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-${{ matrix.arch }}
+          path: artifacts/updater/*
+          compression-level: 0
+
+  publish:
     needs: build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
+      pages: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate and upload latest.json
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Download updater artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: updater-*
+          path: updater
+          merge-multiple: true
+
+      - name: Generate latest.json
         run: |
-          VERSION="${{ github.ref_name }}"
-          VERSION_CLEAN="${VERSION#v}"
-          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          BASE_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}"
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          BASE_URL="https://myedithub.github.io/binky"
 
-          # Download sig files uploaded by build jobs
-          gh release download "${{ github.ref_name }}" --pattern "*.sig" --dir /tmp/sigs
+          ARM_SIG=$(cat "updater/Binky_${VERSION}_aarch64.app.tar.gz.sig")
+          X64_SIG=$(cat "updater/Binky_${VERSION}_x64.app.tar.gz.sig")
 
-          ARM_SIG=$(cat "/tmp/sigs/Binky_${VERSION_CLEAN}_aarch64.app.tar.gz.sig")
-          X64_SIG=$(cat "/tmp/sigs/Binky_${VERSION_CLEAN}_x64.app.tar.gz.sig")
-
-          cat > /tmp/latest.json << JSON
+          cat > updater/latest.json << EOF
           {
-            "version": "${VERSION}",
+            "version": "v${VERSION}",
             "notes": "Neue Version verfügbar.",
-            "pub_date": "${PUB_DATE}",
+            "pub_date": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
             "platforms": {
               "darwin-aarch64": {
                 "signature": "${ARM_SIG}",
-                "url": "${BASE_URL}/Binky_${VERSION_CLEAN}_aarch64.app.tar.gz"
+                "url": "${BASE_URL}/Binky_${VERSION}_aarch64.app.tar.gz"
               },
               "darwin-x86_64": {
                 "signature": "${X64_SIG}",
-                "url": "${BASE_URL}/Binky_${VERSION_CLEAN}_x64.app.tar.gz"
+                "url": "${BASE_URL}/Binky_${VERSION}_x64.app.tar.gz"
               }
             }
           }
-          JSON
+          EOF
 
-          gh release upload "${{ github.ref_name }}" /tmp/latest.json --clobber
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./updater
+          keep_files: true
+
+      - name: Extract release notes from README
+        id: notes
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          NOTES=$(awk "/^### v${VERSION} /{start=1; next} start && /^### v[0-9]/{exit} start && /^## [^#]/{exit} start{print}" README.md | sed '/^[[:space:]]*$/{ N; /^\n$/d; }' | sed '/./,$!d')
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Update release description
+        uses: softprops/action-gh-release@v1
+        with:
+          name: 'Binky v${{ steps.version.outputs.VERSION }}'
+          body: |
+            ${{ steps.notes.outputs.notes }}
+
+            ---
+
+            ## Download
+
+            | Mac-Typ | Download |
+            |---------|----------|
+            | **Apple Silicon** (M1/M2/M3/M4) | [Download](https://github.com/MyEditHub/binky/releases/download/v${{ steps.version.outputs.VERSION }}/Binky_${{ steps.version.outputs.VERSION }}_aarch64.pkg) |
+            | **Intel** | [Download](https://github.com/MyEditHub/binky/releases/download/v${{ steps.version.outputs.VERSION }}/Binky_${{ steps.version.outputs.VERSION }}_x64.pkg) |
+
+            ---
+
+            ## Installation Guide
+
+            macOS blockiert die App, weil sie von einem unabhängigen Entwickler stammt. Folge diesen Schritten:
+
+            1. Lade die `.pkg`-Datei oben herunter
+            2. **Doppelklick** — macOS zeigt eine Sicherheitswarnung
+            3. **Systemeinstellungen → Datenschutz & Sicherheit** öffnen
+            4. **Nach unten scrollen** — du siehst *„Binky wurde blockiert"*
+            5. **„Trotzdem öffnen"** klicken → Passwort eingeben
+            6. **Installer erneut starten** — jetzt klappt es
+
+            Nach dieser einmaligen Einrichtung öffnet sich die App normal.
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
