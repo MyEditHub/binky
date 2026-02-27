@@ -78,6 +78,19 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.1.3 (2026-02-27)
+
+
+### Added
+- (none)
+
+### Changed
+- Release-Seite zeigt jetzt strukturierte Versionshinweise mit Download-Tabelle und Installationsanleitung
+
+### Fixed
+- (none)
+
+
 ### v0.1.2 (2026-02-26)
 
 - Release-Pipeline stabilisiert — Builds laufen jetzt zuverlässig durch

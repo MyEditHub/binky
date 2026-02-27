@@ -1,5 +1,10 @@
 # Nächste Version
 
-Trag deine Änderungen hier ein, bevor du bump-version.sh ausführst.
+### Added
+- (none)
 
-- TODO
+### Changed
+- (none)
+
+### Fixed
+- (none)
