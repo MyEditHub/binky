@@ -1,14 +1,14 @@
 {
   "version": "v0.1.3",
   "notes": "Neue Version verfügbar.",
-  "pub_date": "2026-02-27T08:13:49Z",
+  "pub_date": "2026-02-27T09:13:15Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHNvZkJsdytacys2VU9HSnFja2xvOFlVcUtrSk5nVGtDaEo0cmpOL0tIaXNGVm5pTGswR1JZdWVLbFBOUmhKbkxUL0VRdEx0VUhQWGpNSUxCNEdrR2dJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyMTc5ODEzCWZpbGU6Qmlua3kuYXBwLnRhci5negoxVy96WUMvRUxSWkNaWmZuTHB0ZHVXWVpTaFNXSHFPWUZGSjZTcWc4SDJKQS90Q0pXMm5SZnZmTXhjbjQ4eVR3aUxwSUxld0N3Ly82RDRrNjFSeG1DZz09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNGtaZ1h6VHJPQVV4VUxsL05sMmcvMDUzZjNTSlRlWm14RVN3N1BiS3pQRW4vRUsxbDUzbElkNTdRUkxydHZRQnl4K05QQkp3ZjM5Q1oxMHNnVFNrTEFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyMTgzMzg5CWZpbGU6Qmlua3kuYXBwLnRhci5negp0S1lMQkRVN1YxR2ZPTlFHZGttNFoxbnBDRU52VXV3bG5Bd1lUaHFuVG9YUFgwcDJ0d2FwN1ZNSnlZZ3JTVnR3eW1YRmZuNjducE51L2pZZTFuZmpBdz09Cg==",
       "url": "https://myedithub.github.io/binky/Binky_0.1.3_aarch64.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHBLZHc1K1Q5QWdsYW9rUlBMVWY4Z2M2aUwzdDBIV0V1dFJDQXVDWXErL05yb2xvMDczdTA0MGdBeUJxTjJua3RNeHF0SEswQlZQaGVoYTlHQzN5UFFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyMTgwMDEwCWZpbGU6Qmlua3kuYXBwLnRhci5nego4aUd2TWdQaFRkek1ZTmFuRmlxVDRmTWErd2YyZVRCaU9oWVVGcEp2U1FudisvUnBsRDV5NSsxeUtwZ1FEdDN5YjVrN0dRb0xDdXBWYXRjNUxSLzBBUT09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHJtYU1PNUhycmo0UElHREEra3d5TzZuUXFVMzRhTnJadUpBWGhCZWNJWmIxaXBldjNCQzJ3UVJaMHcvOC9QZ0x1QlUxQzNxVnhWaUxwWmRHSHVkb0EwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyMTgzNTczCWZpbGU6Qmlua3kuYXBwLnRhci5negp3Mk5SY2FQYjArdno3aXlHclpXR2lsbTMwSFRwa1lIWjkwT3VLbWtGdkRYdG1kRkxmbzFmRDEwSU1LRmxEVVZlUGpTdm1ucjQvcXBidmkrNW16aXFEZz09Cg==",
       "url": "https://myedithub.github.io/binky/Binky_0.1.3_x64.app.tar.gz"
     }
   }
