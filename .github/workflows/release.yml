@@ -101,6 +101,31 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
+      - name: Bundle onnxruntime dylib into app
+        run: |
+          BUNDLE="src-tauri/target/${{ matrix.target }}/release/bundle/macos/Binky.app"
+          DYLIB=$(find ~/Library/Caches/sherpa-rs -name "libonnxruntime.1.17.1.dylib" | head -1)
+
+          if [ -z "$DYLIB" ]; then
+            echo "Error: libonnxruntime.1.17.1.dylib not found in cache"
+            exit 1
+          fi
+
+          echo "Bundling: $DYLIB"
+          mkdir -p "$BUNDLE/Contents/Frameworks"
+          cp "$DYLIB" "$BUNDLE/Contents/Frameworks/"
+
+          # Ensure dylib install name is @rpath-relative
+          install_name_tool -id "@rpath/libonnxruntime.1.17.1.dylib" \
+            "$BUNDLE/Contents/Frameworks/libonnxruntime.1.17.1.dylib"
+
+          # Add rpath to binary so it finds Frameworks/
+          install_name_tool -add_rpath "@executable_path/../Frameworks" \
+            "$BUNDLE/Contents/MacOS/binky"
+
+          # Re-sign the modified bundle (ad-hoc, no cert needed)
+          codesign --force --deep --sign - "$BUNDLE"
+
       - name: Collect artifacts
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
