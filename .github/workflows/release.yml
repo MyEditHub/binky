@@ -101,23 +101,25 @@ jobs:
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
 
-      - name: Bundle onnxruntime dylib into app
+      - name: Bundle sherpa-onnx dylibs into app
         run: |
           BUNDLE="src-tauri/target/${{ matrix.target }}/release/bundle/macos/Binky.app"
-          DYLIB=$(find ~/Library/Caches/sherpa-rs -name "libonnxruntime.1.17.1.dylib" | head -1)
+          SHERPA_LIB_DIR=$(find ~/Library/Caches/sherpa-rs -name "libonnxruntime*.dylib" -exec dirname {} \; | head -1)
 
-          if [ -z "$DYLIB" ]; then
-            echo "Error: libonnxruntime.1.17.1.dylib not found in cache"
+          if [ -z "$SHERPA_LIB_DIR" ]; then
+            echo "Error: sherpa-onnx dylibs not found in cache"
             exit 1
           fi
 
-          echo "Bundling: $DYLIB"
+          echo "Bundling all dylibs from: $SHERPA_LIB_DIR"
           mkdir -p "$BUNDLE/Contents/Frameworks"
-          cp "$DYLIB" "$BUNDLE/Contents/Frameworks/"
+          cp "$SHERPA_LIB_DIR"/*.dylib "$BUNDLE/Contents/Frameworks/"
 
-          # Ensure dylib install name is @rpath-relative
-          install_name_tool -id "@rpath/libonnxruntime.1.17.1.dylib" \
-            "$BUNDLE/Contents/Frameworks/libonnxruntime.1.17.1.dylib"
+          # Fix install name of each bundled dylib to be @rpath-relative
+          for dylib in "$BUNDLE/Contents/Frameworks"/*.dylib; do
+            name=$(basename "$dylib")
+            install_name_tool -id "@rpath/$name" "$dylib"
+          done
 
           # Add rpath to binary so it finds Frameworks/
           install_name_tool -add_rpath "@executable_path/../Frameworks" \
