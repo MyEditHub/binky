@@ -49,7 +49,7 @@ export default function Layout() {
         setDevMode(prev => {
           const next = !prev;
           setSetting('developer_mode', next ? 'true' : 'false');
-          if (!next && ['episodes', 'analytics', 'topics'].includes(activePageRef.current)) {
+          if (!next && ['episodes', 'analytics'].includes(activePageRef.current)) {
             setActivePage('home');
           }
           return next;
