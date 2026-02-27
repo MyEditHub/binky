@@ -1,8 +1,6 @@
 node_modules
 .planning
-.claude/projects
-.claude/settings.local.json
-.claude/evolution.json
+.claude
 src-tauri/target
 .env
 CLAUDE.md
