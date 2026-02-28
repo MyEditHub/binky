@@ -379,7 +379,7 @@ pub async fn assemblyai_backfill_utterance_text(
         let mut unmatched_count: usize = 0;
 
         let mut next_url: Option<String> = Some(
-            "https://api.assemblyai.com/v2/transcripts?status=completed&limit=200".to_string(),
+            "https://api.assemblyai.com/v2/transcript?status=completed&limit=200".to_string(),
         );
 
         while let Some(url) = next_url {
