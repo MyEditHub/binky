@@ -151,6 +151,7 @@ pub fn run() {
             commands::birds::delete_bird_history_entry,
             commands::birds::get_current_bird,
             commands::assemblyai::assemblyai_process_backlog,
+            commands::assemblyai::assemblyai_backfill_utterance_text,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
