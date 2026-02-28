@@ -1667,6 +1667,32 @@ body {
   margin-bottom: 0;
 }
 
+/* Speaker blocks */
+.speaker-block {
+  border-left: 3px solid var(--color-border);
+  padding: 0.5rem 0 0.5rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.speaker-block-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.speaker-block-text {
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.speaker-block:last-child {
+  margin-bottom: 0;
+}
+
 /* Highlight marks */
 .transcript-highlight {
   background-color: #fef9c3;

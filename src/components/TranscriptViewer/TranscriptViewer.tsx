@@ -1,6 +1,8 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useTranscript, groupIntoParagraphs } from '../../hooks/useTranscript';
+import { useSpeakerBlocks } from '../../hooks/useSpeakerBlocks';
+import SpeakerBlock from './SpeakerBlock';
 import TranscriptSearch from './TranscriptSearch';
 
 interface TranscriptViewerProps {
@@ -72,6 +74,7 @@ export default function TranscriptViewer({
 }: TranscriptViewerProps) {
   const { t } = useTranslation();
   const { transcript, loading, error, deleteTranscript } = useTranscript(episodeId);
+  const { blocks: speakerBlocks, loading: blocksLoading } = useSpeakerBlocks(episodeId);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearch, setShowSearch] = useState(false);
@@ -81,7 +84,7 @@ export default function TranscriptViewer({
 
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  // Build paragraphs from transcript
+  // Build paragraphs from transcript (used when no speaker blocks available)
   const paragraphs = useMemo(() => {
     if (!transcript) return [];
     if (transcript.segments_json) {
@@ -98,16 +101,25 @@ export default function TranscriptViewer({
     return [];
   }, [transcript]);
 
-  // Compute match counts per paragraph
+  // Compute match counts per paragraph (used in fallback path)
   const matchCountsPerParagraph = useMemo(() => {
     if (!searchQuery) return paragraphs.map(() => 0);
     return paragraphs.map((p) => countMatches(p.text, searchQuery));
   }, [paragraphs, searchQuery]);
 
-  const totalMatches = useMemo(
-    () => matchCountsPerParagraph.reduce((a, b) => a + b, 0),
-    [matchCountsPerParagraph]
-  );
+  // Compute match counts per speaker block
+  const matchCountsPerBlock = useMemo(() => {
+    if (!searchQuery) return speakerBlocks.map(() => 0);
+    return speakerBlocks.map((b) => countMatches(b.text, searchQuery));
+  }, [speakerBlocks, searchQuery]);
+
+  // Total matches across whichever rendering path is active
+  const totalMatches = useMemo(() => {
+    if (speakerBlocks.length > 0) {
+      return matchCountsPerBlock.reduce((a, b) => a + b, 0);
+    }
+    return matchCountsPerParagraph.reduce((a, b) => a + b, 0);
+  }, [speakerBlocks, matchCountsPerBlock, matchCountsPerParagraph]);
 
   // Clamp currentMatchIdx when totalMatches changes
   useEffect(() => {
@@ -156,12 +168,21 @@ export default function TranscriptViewer({
     onTranscriptDeleted();
   }, [deleteTranscript, episodeId, onTranscriptDeleted]);
 
-  /** Get the global match offset at the start of paragraph i. */
+  /** Get the global match offset at the start of paragraph i (fallback path). */
   function getOffset(i: number): number {
     let offset = 0;
     for (let k = 0; k < i; k++) offset += matchCountsPerParagraph[k];
     return offset;
   }
+
+  /** Get the global match offset at the start of speaker block i. */
+  function getSpeakerBlockOffset(i: number): number {
+    let offset = 0;
+    for (let k = 0; k < i; k++) offset += matchCountsPerBlock[k];
+    return offset;
+  }
+
+  const isLoading = loading || blocksLoading;
 
   return (
     <div className="transcript-viewer">
@@ -206,23 +227,39 @@ export default function TranscriptViewer({
 
       {/* Body */}
       <div className="transcript-body" ref={bodyRef}>
-        {loading && (
+        {isLoading && (
           <div className="transcript-loading">
             <span className="spinner" />
           </div>
         )}
 
-        {error && !loading && (
+        {error && !isLoading && (
           <div className="transcript-error">{error}</div>
         )}
 
-        {!loading && !error && paragraphs.length === 0 && (
+        {!isLoading && !error && speakerBlocks.length === 0 && paragraphs.length === 0 && (
           <div className="transcript-empty">
             {t('pages.episodes.transcript_no_text')}
           </div>
         )}
 
-        {!loading && !error && paragraphs.length > 0 && paragraphs.map((para, i) => {
+        {/* Speaker block rendering path (AssemblyAI episodes with diarization text) */}
+        {!isLoading && !error && speakerBlocks.length > 0 && speakerBlocks.map((block, i) => {
+          const offset = getSpeakerBlockOffset(i);
+          const isActiveMatch = (globalIdx: number) => globalIdx === currentMatchIdx;
+          return (
+            <SpeakerBlock
+              key={i}
+              displayName={block.displayName}
+              color={block.color}
+            >
+              {highlightText(block.text, searchQuery, isActiveMatch, offset)}
+            </SpeakerBlock>
+          );
+        })}
+
+        {/* Fallback paragraph rendering path (Whisper episodes or no diarization text) */}
+        {!isLoading && !error && speakerBlocks.length === 0 && paragraphs.length > 0 && paragraphs.map((para, i) => {
           const offset = getOffset(i);
           const isActiveMatch = (globalIdx: number) => globalIdx === currentMatchIdx;
           return (
