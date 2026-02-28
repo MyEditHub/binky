@@ -39,7 +39,6 @@ struct Utterance {
     speaker: String,
     start: i64,
     end: i64,
-    #[allow(dead_code)]
     text: String,
 }
 
@@ -363,9 +362,9 @@ fn write_results_to_db(
         for utterance in utterances {
             let speaker_label = map_speaker_label(&utterance.speaker);
             conn.execute(
-                "INSERT INTO diarization_segments (episode_id, start_ms, end_ms, speaker_label, confidence) \
-                 VALUES (?1, ?2, ?3, ?4, 1.0)",
-                rusqlite::params![episode_id, utterance.start, utterance.end, speaker_label],
+                "INSERT INTO diarization_segments (episode_id, start_ms, end_ms, speaker_label, confidence, text) \
+                 VALUES (?1, ?2, ?3, ?4, 1.0, ?5)",
+                rusqlite::params![episode_id, utterance.start, utterance.end, speaker_label, utterance.text],
             )
             .map_err(|e| format!("Segment konnte nicht gespeichert werden: {}", e))?;
         }
