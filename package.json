@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@sentry/browser": "^10.38.0",
+    "@tanstack/react-virtual": "^3.13.19",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2.5.3",
     "@tauri-apps/plugin-process": "^2.3.1",
