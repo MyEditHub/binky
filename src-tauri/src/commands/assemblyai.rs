@@ -350,7 +350,12 @@ pub async fn assemblyai_backfill_utterance_text(
             .map_err(|e| e.to_string())?
             .join("binky.db");
 
-        // Load all episodes with their audio_url into a HashMap<audio_url -> episode_id>
+        // Strip query params from URL for fuzzy matching (e.g. tracking params differ)
+        fn base_url(url: &str) -> &str {
+            url.find('?').map(|i| &url[..i]).unwrap_or(url)
+        }
+
+        // Load all episodes with their audio_url into a HashMap<base_url -> episode_id>
         let episode_map: std::collections::HashMap<String, i64> = {
             let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
             let mut stmt = conn
@@ -364,7 +369,9 @@ pub async fn assemblyai_backfill_utterance_text(
                     Ok((row.get::<_, String>(1)?, row.get::<_, i64>(0)?))
                 })
                 .map_err(|e| e.to_string())?;
-            rows.filter_map(|r| r.ok()).collect()
+            rows.filter_map(|r| r.ok())
+                .map(|(url, id)| (base_url(&url).to_string(), id))
+                .collect()
         };
 
         if episode_map.is_empty() {
@@ -420,7 +427,7 @@ pub async fn assemblyai_backfill_utterance_text(
                 let transcript_id = transcript["id"].as_str().unwrap_or("").to_string();
                 let audio_url = transcript["audio_url"].as_str().unwrap_or("").to_string();
 
-                if let Some(&episode_id) = episode_map.get(&audio_url) {
+                if let Some(&episode_id) = episode_map.get(base_url(&audio_url)) {
                     matched.push((episode_id, transcript_id));
                 } else {
                     unmatched_count += 1;
