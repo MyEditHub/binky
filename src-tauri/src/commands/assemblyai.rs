@@ -333,6 +333,225 @@ async fn poll_until_done(transcript_id: &str, api_key: &str) -> Result<PollRespo
     }
 }
 
+#[tauri::command]
+pub async fn assemblyai_backfill_utterance_text(
+    app: tauri::AppHandle,
+    api_key: String,
+) -> Result<String, String> {
+    // Release build guard — this command is dev/internal only
+    #[cfg(not(debug_assertions))]
+    return Err("Dev-only command".to_string());
+
+    #[cfg(debug_assertions)]
+    {
+        let db_path = app
+            .path()
+            .app_data_dir()
+            .map_err(|e| e.to_string())?
+            .join("binky.db");
+
+        // Load all episodes with their audio_url into a HashMap<audio_url -> episode_id>
+        let episode_map: std::collections::HashMap<String, i64> = {
+            let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, audio_url FROM episodes \
+                     WHERE audio_url IS NOT NULL AND audio_url != ''",
+                )
+                .map_err(|e| e.to_string())?;
+            let rows = stmt
+                .query_map([], |row| {
+                    Ok((row.get::<_, String>(1)?, row.get::<_, i64>(0)?))
+                })
+                .map_err(|e| e.to_string())?;
+            rows.filter_map(|r| r.ok()).collect()
+        };
+
+        if episode_map.is_empty() {
+            return Ok("Keine Episoden mit audio_url gefunden".to_string());
+        }
+
+        let client = reqwest::Client::new();
+
+        // Page through AssemblyAI list API to collect all completed transcripts
+        let mut matched: Vec<(i64, String)> = vec![]; // (episode_id, transcript_id)
+        let mut total_transcripts_found: usize = 0;
+        let mut unmatched_count: usize = 0;
+
+        let mut next_url: Option<String> = Some(
+            "https://api.assemblyai.com/v2/transcripts?status=completed&limit=200".to_string(),
+        );
+
+        while let Some(url) = next_url {
+            let response = match client
+                .get(&url)
+                .header("Authorization", &api_key)
+                .send()
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!("[backfill] Page request failed for {}: {}", url, e);
+                    break;
+                }
+            };
+
+            if !response.status().is_success() {
+                eprintln!(
+                    "[backfill] Page request returned status {}",
+                    response.status()
+                );
+                break;
+            }
+
+            let body: serde_json::Value = match response.json().await {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!("[backfill] Failed to parse page response: {}", e);
+                    break;
+                }
+            };
+
+            let empty_vec = vec![];
+            let transcripts = body["transcripts"].as_array().unwrap_or(&empty_vec);
+
+            for transcript in transcripts {
+                total_transcripts_found += 1;
+                let transcript_id = transcript["id"].as_str().unwrap_or("").to_string();
+                let audio_url = transcript["audio_url"].as_str().unwrap_or("").to_string();
+
+                if let Some(&episode_id) = episode_map.get(&audio_url) {
+                    matched.push((episode_id, transcript_id));
+                } else {
+                    unmatched_count += 1;
+                    eprintln!(
+                        "[backfill] Unmatched transcript {} (audio_url: {})",
+                        transcript_id, audio_url
+                    );
+                }
+            }
+
+            // Advance to next page
+            next_url = body["page_details"]["next_url"]
+                .as_str()
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty());
+        }
+
+        // For each matched episode, fetch the transcript and backfill diarization_segments.text
+        let mut updated_count: usize = 0;
+
+        for (episode_id, transcript_id) in &matched {
+            // Check if this episode already has text populated — skip if so (idempotent)
+            let already_done: bool = {
+                let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+                let count: i64 = conn
+                    .query_row(
+                        "SELECT COUNT(*) FROM diarization_segments \
+                         WHERE episode_id = ?1 AND text IS NOT NULL",
+                        rusqlite::params![episode_id],
+                        |row| row.get(0),
+                    )
+                    .unwrap_or(0);
+                count > 0
+            };
+
+            if already_done {
+                eprintln!(
+                    "[backfill] Episode {} already has text, skipping transcript {}",
+                    episode_id, transcript_id
+                );
+                continue;
+            }
+
+            // Rate-limit: small delay between individual transcript fetches
+            sleep(Duration::from_millis(200)).await;
+
+            let response = match client
+                .get(&format!(
+                    "https://api.assemblyai.com/v2/transcript/{}",
+                    transcript_id
+                ))
+                .header("Authorization", &api_key)
+                .send()
+                .await
+            {
+                Ok(r) => r,
+                Err(e) => {
+                    eprintln!(
+                        "[backfill] Fetch failed for transcript {}: {}",
+                        transcript_id, e
+                    );
+                    continue;
+                }
+            };
+
+            if !response.status().is_success() {
+                eprintln!(
+                    "[backfill] Transcript {} returned status {}",
+                    transcript_id,
+                    response.status()
+                );
+                continue;
+            }
+
+            let body: serde_json::Value = match response.json().await {
+                Ok(v) => v,
+                Err(e) => {
+                    eprintln!(
+                        "[backfill] Failed to parse transcript {}: {}",
+                        transcript_id, e
+                    );
+                    continue;
+                }
+            };
+
+            let empty_vec = vec![];
+            let utterances = body["utterances"].as_array().unwrap_or(&empty_vec);
+
+            if utterances.is_empty() {
+                eprintln!(
+                    "[backfill] Transcript {} has no utterances",
+                    transcript_id
+                );
+                continue;
+            }
+
+            // Open a fresh connection (rusqlite is not Send — must not hold across await)
+            let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+            let mut rows_updated: usize = 0;
+
+            for utterance in utterances {
+                let text = utterance["text"].as_str().unwrap_or("").to_string();
+                let start_ms = utterance["start"].as_i64().unwrap_or(0);
+                let end_ms = utterance["end"].as_i64().unwrap_or(0);
+
+                match conn.execute(
+                    "UPDATE diarization_segments \
+                     SET text = ?1 \
+                     WHERE episode_id = ?2 AND start_ms = ?3 AND end_ms = ?4 AND text IS NULL",
+                    rusqlite::params![text, episode_id, start_ms, end_ms],
+                ) {
+                    Ok(n) => rows_updated += n,
+                    Err(e) => eprintln!(
+                        "[backfill] UPDATE failed for episode {} utterance [{}-{}]: {}",
+                        episode_id, start_ms, end_ms, e
+                    ),
+                }
+            }
+
+            if rows_updated > 0 {
+                updated_count += 1;
+            }
+        }
+
+        Ok(format!(
+            "{} Episoden aktualisiert ({} Transkripte gefunden, {} nicht zugeordnet)",
+            updated_count, total_transcripts_found, unmatched_count
+        ))
+    }
+}
+
 fn write_results_to_db(
     episode_id: i64,
     poll: &PollResponse,
