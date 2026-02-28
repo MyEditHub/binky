@@ -81,6 +81,12 @@ pub fn run() {
             sql: include_str!("../migrations/010_clean_test_birds.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 11,
+            description: "add_utterance_text_to_diarization_segments",
+            sql: include_str!("../migrations/011_utterance_text.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
