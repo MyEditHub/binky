@@ -31,6 +31,7 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
   const [completedCount, setCompletedCount] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [batchResult, setBatchResult] = useState<string | null>(null);
+  const [backfillResult, setBackfillResult] = useState<string | null>(null);
 
   // Load stored API key when panel opens
   useEffect(() => {
@@ -68,6 +69,17 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
       unlistenPromise.then(unlisten => unlisten());
     };
   }, [open]);
+
+  async function handleBackfillUtteranceText() {
+    if (!apiKey) return;
+    setBackfillResult('Läuft...');
+    try {
+      const result = await invoke<string>('assemblyai_backfill_utterance_text', { apiKey });
+      setBackfillResult(result);
+    } catch (err) {
+      setBackfillResult(`Fehler: ${String(err)}`);
+    }
+  }
 
   async function handleStart() {
     if (!apiKey || processing) return;
@@ -212,6 +224,35 @@ export default function AssemblyAIDevPanel({ open, onClose }: Props) {
             {batchResult}
           </p>
         )}
+
+        {/* Utterance text backfill */}
+        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: 12 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--color-text)', opacity: 0.7 }}>
+            Utterance-Text für bestehende Episoden nachfüllen (einmalig)
+          </p>
+          <button
+            onClick={handleBackfillUtteranceText}
+            disabled={!apiKey}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 6,
+              border: '1px solid var(--color-border)',
+              background: !apiKey ? 'transparent' : 'var(--color-accent, #d97757)',
+              color: !apiKey ? 'var(--color-text)' : '#fff',
+              fontSize: 13,
+              cursor: !apiKey ? 'not-allowed' : 'pointer',
+              opacity: !apiKey ? 0.5 : 1,
+              alignSelf: 'flex-start',
+            }}
+          >
+            Utterance-Text nachfüllen
+          </button>
+          {backfillResult && (
+            <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--color-text)', opacity: 0.7 }}>
+              {backfillResult}
+            </p>
+          )}
+        </div>
 
         {/* Progress list */}
         {sortedEntries.length > 0 && (
