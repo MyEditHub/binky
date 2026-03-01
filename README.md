@@ -78,6 +78,21 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.0 (2026-03-01)
+
+### Added
+- Transkripte zeigen jetzt, wer was gesagt hat: Jeder Absatz hat ein farbiges Label mit dem Namen des Sprechers (Nadine oder Philipp)
+- Aufeinanderfolgende Sätze desselben Sprechers werden automatisch zu einem Block zusammengefasst — kein Wechsel mitten im Gedanken
+- Suche im Transkript funktioniert auch in der neuen Sprecher-Ansicht mit Navigation zwischen Treffern
+
+### Changed
+- (none)
+
+### Fixed
+- Themen-Seite war unter bestimmten Umständen nicht erreichbar
+- Vogel-Datenbank: Fehler in Migration behoben, der Vogelnamen nicht korrekt zuordnen konnte
+
+
 ### v0.1.3 (2026-02-27)
 
 
