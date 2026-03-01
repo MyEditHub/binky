@@ -78,6 +78,11 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.1 (2026-03-01)
+
+- TODO: Changelog eintragen
+
+
 ### v0.2.0 (2026-03-01)
 
 ### Added
