@@ -78,6 +78,18 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.3 (2026-03-02)
+
+### Added
+- Analytik: Schaltfläche „Sprecher erkennen" erkennt automatisch per Transkripttext, ob Sprecher 0 und Sprecher 1 vertauscht sind, und korrigiert alle betroffenen Episoden auf einmal
+
+### Changed
+- (none)
+
+### Fixed
+- (none)
+
+
 ### v0.2.2 (2026-03-01)
 
 - TODO: Changelog eintragen
