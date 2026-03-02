@@ -1,6 +1,7 @@
 import Database from '@tauri-apps/plugin-sql';
 import { useState, useEffect, useCallback } from 'react';
 import { getSetting, setSetting } from '../lib/settings';
+import { detectSpeakerSwap } from '../lib/speakerDetection';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -234,6 +235,56 @@ export function useAnalytics() {
     );
   }, []);
 
+  const autoDetectAllSpeakers = useCallback(async (): Promise<{
+    swapped: number;
+    unchanged: number;
+    uncertain: number;
+  }> => {
+    const db = await Database.load('sqlite:binky.db');
+    const [h0Name, h1Name] = await Promise.all([
+      getSetting('host_0_name'),
+      getSetting('host_1_name'),
+    ]);
+
+    let swapped = 0;
+    let unchanged = 0;
+    let uncertain = 0;
+
+    const doneEpisodes = episodes.filter((e) => e.diarizationStatus === 'done');
+
+    for (const ep of doneEpisodes) {
+      const segments = await db.select<
+        Array<{ speaker_label: string; corrected_speaker: string | null; text: string | null }>
+      >(
+        `SELECT speaker_label, corrected_speaker, text
+         FROM diarization_segments WHERE episode_id = ? AND text IS NOT NULL ORDER BY start_ms`,
+        [ep.episodeId],
+      );
+
+      const { result } = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '');
+
+      if (result === 'swap') {
+        await db.execute(
+          `UPDATE diarization_segments
+           SET corrected_speaker = CASE
+               WHEN COALESCE(corrected_speaker, speaker_label) = 'SPEAKER_0' THEN 'SPEAKER_1'
+               ELSE 'SPEAKER_0'
+           END
+           WHERE episode_id = ?`,
+          [ep.episodeId],
+        );
+        swapped++;
+      } else if (result === 'no_swap') {
+        unchanged++;
+      } else {
+        uncertain++;
+      }
+    }
+
+    await refresh();
+    return { swapped, unchanged, uncertain };
+  }, [episodes, refresh]);
+
   useEffect(() => {
     refresh();
   }, [refresh]);
@@ -249,5 +300,6 @@ export function useAnalytics() {
     flipEpisodeSpeakers,
     correctSegment,
     loadSegments,
+    autoDetectAllSpeakers,
   };
 }

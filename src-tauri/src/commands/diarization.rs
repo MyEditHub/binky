@@ -318,6 +318,87 @@ fn update_diarization_status(
     }
 }
 
+/// After storing diarization segments, populate the `text` column by joining
+/// with Whisper's `transcripts.segments_json` on time overlap.
+/// Silent no-op if no Whisper transcript exists (AssemblyAI path or not yet transcribed).
+fn backfill_segment_text_from_whisper(db_path: &std::path::Path, episode_id: i64) {
+    let conn = match rusqlite::Connection::open(db_path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    // Fetch Whisper segments JSON — NULL or missing if episode used AssemblyAI
+    let segments_json: Option<String> = match conn.query_row(
+        "SELECT segments_json FROM transcripts WHERE episode_id = ?1",
+        rusqlite::params![episode_id],
+        |row| row.get(0),
+    ) {
+        Ok(v) => v,
+        Err(_) => return,
+    };
+    let segments_json = match segments_json {
+        Some(j) => j,
+        None => return,
+    };
+
+    // Parse [{text, start_ms, end_ms}, ...] from Whisper output
+    let whisper_segs: Vec<(i64, i64, String)> =
+        match serde_json::from_str::<serde_json::Value>(&segments_json) {
+            Ok(serde_json::Value::Array(arr)) => arr
+                .into_iter()
+                .filter_map(|v| {
+                    let start = v["start_ms"].as_i64()?;
+                    let end = v["end_ms"].as_i64()?;
+                    let text = v["text"].as_str()?.trim().to_string();
+                    if text.is_empty() { None } else { Some((start, end, text)) }
+                })
+                .collect(),
+            _ => return,
+        };
+
+    if whisper_segs.is_empty() {
+        return;
+    }
+
+    // Fetch diarization segments that still have no text
+    let diar_segs: Vec<(i64, i64, i64)> = {
+        let mut stmt = match conn.prepare(
+            "SELECT id, start_ms, end_ms FROM diarization_segments \
+             WHERE episode_id = ?1 AND text IS NULL",
+        ) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+        // Collect before stmt drops — MappedRows borrows stmt and must be
+        // fully consumed before the block ends.
+        let collected: Vec<(i64, i64, i64)> = match stmt.query_map(
+            rusqlite::params![episode_id],
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?, row.get::<_, i64>(2)?)),
+        ) {
+            Ok(rows) => rows.filter_map(|r| r.ok()).collect(),
+            Err(_) => return,
+        };
+        collected
+    };
+
+    // For each diarization window, collect overlapping Whisper texts and write back
+    for (seg_id, ds_start, ds_end) in diar_segs {
+        let text: String = whisper_segs
+            .iter()
+            .filter(|(ts_start, ts_end, _)| ts_start < &ds_end && ts_end > &ds_start)
+            .map(|(_, _, t)| t.as_str())
+            .collect::<Vec<_>>()
+            .join(" ");
+
+        if !text.is_empty() {
+            let _ = conn.execute(
+                "UPDATE diarization_segments SET text = ?1 WHERE id = ?2",
+                rusqlite::params![text, seg_id],
+            );
+        }
+    }
+}
+
 /// Store diarization segments in SQLite atomically.
 /// Deletes existing segments first (allows re-runs).
 fn store_diarization_segments(
@@ -633,6 +714,8 @@ async fn process_diarization_episode(
                     let _ = ch.send(DiarizationEvent::Error { message: e });
                 }
             } else {
+                // Populate text from Whisper transcript (no-op for AssemblyAI episodes)
+                backfill_segment_text_from_whisper(db_path, episode_id);
                 update_diarization_status(db_path, episode_id, final_status, None);
                 if let Some(ch) = on_event {
                     let _ = ch.send(DiarizationEvent::Done { episode_id });

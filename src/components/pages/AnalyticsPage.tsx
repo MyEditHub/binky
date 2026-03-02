@@ -20,6 +20,7 @@ export default function AnalyticsPage() {
     flipEpisodeSpeakers,
     correctSegment,
     loadSegments,
+    autoDetectAllSpeakers,
   } = useAnalytics();
   const diarization = useDiarization(refresh);
   const autoStartedRef = useRef(false);
@@ -107,6 +108,7 @@ export default function AnalyticsPage() {
                 correctSegment={correctSegment}
                 loadSegments={loadSegments}
                 onReanalyze={handleReanalyze}
+                autoDetectAllSpeakers={autoDetectAllSpeakers}
               />
             </>
           )}

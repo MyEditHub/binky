@@ -191,7 +191,10 @@
       "reanalyze": "Neu analysieren",
       "reanalyze_confirm": "Alle Korrekturen werden verworfen und die Episode wird neu analysiert. Fortfahren?",
       "load_more": "Mehr laden",
-      "correction_close": "Schließen"
+      "correction_close": "Schließen",
+      "auto_detect": "Sprecher erkennen",
+      "auto_detecting": "Erkenne...",
+      "auto_detect_result": "{{swapped}} korrigiert · {{unchanged}} korrekt · {{uncertain}} unklar"
     },
     "topics": {
       "title": "Themen",
