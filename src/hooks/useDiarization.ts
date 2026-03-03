@@ -114,6 +114,10 @@ export function useDiarization(onEpisodeUpdated?: () => void): UseDiarizationRet
         setIsProcessing(false);
         setActiveEpisodeId(null);
         setProgress(0);
+      } finally {
+        // Safety net: invoke only returns after Rust completes, so force-clear
+        // processing state in case the Done/Error channel event was missed.
+        await refreshQueueStatus();
       }
     },
     [onEpisodeUpdated]

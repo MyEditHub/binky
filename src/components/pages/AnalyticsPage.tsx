@@ -36,6 +36,10 @@ export default function AnalyticsPage() {
           WHERE transcription_status = 'done'
           AND diarization_status = 'not_started'
           AND audio_url IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM diarization_segments ds
+            WHERE ds.episode_id = episodes.id AND ds.text IS NOT NULL
+          )
         `)
       )
       .then((pendingEps) => {
@@ -68,6 +72,10 @@ export default function AnalyticsPage() {
           WHERE transcription_status = 'done'
           AND diarization_status = 'not_started'
           AND audio_url IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM diarization_segments ds
+            WHERE ds.episode_id = episodes.id AND ds.text IS NOT NULL
+          )
         `)
       )
       .then((pendingEps) => {

@@ -34,7 +34,8 @@ export default function EpisodeAnalyticsRow({
 
   const isSolo = stats.diarizationStatus === 'solo';
   const isDone = stats.diarizationStatus === 'done';
-  const isExpandable = isDone || isSolo;
+  const isNotStarted = stats.diarizationStatus === 'not_started' || stats.diarizationStatus === 'error';
+  const isExpandable = isDone || isSolo || (isNotStarted && !!stats.audioUrl);
 
   const statusLabel: Record<string, string> = {
     not_started: t('pages.analytics.status_not_started'),
@@ -76,7 +77,7 @@ export default function EpisodeAnalyticsRow({
         </div>
       )}
 
-      {expanded && isSolo && (
+      {expanded && (isSolo || isNotStarted) && (
         <div
           className="analytics-episode-expanded"
           onClick={(e) => e.stopPropagation()}

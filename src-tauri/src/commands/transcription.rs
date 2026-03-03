@@ -715,11 +715,18 @@ async fn process_episode(
                 .full(params, chunk)
                 .map_err(|e| format!("Whisper failed (chunk {}/{}): {}", chunk_idx + 1, num_chunks, e))?;
 
-            // Collect segments with timestamp offset so they align to the full episode
+            // Collect segments with timestamp offset so they align to the full episode.
+            // Whisper often repeats the tail of the previous chunk at the start of the
+            // next one — deduplicate via is_duplicate_segment().
             for segment in whisper_state.as_iter() {
                 let text = segment.to_string();
                 let t0 = segment.start_timestamp() + chunk_offset_cs;
                 let t1 = segment.end_timestamp() + chunk_offset_cs;
+
+                if is_duplicate_segment(&text, &segments_arr) {
+                    continue;
+                }
+
                 full_text.push_str(&text);
                 segments_arr.push(serde_json::json!({
                     "text": text,
@@ -892,4 +899,91 @@ pub async fn get_queue_status(
         queue_length: q.queue_len(),
         is_processing: q.is_processing,
     })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Deduplication helper
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Returns true if `text` (normalised: trimmed + lowercased) already appears
+/// in the last 20 entries of `segments`. Used to drop Whisper's chunk-boundary
+/// hallucinations where it repeats the tail of the previous chunk verbatim.
+pub(crate) fn is_duplicate_segment(text: &str, segments: &[serde_json::Value]) -> bool {
+    let normalized = text.trim().to_lowercase();
+    if normalized.is_empty() {
+        return false;
+    }
+    let window_start = segments.len().saturating_sub(20);
+    segments[window_start..].iter().any(|prev| {
+        prev["text"]
+            .as_str()
+            .map(|t| t.trim().to_lowercase() == normalized)
+            .unwrap_or(false)
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn seg(text: &str) -> serde_json::Value {
+        serde_json::json!({ "text": text, "start_ms": 0, "end_ms": 1000 })
+    }
+
+    #[test]
+    fn no_dup_on_empty_window() {
+        assert!(!is_duplicate_segment("Hallo Welt", &[]));
+    }
+
+    #[test]
+    fn detects_exact_consecutive_dup() {
+        let segments = vec![seg("Hallo Welt")];
+        assert!(is_duplicate_segment("Hallo Welt", &segments));
+    }
+
+    #[test]
+    fn case_insensitive() {
+        let segments = vec![seg("HALLO WELT")];
+        assert!(is_duplicate_segment("hallo welt", &segments));
+    }
+
+    #[test]
+    fn whitespace_normalised() {
+        let segments = vec![seg("  Hallo Welt  ")];
+        assert!(is_duplicate_segment("Hallo Welt", &segments));
+    }
+
+    #[test]
+    fn distinct_text_not_flagged() {
+        let segments = vec![seg("Hallo Welt"), seg("Neue Folge")];
+        assert!(!is_duplicate_segment("Nett geflüstert", &segments));
+    }
+
+    #[test]
+    fn dup_within_window_of_20() {
+        // Place a matching segment 19 positions back — should still be caught
+        let mut segments: Vec<serde_json::Value> = (0..19).map(|i| seg(&format!("seg {i}"))).collect();
+        segments.push(seg("Wir haben heute einen großen Streitmosch-Bit gemacht."));
+        // 20 more unique segments to push the match to exactly window edge
+        assert!(is_duplicate_segment(
+            "Wir haben heute einen großen Streitmosch-Bit gemacht.",
+            &segments
+        ));
+    }
+
+    #[test]
+    fn dup_outside_window_not_flagged() {
+        // Place a matching segment 21 positions back — outside the 20-segment window
+        let mut segments: Vec<serde_json::Value> = (0..21).map(|i| seg(&format!("seg {i}"))).collect();
+        segments.insert(0, seg("Alte Folge, vergessen."));
+        // The matching segment is now at index 0, more than 20 from the end
+        assert!(!is_duplicate_segment("Alte Folge, vergessen.", &segments));
+    }
+
+    #[test]
+    fn empty_text_never_flagged_as_dup() {
+        let segments = vec![seg(""), seg("  ")];
+        assert!(!is_duplicate_segment("", &segments));
+        assert!(!is_duplicate_segment("   ", &segments));
+    }
 }

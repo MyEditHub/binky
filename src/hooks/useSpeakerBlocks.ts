@@ -21,6 +21,12 @@ interface DiarizationSegmentRow {
   text: string | null;
 }
 
+interface WhisperSegment {
+  text: string;
+  start_ms: number;
+  end_ms: number;
+}
+
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_COLORS: Record<string, string> = {
@@ -56,6 +62,54 @@ function resolveColor(
   return 'var(--color-border)';
 }
 
+// ─── Proportional overlap speaker assignment ───────────────────────────────────
+//
+// sherpa-rs produces overlapping/nested diarization windows: one large SPEAKER_0
+// window (e.g. 30ms-48462ms) contains many short SPEAKER_1 interjection windows
+// (300-1000ms). Whisper segments are always sequential and non-overlapping, so
+// we use them as the atomic display unit and assign each one a speaker via
+// proportional overlap against the diarization windows.
+//
+// Proportional = overlap_ms / diarization_window_duration_ms
+// A 1s Whisper segment covering 99% of a 1s SPEAKER_1 window scores 0.99 vs
+// ~0.04 for a surrounding 48s SPEAKER_0 window — correctly attributing it to
+// SPEAKER_1.
+
+function assignSpeakersToWhisperSegments(
+  whisperSegs: WhisperSegment[],
+  diarSegs: DiarizationSegmentRow[],
+): Array<{ text: string; speaker: string }> {
+  return whisperSegs
+    .filter((ws) => ws.text.trim() !== '')
+    .map((ws) => {
+      const wsDur = ws.end_ms - ws.start_ms;
+      if (wsDur <= 0) return null;
+
+      let bestScore = -1;
+      let bestSpeaker = 'SPEAKER_0';
+
+      for (const ds of diarSegs) {
+        const overlapStart = Math.max(ws.start_ms, ds.start_ms);
+        const overlapEnd = Math.min(ws.end_ms, ds.end_ms);
+        const overlap = overlapEnd - overlapStart;
+        const dsDur = ds.end_ms - ds.start_ms;
+        if (overlap > 0 && dsDur > 0) {
+          // Primary: what fraction of THIS Whisper segment falls in this diarization window
+          // (prevents a large diar window from losing to a small one that only covers part of Whisper)
+          // Secondary tiebreaker: how precisely does the diar window match (favors short/specific windows)
+          const score = (overlap / wsDur) * 1_000_000 + (overlap / dsDur) * 1_000;
+          if (score > bestScore) {
+            bestScore = score;
+            bestSpeaker = ds.corrected_speaker ?? ds.speaker_label;
+          }
+        }
+      }
+
+      return { text: ws.text.trim(), speaker: bestSpeaker };
+    })
+    .filter((x): x is { text: string; speaker: string } => x !== null);
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useSpeakerBlocks(episodeId: number | null): {
@@ -70,10 +124,14 @@ export function useSpeakerBlocks(episodeId: number | null): {
     try {
       const db = await Database.load('sqlite:binky.db');
 
-      const [rows, host0Name, host1Name, host0Color, host1Color] = await Promise.all([
+      const [diarRows, transcriptRows, host0Name, host1Name, host0Color, host1Color] = await Promise.all([
         db.select<DiarizationSegmentRow[]>(
           `SELECT id, start_ms, end_ms, speaker_label, corrected_speaker, confidence, text
            FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
+          [id],
+        ),
+        db.select<Array<{ segments_json: string | null }>>(
+          `SELECT segments_json FROM transcripts WHERE episode_id = ? LIMIT 1`,
           [id],
         ),
         getSetting('host_0_name'),
@@ -82,10 +140,59 @@ export function useSpeakerBlocks(episodeId: number | null): {
         getSetting('host_1_color'),
       ]);
 
-      // Run-length encoding merge: consecutive same-speaker segments with text
+      if (diarRows.length === 0) {
+        setBlocks([]);
+        return;
+      }
+
+      // ── Whisper path ─────────────────────────────────────────────────────────
+      // For Whisper episodes (segments_json present), use Whisper segments as the
+      // atomic display unit ordered by their own start_ms. This avoids the
+      // overlap ordering bug where a large SPEAKER_0 diarization window [30ms-48s]
+      // would appear before all nested SPEAKER_1 interjection windows in ORDER BY
+      // start_ms, causing all SPEAKER_0 text (pre- and post-interjection) to merge
+      // into one block shown before SPEAKER_1's interjections.
+      const segmentsJson = transcriptRows[0]?.segments_json ?? null;
+
+      if (segmentsJson) {
+        let whisperSegs: WhisperSegment[] = [];
+        try {
+          whisperSegs = JSON.parse(segmentsJson);
+        } catch {
+          whisperSegs = [];
+        }
+
+        if (Array.isArray(whisperSegs) && whisperSegs.length > 0) {
+          const labeled = assignSpeakersToWhisperSegments(whisperSegs, diarRows);
+
+          // RLE merge: consecutive same-speaker Whisper segments → one SpeakerBlock
+          const merged: SpeakerBlock[] = [];
+          for (const { text, speaker } of labeled) {
+            const last = merged[merged.length - 1];
+            if (last && last.speaker === speaker) {
+              last.text = last.text + ' ' + text;
+            } else {
+              merged.push({
+                speaker,
+                displayName: resolveName(speaker, host0Name, host1Name),
+                color: resolveColor(speaker, host0Color, host1Color),
+                text,
+              });
+            }
+          }
+
+          setBlocks(merged);
+          return;
+        }
+      }
+
+      // ── AssemblyAI fallback path ─────────────────────────────────────────────
+      // AssemblyAI diarization segments are sequential (non-overlapping), so
+      // ORDER BY start_ms gives correct display order. Use diarization_segments.text
+      // as before.
       const merged: SpeakerBlock[] = [];
 
-      for (const row of rows) {
+      for (const row of diarRows) {
         if (row.text == null || row.text.trim() === '') continue;
 
         const effectiveSpeaker = row.corrected_speaker ?? row.speaker_label;
@@ -133,6 +240,20 @@ export function useSpeakerBlocks(episodeId: number | null): {
     window.addEventListener('focus', handleFocus);
     return () => {
       window.removeEventListener('focus', handleFocus);
+    };
+  }, [episodeId, load]);
+
+  // Reload when speaker corrections are updated (e.g. after "Sprecher erkennen")
+  useEffect(() => {
+    if (episodeId === null) return;
+
+    const handleCorrections = () => {
+      load(episodeId);
+    };
+
+    window.addEventListener('speaker-corrections-updated', handleCorrections);
+    return () => {
+      window.removeEventListener('speaker-corrections-updated', handleCorrections);
     };
   }, [episodeId, load]);
 

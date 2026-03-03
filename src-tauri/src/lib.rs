@@ -115,13 +115,27 @@ pub fn run() {
                          WHERE transcription_status IN ('queued', 'downloading', 'transcribing')",
                         [],
                     );
+                    // Reset stale in-flight diarization statuses.
+                    // If an episode has diarization_segments with populated text, the
+                    // diarization actually completed — set it back to 'done' so it is
+                    // not re-queued on the next Analytics page visit. Episodes with no
+                    // segment text are truly incomplete and go back to 'not_started'.
                     let _ = conn.execute(
                         "UPDATE episodes \
-                         SET diarization_status = 'not_started', diarization_error = NULL \
+                         SET diarization_status = \
+                             CASE WHEN EXISTS( \
+                                 SELECT 1 FROM diarization_segments ds \
+                                 WHERE ds.episode_id = episodes.id AND ds.text IS NOT NULL \
+                             ) THEN 'done' ELSE 'not_started' END, \
+                             diarization_error = NULL \
                          WHERE diarization_status IN ('queued', 'processing')",
                         [],
                     );
                 }
+
+                // Retroactively populate diarization_segments.text for episodes that
+                // were diarized before the Whisper backfill was introduced. Idempotent.
+                commands::diarization::backfill_all_whisper_segment_text(&db_path);
             }
             Ok(())
         })

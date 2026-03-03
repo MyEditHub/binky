@@ -250,15 +250,27 @@ export function useAnalytics() {
     let unchanged = 0;
     let uncertain = 0;
 
-    const doneEpisodes = episodes.filter((e) => e.diarizationStatus === 'done');
+    // Query DB directly for all episodes that have diarization segments with
+    // text populated. Using the DB rather than the in-memory `episodes` state
+    // avoids missing episodes whose diarization_status was incorrectly reset
+    // to 'not_started' by the startup hook (e.g. app was quit mid-diarization
+    // after segments were written but before the status column was updated).
+    const episodesWithSegments = await db.select<Array<{ episode_id: number }>>(
+      `SELECT DISTINCT episode_id FROM diarization_segments WHERE text IS NOT NULL`,
+    );
 
-    for (const ep of doneEpisodes) {
+    for (const { episode_id } of episodesWithSegments) {
+      // Fetch ALL segments ordered by start_ms so the intro-pattern scanner
+      // (which checks the first ~30 segments) sees early segments even when
+      // some have NULL text. NULL-text segments are handled gracefully by
+      // detectSpeakerSwap (skipped in name-counting, INTRO_PATTERNS.test('')
+      // is false so they are skipped in intro detection too).
       const segments = await db.select<
         Array<{ speaker_label: string; corrected_speaker: string | null; text: string | null }>
       >(
         `SELECT speaker_label, corrected_speaker, text
-         FROM diarization_segments WHERE episode_id = ? AND text IS NOT NULL ORDER BY start_ms`,
-        [ep.episodeId],
+         FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
+        [episode_id],
       );
 
       const { result } = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '');
@@ -271,7 +283,7 @@ export function useAnalytics() {
                ELSE 'SPEAKER_0'
            END
            WHERE episode_id = ?`,
-          [ep.episodeId],
+          [episode_id],
         );
         swapped++;
       } else if (result === 'no_swap') {
@@ -282,8 +294,10 @@ export function useAnalytics() {
     }
 
     await refresh();
+    // Notify transcript viewers to reload corrected_speaker values
+    window.dispatchEvent(new CustomEvent('speaker-corrections-updated'));
     return { swapped, unchanged, uncertain };
-  }, [episodes, refresh]);
+  }, [refresh]);
 
   useEffect(() => {
     refresh();

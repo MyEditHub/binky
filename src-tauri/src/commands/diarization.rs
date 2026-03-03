@@ -17,8 +17,8 @@ use tokio_util::sync::CancellationToken;
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SEGMENTATION_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2";
-const EMBEDDING_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_resnet34_LM.onnx";
-const EMBEDDING_FILENAME: &str = "wespeaker_en_voxceleb_resnet34_LM.onnx";
+const EMBEDDING_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/nemo_en_titanet_large.onnx";
+const EMBEDDING_FILENAME: &str = "nemo_en_titanet_large.onnx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: download a URL with streaming progress, writing to a tmp file,
@@ -125,26 +125,11 @@ pub async fn get_diarization_model_status(
         false
     };
 
-    // Check embedding model: any .onnx file in embedding/ with size > 0
-    let emb_dir = models_dir.join("embedding");
-    let embedding_downloaded = if emb_dir.exists() {
-        match tokio::fs::read_dir(&emb_dir).await {
-            Ok(mut rd) => {
-                let mut found = false;
-                while let Ok(Some(entry)) = rd.next_entry().await {
-                    let name = entry.file_name();
-                    let name_str = name.to_string_lossy();
-                    if name_str.ends_with(".onnx") {
-                        if let Ok(meta) = entry.metadata().await {
-                            if meta.len() > 0 {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                found
-            }
+    // Check embedding model: the specific expected file must exist with size > 0
+    let emb_path = models_dir.join("embedding").join(EMBEDDING_FILENAME);
+    let embedding_downloaded = if emb_path.exists() {
+        match tokio::fs::metadata(&emb_path).await {
+            Ok(m) => m.len() > 0,
             Err(_) => false,
         }
     } else {
@@ -318,6 +303,40 @@ fn update_diarization_status(
     }
 }
 
+/// Run backfill_segment_text_from_whisper for every episode that has both a
+/// Whisper transcript (segments_json IS NOT NULL) and diarization segments.
+/// Runs unconditionally (not just for text IS NULL) so that episodes already
+/// backfilled with the old buggy overlap logic are also corrected.
+/// Called once at app startup. Idempotent — safe to re-run.
+pub(crate) fn backfill_all_whisper_segment_text(db_path: &std::path::Path) {
+    let conn = match rusqlite::Connection::open(db_path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    let episode_ids: Vec<i64> = {
+        let mut stmt = match conn.prepare(
+            "SELECT DISTINCT t.episode_id FROM transcripts t \
+             JOIN diarization_segments ds ON ds.episode_id = t.episode_id \
+             WHERE t.segments_json IS NOT NULL",
+        ) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+        let collected: Vec<i64> = match stmt.query_map([], |row| row.get(0)) {
+            Ok(rows) => rows.filter_map(|r| r.ok()).collect(),
+            Err(_) => return,
+        };
+        collected
+    };
+
+    drop(conn);
+
+    for episode_id in episode_ids {
+        backfill_segment_text_from_whisper(db_path, episode_id);
+    }
+}
+
 /// After storing diarization segments, populate the `text` column by joining
 /// with Whisper's `transcripts.segments_json` on time overlap.
 /// Silent no-op if no Whisper transcript exists (AssemblyAI path or not yet transcribed).
@@ -360,11 +379,12 @@ fn backfill_segment_text_from_whisper(db_path: &std::path::Path, episode_id: i64
         return;
     }
 
-    // Fetch diarization segments that still have no text
+    // Fetch ALL diarization segments (regardless of text status) so we can
+    // assign each Whisper segment to exactly one speaker window.
     let diar_segs: Vec<(i64, i64, i64)> = {
         let mut stmt = match conn.prepare(
             "SELECT id, start_ms, end_ms FROM diarization_segments \
-             WHERE episode_id = ?1 AND text IS NULL",
+             WHERE episode_id = ?1 ORDER BY start_ms",
         ) {
             Ok(s) => s,
             Err(_) => return,
@@ -381,15 +401,71 @@ fn backfill_segment_text_from_whisper(db_path: &std::path::Path, episode_id: i64
         collected
     };
 
-    // For each diarization window, collect overlapping Whisper texts and write back
-    for (seg_id, ds_start, ds_end) in diar_segs {
-        let text: String = whisper_segs
-            .iter()
-            .filter(|(ts_start, ts_end, _)| ts_start < &ds_end && ts_end > &ds_start)
-            .map(|(_, _, t)| t.as_str())
-            .collect::<Vec<_>>()
-            .join(" ");
+    if diar_segs.is_empty() {
+        return;
+    }
 
+    // Clear existing text on all diarization segments for this episode so that
+    // segments which receive no assignment (no overlapping Whisper segment) don't
+    // retain stale text from a previous buggy backfill run.
+    let _ = conn.execute(
+        "UPDATE diarization_segments SET text = NULL WHERE episode_id = ?1",
+        rusqlite::params![episode_id],
+    );
+
+    // Winner-takes-all assignment: each Whisper segment belongs to exactly one
+    // diarization window — the one with the greatest millisecond overlap.
+    // This prevents the same sentence from appearing under both speakers when a
+    // Whisper segment straddles a speaker boundary.
+    //
+    // Build a map: diarization segment id → Vec<text>
+    let mut text_map: std::collections::HashMap<i64, Vec<String>> = std::collections::HashMap::new();
+
+    for (ws_start, ws_end, ws_text) in &whisper_segs {
+        let ws_duration = ws_end - ws_start;
+        if ws_duration <= 0 {
+            continue;
+        }
+
+        // Find the diarization segment with the maximum PROPORTIONAL overlap.
+        //
+        // Proportional = overlap_ms / diarization_window_duration_ms
+        //
+        // Why proportional instead of absolute?
+        // sherpa-rs produces large SPEAKER_0 windows (30-60s) that temporally
+        // envelop many short SPEAKER_1 windows (300-1000ms).  A ~1.8s average
+        // Whisper segment always has more absolute ms overlap with the big
+        // SPEAKER_0 window than with the 1s SPEAKER_1 window it actually
+        // fills — so absolute wins always go to SPEAKER_0, leaving all
+        // SPEAKER_1 segments with NULL text.
+        //
+        // With proportional overlap a Whisper segment covering 99% of a 1s
+        // SPEAKER_1 window scores 0.99 vs ~0.04 for the 48s SPEAKER_0 window,
+        // correctly attributing it to SPEAKER_1.
+        //
+        // We store (overlap_numerator * 1_000_000 / ds_duration) as an i64
+        // to avoid floating point while preserving ordering.
+        let best = diar_segs.iter().filter_map(|(seg_id, ds_start, ds_end)| {
+            let overlap_start = (*ws_start).max(*ds_start);
+            let overlap_end = (*ws_end).min(*ds_end);
+            let overlap = overlap_end - overlap_start;
+            let ds_dur = ds_end - ds_start;
+            if overlap > 0 && ds_dur > 0 {
+                let prop_score = overlap * 1_000_000 / ds_dur;
+                Some((prop_score, seg_id))
+            } else {
+                None
+            }
+        }).max_by_key(|(prop_score, _)| *prop_score);
+
+        if let Some((_, seg_id)) = best {
+            text_map.entry(*seg_id).or_default().push(ws_text.clone());
+        }
+    }
+
+    // Write assigned texts back to each diarization segment
+    for (seg_id, texts) in &text_map {
+        let text = texts.join(" ");
         if !text.is_empty() {
             let _ = conn.execute(
                 "UPDATE diarization_segments SET text = ?1 WHERE id = ?2",

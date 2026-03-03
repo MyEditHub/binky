@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core';
 import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
+import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
 import { parseWordGroups, type WordGroup } from './StatsPage';
 
 // ─── OpenAI Settings Section ─────────────────────────────────────────────────
@@ -520,6 +521,9 @@ export default function SettingsPage() {
 
       {/* Transcription / Model Manager */}
       <ModelManager />
+
+      {/* Diarization Model Manager */}
+      <DiarizationModelManager />
 
 
       {/* OpenAI Settings */}
