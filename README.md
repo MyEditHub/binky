@@ -78,6 +78,25 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.4 (2026-03-03)
+
+### Added
+- Diarisierungsmodell-Manager in den Einstellungen — Modelle herunterladen und löschen direkt in der App
+- Episoden mit Status „Nicht analysiert" können jetzt in der Analyse-Ansicht angeklickt und neu diarisiert werden
+
+### Changed
+- Sprecher-Erkennungsmodell gewechselt zu NeMo TitaNet Large für bessere Sprecher-Trennung
+- Sprecher-Erkennung nutzt jetzt das Intro-Muster („Neue Woche, neue Folge…") statt Namens-Zählung — zuverlässiger bei Hosts, die sich gegenseitig erwähnen
+- Transkript-Anzeige zeigt Sprecher-Wechsel jetzt in chronologischer Reihenfolge (Whisper-Segmente als Anzeigeeinheit)
+
+### Fixed
+- Doppelte Sätze im Transkript: Whisper-Segmente wurden mehreren Diarisierungs-Fenstern gleichzeitig zugewiesen
+- Große Sprecher-Blöcke statt feiner Wechsel: Scoring bevorzugt jetzt Whisper-Abdeckung als primäres Kriterium
+- Sprecher-Korrekturen wurden bei erneutem Öffnen der Analyse-Seite zurückgesetzt
+- Fortschritts-Banner blieb nach abgeschlossener Diarisierung stehen
+- Transkript zeigte veraltete Sprecher-Zuordnung nach „Sprecher erkennen" ohne Seiten-Wechsel
+
+
 ### v0.2.3 (2026-03-02)
 
 ### Added
