@@ -128,6 +128,23 @@ jobs:
           # Re-sign the modified bundle (ad-hoc, no cert needed)
           codesign --force --deep --sign - "$BUNDLE"
 
+      - name: Regenerate updater tarball after dylib bundling
+        run: |
+          BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle/macos"
+
+          # The .app.tar.gz created by `tauri build` is a snapshot taken before
+          # the dylib bundling step above. Regenerate it from the patched .app
+          # so the auto-updater receives a bundle that actually contains the dylibs.
+          rm -f "$BUNDLE_DIR/Binky.app.tar.gz" "$BUNDLE_DIR/Binky.app.tar.gz.sig"
+          (cd "$BUNDLE_DIR" && tar -czf Binky.app.tar.gz Binky.app)
+
+          # Re-sign for Tauri updater verification
+          export TAURI_SIGNING_PRIVATE_KEY="$(cat /tmp/signing.key)"
+          npm run tauri -- signer sign \
+            -k "$TAURI_SIGNING_PRIVATE_KEY" \
+            -p "tauri" \
+            "$BUNDLE_DIR/Binky.app.tar.gz"
+
       - name: Collect artifacts
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
