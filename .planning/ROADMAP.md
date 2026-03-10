@@ -99,7 +99,7 @@ Plans:
 | 8.2. Pre-Release UX Completion | v0.2 | 4/4 | Complete | 2026-02-27 |
 | 9. Utterance Text Migration | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
-| 11. FTS Infrastructure | v0.3.0 | 0/2 | In progress | - |
+| 11. FTS Infrastructure | 1/2 | In Progress|  | - |
 | 12. Search UI | v0.3.0 | 0/? | Not started | - |
 | 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
 
