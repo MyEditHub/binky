@@ -173,6 +173,8 @@ pub fn run() {
             commands::birds::get_current_bird,
             commands::assemblyai::assemblyai_process_backlog,
             commands::assemblyai::assemblyai_backfill_utterance_text,
+            commands::search::search_transcripts,
+            commands::search::rebuild_search_index,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

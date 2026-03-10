@@ -4,3 +4,4 @@ pub mod diarization;
 pub mod topics;
 pub mod birds;
 pub mod assemblyai;
+pub mod search;
