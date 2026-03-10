@@ -40,7 +40,7 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
 
 ### v0.3.0 — Transkript-Suche & Themenverknüpfung
 
-- [ ] **Phase 11: FTS Infrastructure** — SQLite FTS5 index + Rust search command covering transcripts, titles, and topics
+- [x] **Phase 11: FTS Infrastructure** — SQLite FTS5 index + Rust search command covering transcripts, titles, and topics
 - [ ] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation
 - [ ] **Phase 13: Cross-Episode Topic Linking** — Auto-derived topic connections shown in topics view with navigation
 
@@ -57,8 +57,8 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
   4. The FTS5 virtual table is populated via a SQLite migration that indexes all existing transcript and topic data
 **Plans**: 2 plans
 Plans:
-- [ ] 11-01-PLAN.md — FTS5 migration 012: virtual table creation, bulk populate, triggers
-- [ ] 11-02-PLAN.md — Rust search commands: search_transcripts, rebuild_search_index, SearchResult contract
+- [x] 11-01-PLAN.md — FTS5 migration 012: virtual table creation, bulk populate, triggers
+- [x] 11-02-PLAN.md — Rust search commands: search_transcripts, rebuild_search_index, SearchResult contract
 
 ### Phase 12: Search UI
 **Goal**: Users can type a query into a dedicated Suche page, see ranked results with episode title, speaker label, and highlighted snippets, and navigate directly to the matching transcript segment.
@@ -99,7 +99,7 @@ Plans:
 | 8.2. Pre-Release UX Completion | v0.2 | 4/4 | Complete | 2026-02-27 |
 | 9. Utterance Text Migration | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
-| 11. FTS Infrastructure | 1/2 | In Progress|  | - |
+| 11. FTS Infrastructure | v0.3.0 | 2/2 | Complete | 2026-03-10 |
 | 12. Search UI | v0.3.0 | 0/? | Not started | - |
 | 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
 
