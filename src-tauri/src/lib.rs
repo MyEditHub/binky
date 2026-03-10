@@ -87,6 +87,12 @@ pub fn run() {
             sql: include_str!("../migrations/011_utterance_text.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 12,
+            description: "fts_search_index",
+            sql: include_str!("../migrations/012_fts.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
