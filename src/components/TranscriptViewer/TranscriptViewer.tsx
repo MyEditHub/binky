@@ -10,6 +10,7 @@ interface TranscriptViewerProps {
   episodeTitle: string;
   onClose: () => void;
   onTranscriptDeleted: () => void;
+  scrollToMs?: number;
 }
 
 /** Split text into segments: plain text and highlighted matches. */
@@ -71,6 +72,7 @@ export default function TranscriptViewer({
   episodeTitle,
   onClose,
   onTranscriptDeleted,
+  scrollToMs,
 }: TranscriptViewerProps) {
   const { t } = useTranslation();
   const { transcript, loading, error, deleteTranscript } = useTranscript(episodeId);
@@ -184,6 +186,27 @@ export default function TranscriptViewer({
 
   const isLoading = loading || blocksLoading;
 
+  // Scroll to external navigation target (from search result deep-link)
+  // Must be after isLoading declaration — depends on loading + blocksLoading state.
+  useEffect(() => {
+    if (!scrollToMs || isLoading) return;
+    if (speakerBlocks.length === 0 && paragraphs.length === 0) return;
+    const container = bodyRef.current;
+    if (!container) return;
+    const elements = container.querySelectorAll('[data-start-ms]');
+    let closestEl: Element | null = null;
+    let minDiff = Infinity;
+    elements.forEach((el) => {
+      const ms = parseInt(el.getAttribute('data-start-ms') ?? '0', 10);
+      const diff = Math.abs(ms - scrollToMs);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestEl = el;
+      }
+    });
+    (closestEl as Element | null)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [scrollToMs, isLoading, speakerBlocks, paragraphs]);
+
   return (
     <div className="transcript-viewer">
       {/* Header */}
@@ -248,13 +271,14 @@ export default function TranscriptViewer({
           const offset = getSpeakerBlockOffset(i);
           const isActiveMatch = (globalIdx: number) => globalIdx === currentMatchIdx;
           return (
-            <SpeakerBlock
-              key={i}
-              displayName={block.displayName}
-              color={block.color}
-            >
-              {highlightText(block.text, searchQuery, isActiveMatch, offset)}
-            </SpeakerBlock>
+            <div key={i} data-start-ms={block.startMs}>
+              <SpeakerBlock
+                displayName={block.displayName}
+                color={block.color}
+              >
+                {highlightText(block.text, searchQuery, isActiveMatch, offset)}
+              </SpeakerBlock>
+            </div>
           );
         })}
 
@@ -263,7 +287,7 @@ export default function TranscriptViewer({
           const offset = getOffset(i);
           const isActiveMatch = (globalIdx: number) => globalIdx === currentMatchIdx;
           return (
-            <p key={i} className="transcript-paragraph">
+            <p key={i} className="transcript-paragraph" data-start-ms={para.startMs}>
               {highlightText(para.text, searchQuery, isActiveMatch, offset)}
             </p>
           );
