@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 12 — Search UI (in progress)
-Plan: 01 — Tasks 1+2 complete, awaiting human-verify checkpoint (Task 3)
-Status: Plan 12-01 auto tasks executed — useSearch hook, SearchPage, SearchResultCard/Group, Layout+Sidebar wiring committed
-Last activity: 2026-03-12 — 12-01 executed (search UI components)
+Plan: 02 — ready to start (Plan 01 complete)
+Status: Plan 12-01 complete — search UI delivered, human-verified, speaker labels resolved from settings, episodes nav devOnly
+Last activity: 2026-03-12 — 12-01 complete (all 3 tasks done including human-verify)
 
-Progress: [Phase 11: ##########] [Phase 12: ##--------] [Phase 13: ----------]
+Progress: [Phase 11: ##########] [Phase 12: #####-----] [Phase 13: ----------]
 
 ## Accumulated Context
 
@@ -55,6 +55,8 @@ Progress: [Phase 11: ##########] [Phase 12: ##--------] [Phase 13: ----------]
 - pendingTranscriptNav shape in Layout.tsx: { episodeId: number; startMs: number | null; title: string } — Plan 02 consumes this
 - indexOf-based snippet highlighting in SearchResultCard (RegExp-safe, handles German umlauts)
 - @ts-expect-error on EpisodesPage pendingTranscriptNav/onTranscriptNavConsumed props — Plan 02 removes this
+- Speaker labels in SearchResultCard resolved from host_0_name/host_1_name settings (mirrors useSpeakerBlocks), raw SPEAKER_* labels never shown to user
+- Episodes nav item is devOnly: true — hidden from regular users, accessible in dev mode only
 
 ### Critical Whisper-rs 0.15 Bugs (do not use)
 - `set_abort_callback_safe`: type-confusion UB → SIGSEGV/SIGABRT
@@ -95,6 +97,6 @@ Progress: [Phase 11: ##########] [Phase 12: ##--------] [Phase 13: ----------]
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: 12-01 checkpoint:human-verify (Task 3 — visual verification of search page)
+Stopped at: Completed 12-01-PLAN.md (all tasks done, human-verified)
 Resume file: None
-Next: Human verifies search page in Tauri dev mode, then continue 12-01 (mark checkpoint done) or proceed to Plan 12-02
+Next: Plan 12-02 — transcript deep-link navigation (EpisodesPage consumes pendingTranscriptNav)

@@ -71,7 +71,7 @@ Plans:
   4. Searching for a term that appears only in a topic summary returns that episode as a result with a snippet from the summary
 **Plans**: 2 plans
 Plans:
-- [ ] 12-01-PLAN.md — SearchPage + useSearch hook + Sidebar/Layout wiring + translations
+- [x] 12-01-PLAN.md — SearchPage + useSearch hook + Sidebar/Layout wiring + translations
 - [ ] 12-02-PLAN.md — Deep-link navigation: EpisodesPage pendingTranscriptNav, TranscriptViewer scrollToMs, useSpeakerBlocks startMs
 
 ### Phase 13: Cross-Episode Topic Linking
@@ -103,7 +103,7 @@ Plans:
 | 9. Utterance Text Migration | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
-| 12. Search UI | 1/2 | In Progress|  | - |
+| 12. Search UI | v0.3.0 | 1/2 | In Progress | - |
 | 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
 
 ---

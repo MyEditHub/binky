@@ -45,6 +45,8 @@ key-decisions:
   - "indexOf-based snippet highlighting avoids RegExp special-char escaping bugs"
   - "@ts-expect-error on EpisodesPage pendingTranscriptNav props — Plan 02 removes this"
   - "pendingTranscriptNav shape: { episodeId: number; startMs: number | null; title: string }"
+  - "Speaker labels in SearchResultCard resolved from host_0_name/host_1_name settings (mirrors useSpeakerBlocks), raw SPEAKER_* labels never shown"
+  - "Episodes nav item set to devOnly: true — hidden from regular users"
 
 patterns-established:
   - "Search navigation: window.dispatchEvent(new CustomEvent(...)) from SearchResultCard, Layout.tsx listens"
@@ -66,7 +68,7 @@ completed: 2026-03-12
 - **Duration:** ~15 min
 - **Started:** 2026-03-12T20:07:00Z
 - **Completed:** 2026-03-12T20:22:33Z
-- **Tasks:** 2/3 auto tasks complete (Task 3 is checkpoint:human-verify)
+- **Tasks:** 3/3 (all complete including human-verify checkpoint)
 - **Files modified:** 8
 
 ## Accomplishments
@@ -86,7 +88,7 @@ Each task was committed atomically:
 
 1. **Task 1: Create useSearch hook and Search sub-components** - `47a6274` (feat)
 2. **Task 2: Create SearchPage and wire into Layout + Sidebar + translations** - `56279f0` (feat)
-3. **Task 3: Verify search page renders and returns results** - checkpoint:human-verify (pending)
+3. **Task 3: Post-verify enhancements (speaker label resolution + episodes devOnly)** - `6f7d91d` (feat)
 
 ## Files Created/Modified
 - `src/hooks/useSearch.ts` - Debounced search hook, SearchResult + EpisodeGroup types
@@ -106,7 +108,28 @@ Each task was committed atomically:
 
 ## Deviations from Plan
 
-None - plan executed exactly as written.
+### Auto-fixed Issues
+
+**1. [Rule 2 - Missing Critical] Speaker labels resolved from settings instead of raw SPEAKER_* fallbacks**
+- **Found during:** Task 3 (post human-verify)
+- **Issue:** Original SearchResultCard used translation keys `pages.search.speaker_fallback_a/b` showing generic "Sprecher A"/"Sprecher B" — inconsistent with TranscriptViewer which shows real host names from settings
+- **Fix:** SearchPage reads `host_0_name`/`host_1_name` via `getSetting` on mount; SearchResultGroup passes them down; SearchResultCard resolves SPEAKER_0/1 to host names, hides label entirely if null (same behavior as useSpeakerBlocks)
+- **Files modified:** src/components/pages/SearchPage.tsx, src/components/Search/SearchResultGroup.tsx, src/components/Search/SearchResultCard.tsx
+- **Verification:** Human verified speaker names appear correctly in search results
+- **Committed in:** 6f7d91d
+
+**2. [Rule 2 - Missing Critical] Episodes nav item marked devOnly**
+- **Found during:** Task 3 (post human-verify)
+- **Issue:** Episodes page (raw episode list) should be hidden from regular users — only dev/debug tooling uses it directly; regular users navigate via Home or Analytics
+- **Fix:** Set `devOnly: true` on the episodes entry in Sidebar allNavItems
+- **Files modified:** src/components/Sidebar.tsx
+- **Verification:** Episodes item no longer appears in Sidebar for non-dev users
+- **Committed in:** 6f7d91d
+
+---
+
+**Total deviations:** 2 auto-fixed (both Rule 2 - missing critical UX correctness)
+**Impact on plan:** Both fixes improve user-facing correctness. No scope creep.
 
 ## Notes for Plan 02
 
@@ -128,5 +151,6 @@ None.
 
 ## Self-Check: PASSED
 - All 4 created files verified on disk
-- Both task commits verified in git log (47a6274, 56279f0)
+- All 3 task commits verified in git log (47a6274, 56279f0, 6f7d91d)
 - TypeScript: 0 errors
+- Human verified: search page renders, results appear, highlights work, empty states correct
