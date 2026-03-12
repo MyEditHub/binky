@@ -58,6 +58,7 @@ export default function Sidebar({
       labelKey: 'nav.episodes',
       collapsedLabel: 'Ep',
       disabled: false,
+      devOnly: true,
     },
     {
       id: 'analytics',

@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import type { SearchResult } from '../../hooks/useSearch';
 
 /** Highlight matched query terms in snippet text using indexOf (NOT RegExp — safe with special chars). */
@@ -30,17 +29,17 @@ function highlightSnippet(snippet: string, query: string): React.ReactNode {
 interface SearchResultCardProps {
   result: SearchResult;
   query: string;
+  host0Name: string | null;
+  host1Name: string | null;
 }
 
-export default function SearchResultCard({ result, query }: SearchResultCardProps) {
-  const { t } = useTranslation();
-
-  // Speaker label with fallback: null → 'Sprecher A' or 'Sprecher B' based on raw speaker string
-  function getSpeakerLabel(speaker: string | null): string {
-    if (!speaker) return t('pages.search.speaker_fallback_a');
-    if (speaker === 'SPEAKER_0') return t('pages.search.speaker_fallback_a');
-    if (speaker === 'SPEAKER_1') return t('pages.search.speaker_fallback_b');
-    return speaker;
+export default function SearchResultCard({ result, query, host0Name, host1Name }: SearchResultCardProps) {
+  // Resolve speaker label the same way as useSpeakerBlocks: settings names, fallback to nothing
+  function getSpeakerLabel(speaker: string | null): string | null {
+    if (!speaker) return null;
+    if (speaker === 'SPEAKER_0') return host0Name ?? null;
+    if (speaker === 'SPEAKER_1') return host1Name ?? null;
+    return null;
   }
 
   function handleClick() {
@@ -55,16 +54,15 @@ export default function SearchResultCard({ result, query }: SearchResultCardProp
     }
   }
 
-  const badgeLabel = result.segment_type === 'transcript'
-    ? t('pages.search.badge_transcript')
-    : t('pages.search.badge_topic');
+  const badgeLabel = result.segment_type === 'transcript' ? 'Transkript' : 'Thema';
+  const speakerLabel = getSpeakerLabel(result.speaker);
 
   return (
     <button className="search-result-card" onClick={handleClick} type="button">
       <div className="search-result-card-meta">
         <span className="search-result-badge">{badgeLabel}</span>
-        {result.segment_type === 'transcript' && (
-          <span className="search-result-speaker">{getSpeakerLabel(result.speaker)}</span>
+        {result.segment_type === 'transcript' && speakerLabel && (
+          <span className="search-result-speaker">{speakerLabel}</span>
         )}
       </div>
       <p className="search-result-snippet">{highlightSnippet(result.snippet, query)}</p>
