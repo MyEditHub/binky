@@ -9,6 +9,7 @@ export interface SpeakerBlock {
   displayName: string;  // resolved: 'Nadine', 'Philipp', or fallback 'Sprecher A'/'Sprecher B'
   color: string;        // resolved color from settings or defaults
   text: string;         // merged paragraph text (all consecutive lines joined with space)
+  startMs: number;      // start_ms of the first segment in this merged block
 }
 
 interface DiarizationSegmentRow {
@@ -78,7 +79,7 @@ function resolveColor(
 function assignSpeakersToWhisperSegments(
   whisperSegs: WhisperSegment[],
   diarSegs: DiarizationSegmentRow[],
-): Array<{ text: string; speaker: string }> {
+): Array<{ text: string; speaker: string; startMs: number }> {
   return whisperSegs
     .filter((ws) => ws.text.trim() !== '')
     .map((ws) => {
@@ -110,9 +111,9 @@ function assignSpeakersToWhisperSegments(
         }
       }
 
-      return { text: ws.text.trim(), speaker: bestSpeaker };
+      return { text: ws.text.trim(), speaker: bestSpeaker, startMs: ws.start_ms };
     })
-    .filter((x): x is { text: string; speaker: string } => x !== null);
+    .filter((x): x is { text: string; speaker: string; startMs: number } => x !== null);
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -172,16 +173,18 @@ export function useSpeakerBlocks(episodeId: number | null): {
 
           // RLE merge: consecutive same-speaker Whisper segments → one SpeakerBlock
           const merged: SpeakerBlock[] = [];
-          for (const { text, speaker } of labeled) {
+          for (const { text, speaker, startMs } of labeled) {
             const last = merged[merged.length - 1];
             if (last && last.speaker === speaker) {
               last.text = last.text + ' ' + text;
+              // startMs stays as the first segment's time — do not update
             } else {
               merged.push({
                 speaker,
                 displayName: resolveName(speaker, host0Name, host1Name),
                 color: resolveColor(speaker, host0Color, host1Color),
                 text,
+                startMs,
               });
             }
           }
@@ -212,6 +215,7 @@ export function useSpeakerBlocks(episodeId: number | null): {
             displayName: resolveName(effectiveSpeaker, host0Name, host1Name),
             color: resolveColor(effectiveSpeaker, host0Color, host1Color),
             text: trimmedText,
+            startMs: row.start_ms,
           });
         }
       }
