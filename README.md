@@ -78,6 +78,28 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.6 (2026-03-12)
+
+- TODO: Changelog eintragen
+
+
+### v0.2.5 (2026-03-12)
+
+### Added
+- (none)
+
+### Changed
+- (none)
+
+### Fixed
+- Speaker identification now uses a 4-wave detection strategy: intro pattern, first-person anchors ("Ich bin Philipp"), direct address ("Hey Nadine"), and positional fallback — correctly assigns speakers even when the name appears late in the episode
+- Speaker detection is now idempotent: re-running "Sprecher erkennen" always produces the same result instead of flipping speakers on every run
+- Added "Wie immer gegenüber" and "wunderschöne, einzigartige" as recognised intro patterns for episodes that don't use the standard intro
+- Intro detection now scans the next 3 segments after the intro phrase, fixing episodes where Whisper splits the intro and the host name into separate segments
+- Fixed diarization queue race condition where episodes could get stuck after a batch completed
+- Reverted embedding model to wespeaker (NeMo TitaNet Large was CPU-only single-threaded: 6+ hours per episode)
+
+
 ### v0.2.4 (2026-03-03)
 
 ### Added
