@@ -103,7 +103,7 @@ Plans:
 | 9. Utterance Text Migration | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
-| 12. Search UI | 2/2 | Complete   | 2026-03-12 | - |
+| 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
 
 ---
