@@ -41,7 +41,7 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
 ### v0.3.0 — Transkript-Suche & Themenverknüpfung
 
 - [x] **Phase 11: FTS Infrastructure** — SQLite FTS5 index + Rust search command covering transcripts, titles, and topics
-- [ ] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation
+- [x] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation (completed 2026-03-12)
 - [ ] **Phase 13: Cross-Episode Topic Linking** — Auto-derived topic connections shown in topics view with navigation
 
 ## Phase Details
@@ -103,7 +103,7 @@ Plans:
 | 9. Utterance Text Migration | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
-| 12. Search UI | v0.3.0 | 1/2 | In Progress | - |
+| 12. Search UI | 2/2 | Complete   | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
 
 ---

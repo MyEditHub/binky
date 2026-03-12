@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12 — Search UI (in progress)
-Plan: 02 — ready to start (Plan 01 complete)
-Status: Plan 12-01 complete — search UI delivered, human-verified, speaker labels resolved from settings, episodes nav devOnly
-Last activity: 2026-03-12 — 12-01 complete (all 3 tasks done including human-verify)
+Phase: 12 — Search UI (COMPLETE)
+Plan: 02 — complete (both plans done)
+Status: Plan 12-02 complete — deep-link navigation from search results to TranscriptViewer scrolled to matching segment; SRCH-02 and SRCH-03 satisfied
+Last activity: 2026-03-12 — 12-02 complete (all 4 tasks done including human-verify)
 
-Progress: [Phase 11: ##########] [Phase 12: #####-----] [Phase 13: ----------]
+Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
 
 ## Accumulated Context
 
@@ -39,7 +39,7 @@ Progress: [Phase 11: ##########] [Phase 12: #####-----] [Phase 13: ----------]
 - Distribution: PKG installer + auto-updater via GitHub Releases
 - Signing key: `~/.tauri/binky.key` (must be backed up to 1Password)
 - Version management: `bump-version.sh` syncs package.json, tauri.conf.json, Cargo.toml
-- Migration pattern: create .sql file, register in lib.rs migrations vec with next sequential version (current highest is 12 — next migration is 013)
+- Migration pattern: create .sql file, register in lib.rs migrations vec with next sequential version (current highest is 014 — next migration is 015)
 - FTS5 search_index schema: 7 columns (episode_id UNINDEXED, episode_title, speaker UNINDEXED, segment_text, segment_type UNINDEXED, start_ms UNINDEXED, end_ms UNINDEXED), tokenize='unicode61' (umlaut-tolerant)
 - FTS column indices (0-based): episode_id=0, episode_title=1, speaker=2, segment_text=3, segment_type=4, start_ms=5, end_ms=6 — snippet() uses column index 3
 - FTS5 contentless delete syntax: INSERT INTO search_index(search_index, rowid, episode_title, segment_text) VALUES('delete', id, old_title, old_text)
@@ -52,11 +52,13 @@ Progress: [Phase 11: ##########] [Phase 12: #####-----] [Phase 13: ----------]
 - Fallback pattern: `speakerBlocks.length > 0` gate — zero-config graceful degradation to plain paragraph view
 - All DB access goes through tauri-plugin-sql `invoke()` — no direct SQLite from frontend
 - Map insertion order used (not sort()) in useSearch to preserve BM25 ranking from search_transcripts
-- pendingTranscriptNav shape in Layout.tsx: { episodeId: number; startMs: number | null; title: string } — Plan 02 consumes this
+- pendingTranscriptNav shape in Layout.tsx: { episodeId: number; startMs: number | null; title: string } — consumed by EpisodesPage via useEffect
 - indexOf-based snippet highlighting in SearchResultCard (RegExp-safe, handles German umlauts)
-- @ts-expect-error on EpisodesPage pendingTranscriptNav/onTranscriptNavConsumed props — Plan 02 removes this
+- EpisodesPage accepts pendingTranscriptNav + onTranscriptNavConsumed props — @ts-expect-error comment removed from Layout.tsx
 - Speaker labels in SearchResultCard resolved from host_0_name/host_1_name settings (mirrors useSpeakerBlocks), raw SPEAKER_* labels never shown to user
 - Episodes nav item is devOnly: true — hidden from regular users, accessible in dev mode only
+- Deep-link scroll pattern: data-start-ms on all TranscriptViewer blocks, querySelectorAll + closest-ms arithmetic in useEffect depending on speakerBlocks + paragraphs
+- SpeakerBlock startMs: number field propagated from first segment in each RLE-merged block (both Whisper and AssemblyAI paths)
 
 ### Critical Whisper-rs 0.15 Bugs (do not use)
 - `set_abort_callback_safe`: type-confusion UB → SIGSEGV/SIGABRT
@@ -97,6 +99,6 @@ Progress: [Phase 11: ##########] [Phase 12: #####-----] [Phase 13: ----------]
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed 12-01-PLAN.md (all tasks done, human-verified)
+Stopped at: Completed 12-02-PLAN.md (all tasks done, human-verified, migration 014 committed)
 Resume file: None
-Next: Plan 12-02 — transcript deep-link navigation (EpisodesPage consumes pendingTranscriptNav)
+Next: Plan 13-01 — Cross-Episode Topic Linking (Phase 13 begins)
