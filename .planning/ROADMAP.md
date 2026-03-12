@@ -69,7 +69,10 @@ Plans:
   2. Each result card shows the episode title, speaker label (or fallback "Sprecher A/B"), and a text snippet with the matching term visible
   3. User clicks a result and the episode's transcript opens with the view scrolled to the matching segment
   4. Searching for a term that appears only in a topic summary returns that episode as a result with a snippet from the summary
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — SearchPage + useSearch hook + Sidebar/Layout wiring + translations
+- [ ] 12-02-PLAN.md — Deep-link navigation: EpisodesPage pendingTranscriptNav, TranscriptViewer scrollToMs, useSpeakerBlocks startMs
 
 ### Phase 13: Cross-Episode Topic Linking
 **Goal**: Users viewing a topic in the topics page can see other episodes where the same theme recurs, with those connections derived automatically from transcript and topic content — no manual tagging required.

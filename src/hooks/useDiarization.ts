@@ -76,25 +76,27 @@ export function useDiarization(onEpisodeUpdated?: () => void): UseDiarizationRet
             break;
           }
           case 'Done': {
-            setIsProcessing(false);
-            setActiveEpisodeId(null);
+            // Don't blindly set isProcessing=false here — the Rust loop may still
+            // be processing subsequent episodes in the batch (startBatchDiarization
+            // enqueues multiple episodes into a single Rust queue; Done events for
+            // all of them arrive on this same channel). Check actual Rust state so
+            // the progress banner stays visible until the full batch is complete.
             setProgress(0);
+            refreshQueueStatus();
             onEpisodeUpdated?.();
             break;
           }
           case 'Error': {
             const errMsg = event.data.message;
             console.error('[useDiarization] diarization error:', errMsg);
-            setIsProcessing(false);
-            setActiveEpisodeId(null);
             setProgress(0);
+            refreshQueueStatus();
             onEpisodeUpdated?.();
             break;
           }
           case 'Cancelled': {
-            setIsProcessing(false);
-            setActiveEpisodeId(null);
             setProgress(0);
+            refreshQueueStatus();
             onEpisodeUpdated?.();
             break;
           }
@@ -115,12 +117,12 @@ export function useDiarization(onEpisodeUpdated?: () => void): UseDiarizationRet
         setActiveEpisodeId(null);
         setProgress(0);
       } finally {
-        // Safety net: invoke only returns after Rust completes, so force-clear
-        // processing state in case the Done/Error channel event was missed.
+        // start_diarization returns Ok(()) immediately after spawning the
+        // processing loop. Sync queue state so the TS side reflects reality.
         await refreshQueueStatus();
       }
     },
-    [onEpisodeUpdated]
+    [onEpisodeUpdated, refreshQueueStatus]
   );
 
   const cancelDiarization = useCallback(async () => {

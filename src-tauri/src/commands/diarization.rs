@@ -14,11 +14,18 @@ use tokio_util::sync::CancellationToken;
 // Model URLs (verified 2026-02-16)
 // Segmentation: tar.bz2 archive (no standalone .onnx available)
 // Embedding: direct .onnx file
+//
+// NOTE (2026-03-11): nemo_en_titanet_large.onnx (101 MB) was tested as the
+// embedding model but is unusably slow: sherpa-onnx 1.12.9 hard-codes
+// num_threads=1 and the bundled libonnxruntime has no CoreML/Metal backend.
+// Single-threaded CPU inference on NeMo TitaNet Large takes 6+ hours for a
+// 60-minute episode.  Reverted to wespeaker_en_voxceleb_resnet34_LM.onnx
+// (26 MB) which completes diarization in ~3-5 minutes on the same hardware.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SEGMENTATION_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2";
-const EMBEDDING_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/nemo_en_titanet_large.onnx";
-const EMBEDDING_FILENAME: &str = "nemo_en_titanet_large.onnx";
+const EMBEDDING_URL: &str = "https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_resnet34_LM.onnx";
+const EMBEDDING_FILENAME: &str = "wespeaker_en_voxceleb_resnet34_LM.onnx";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: download a URL with streaming progress, writing to a tmp file,
@@ -862,16 +869,25 @@ pub async fn start_diarization(
 
     tauri::async_runtime::spawn(async move {
         loop {
+            // Dequeue and — if the queue is empty — atomically mark as not-processing
+            // under the same lock acquisition. This eliminates the race where a new
+            // start_diarization call enqueues an episode between the moment this loop
+            // finds the queue empty and the moment it sets is_processing = false.
+            // Without this, the new call sees is_processing=true (loop "still running"),
+            // returns early, and the episode sits in the queue forever.
             let job = {
                 let mut q = state_arc.queue.lock().unwrap();
-                q.dequeue()
+                match q.dequeue() {
+                    Some(j) => Some(j),
+                    None => {
+                        q.is_processing = false;
+                        None
+                    }
+                }
             };
 
             match job {
-                None => {
-                    state_arc.queue.lock().unwrap().is_processing = false;
-                    break;
-                }
+                None => break,
                 Some(j) => {
                     process_diarization_episode(
                         &j,
@@ -933,16 +949,21 @@ pub(crate) async fn enqueue_diarization_internal(
 
     tauri::async_runtime::spawn(async move {
         loop {
+            // Dequeue and — if the queue is empty — atomically mark as not-processing
+            // under the same lock acquisition. Mirrors the same fix in start_diarization.
             let job = {
                 let mut q = state_arc.queue.lock().unwrap();
-                q.dequeue()
+                match q.dequeue() {
+                    Some(j) => Some(j),
+                    None => {
+                        q.is_processing = false;
+                        None
+                    }
+                }
             };
 
             match job {
-                None => {
-                    state_arc.queue.lock().unwrap().is_processing = false;
-                    break;
-                }
+                None => break,
                 Some(j) => {
                     // No frontend channel for chained runs — pass None
                     process_diarization_episode(

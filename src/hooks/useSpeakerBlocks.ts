@@ -94,10 +94,15 @@ function assignSpeakersToWhisperSegments(
         const overlap = overlapEnd - overlapStart;
         const dsDur = ds.end_ms - ds.start_ms;
         if (overlap > 0 && dsDur > 0) {
-          // Primary: what fraction of THIS Whisper segment falls in this diarization window
-          // (prevents a large diar window from losing to a small one that only covers part of Whisper)
-          // Secondary tiebreaker: how precisely does the diar window match (favors short/specific windows)
-          const score = (overlap / wsDur) * 1_000_000 + (overlap / dsDur) * 1_000;
+          // Precision-primary scoring: matches the Rust backfill in diarization.rs.
+          // sherpa-rs produces NESTED windows — SPEAKER_0 is a large ~14s window that
+          // envelops many tiny ~0.9s SPEAKER_1 interjection windows. Using Whisper
+          // coverage as primary caused SPEAKER_0 to win every Whisper segment (it always
+          // covers 100%), collapsing the entire transcript into one block.
+          //
+          // Precision (overlap / ds_dur) favors the smaller, more precise window
+          // (SPEAKER_1), matching how the Rust backfill assigns text to diar segments.
+          const score = (overlap * 1_000_000) / dsDur;
           if (score > bestScore) {
             bestScore = score;
             bestSpeaker = ds.corrected_speaker ?? ds.speaker_label;

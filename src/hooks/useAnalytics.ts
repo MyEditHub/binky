@@ -205,15 +205,32 @@ export function useAnalytics() {
 
   const flipEpisodeSpeakers = useCallback(async (episodeId: number) => {
     const db = await Database.load('sqlite:binky.db');
-    await db.execute(
-      `UPDATE diarization_segments
-       SET corrected_speaker = CASE
-           WHEN COALESCE(corrected_speaker, speaker_label) = 'SPEAKER_0' THEN 'SPEAKER_1'
-           ELSE 'SPEAKER_0'
-       END
-       WHERE episode_id = ?`,
-      [episodeId]
+    // Flip relative to speaker_label (idempotent toggle): if currently swapped → reset,
+    // if currently at default → swap. Check by counting any corrected_speaker overrides.
+    const [{ swapped_count }] = await db.select<[{ swapped_count: number }]>(
+      `SELECT COUNT(*) AS swapped_count FROM diarization_segments
+       WHERE episode_id = ? AND corrected_speaker IS NOT NULL AND corrected_speaker != speaker_label`,
+      [episodeId],
     );
+    if (swapped_count > 0) {
+      // Currently swapped → reset to speaker_label
+      await db.execute(
+        `UPDATE diarization_segments SET corrected_speaker = speaker_label WHERE episode_id = ?`,
+        [episodeId],
+      );
+    } else {
+      // Currently at default → apply swap
+      await db.execute(
+        `UPDATE diarization_segments
+         SET corrected_speaker = CASE
+             WHEN speaker_label = 'SPEAKER_0' THEN 'SPEAKER_1'
+             WHEN speaker_label = 'SPEAKER_1' THEN 'SPEAKER_0'
+             ELSE speaker_label
+         END
+         WHERE episode_id = ?`,
+        [episodeId],
+      );
+    }
     await refresh();
   }, [refresh]);
 
@@ -250,43 +267,93 @@ export function useAnalytics() {
     let unchanged = 0;
     let uncertain = 0;
 
-    // Query DB directly for all episodes that have diarization segments with
-    // text populated. Using the DB rather than the in-memory `episodes` state
-    // avoids missing episodes whose diarization_status was incorrectly reset
-    // to 'not_started' by the startup hook (e.g. app was quit mid-diarization
-    // after segments were written but before the status column was updated).
-    const episodesWithSegments = await db.select<Array<{ episode_id: number }>>(
-      `SELECT DISTINCT episode_id FROM diarization_segments WHERE text IS NOT NULL`,
-    );
+    // Idempotent swap: always derived from speaker_label, never a flip of corrected_speaker.
+    // This means re-running detection always produces the same corrected_speaker values.
+    const applySwap = async (episode_id: number) => {
+      await db.execute(
+        `UPDATE diarization_segments
+         SET corrected_speaker = CASE
+             WHEN speaker_label = 'SPEAKER_0' THEN 'SPEAKER_1'
+             WHEN speaker_label = 'SPEAKER_1' THEN 'SPEAKER_0'
+             ELSE speaker_label
+         END
+         WHERE episode_id = ?`,
+        [episode_id],
+      );
+    };
 
-    for (const { episode_id } of episodesWithSegments) {
-      // Fetch ALL segments ordered by start_ms so the intro-pattern scanner
-      // (which checks the first ~30 segments) sees early segments even when
-      // some have NULL text. NULL-text segments are handled gracefully by
-      // detectSpeakerSwap (skipped in name-counting, INTRO_PATTERNS.test('')
-      // is false so they are skipped in intro detection too).
-      const segments = await db.select<
+    const applyNoSwap = async (episode_id: number) => {
+      await db.execute(
+        `UPDATE diarization_segments
+         SET corrected_speaker = speaker_label
+         WHERE episode_id = ?`,
+        [episode_id],
+      );
+    };
+
+    // Wave 1 pass: batch fetch first 30 segments per episode in ONE query.
+    // Only intro pattern is checked here (earlyOnly=true). Episodes where the
+    // intro is ambiguous are queued for a full-episode scan (Waves 2-4).
+    const batchRows = await db.select<
+      Array<{
+        episode_id: number;
+        speaker_label: string;
+        corrected_speaker: string | null;
+        text: string | null;
+      }>
+    >(`
+      WITH ranked AS (
+        SELECT episode_id, speaker_label, corrected_speaker, text,
+               ROW_NUMBER() OVER (PARTITION BY episode_id ORDER BY start_ms) AS rn
+        FROM diarization_segments
+        WHERE text IS NOT NULL
+      )
+      SELECT episode_id, speaker_label, corrected_speaker, text
+      FROM ranked WHERE rn <= 30
+      ORDER BY episode_id, rn
+    `);
+
+    const byEpisode = new Map<
+      number,
+      Array<{ speaker_label: string; corrected_speaker: string | null; text: string | null }>
+    >();
+    for (const row of batchRows) {
+      const list = byEpisode.get(row.episode_id) ?? [];
+      list.push({ speaker_label: row.speaker_label, corrected_speaker: row.corrected_speaker, text: row.text });
+      byEpisode.set(row.episode_id, list);
+    }
+
+    const fullScanEpisodes: number[] = [];
+
+    for (const [episode_id, segments] of byEpisode) {
+      const { result } = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '', { earlyOnly: true });
+      if (result === 'swap') {
+        await applySwap(episode_id);
+        swapped++;
+      } else if (result === 'no_swap') {
+        await applyNoSwap(episode_id);
+        unchanged++;
+      } else {
+        fullScanEpisodes.push(episode_id);
+      }
+    }
+
+    // Waves 2–4 pass: fetch ALL segments for episodes not resolved by intro detection.
+    // First-person anchors, direct address scoring, and positional heuristic are tried.
+    for (const episode_id of fullScanEpisodes) {
+      const allSegments = await db.select<
         Array<{ speaker_label: string; corrected_speaker: string | null; text: string | null }>
       >(
         `SELECT speaker_label, corrected_speaker, text
          FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
         [episode_id],
       );
-
-      const { result } = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '');
-
+      const { result } = detectSpeakerSwap(allSegments, h0Name ?? '', h1Name ?? '');
       if (result === 'swap') {
-        await db.execute(
-          `UPDATE diarization_segments
-           SET corrected_speaker = CASE
-               WHEN COALESCE(corrected_speaker, speaker_label) = 'SPEAKER_0' THEN 'SPEAKER_1'
-               ELSE 'SPEAKER_0'
-           END
-           WHERE episode_id = ?`,
-          [episode_id],
-        );
+        await applySwap(episode_id);
         swapped++;
       } else if (result === 'no_swap') {
+        await applyNoSwap(episode_id);
         unchanged++;
       } else {
         uncertain++;
@@ -294,7 +361,6 @@ export function useAnalytics() {
     }
 
     await refresh();
-    // Notify transcript viewers to reload corrected_speaker values
     window.dispatchEvent(new CustomEvent('speaker-corrections-updated'));
     return { swapped, unchanged, uncertain };
   }, [refresh]);

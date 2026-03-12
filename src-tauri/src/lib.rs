@@ -93,6 +93,12 @@ pub fn run() {
             sql: include_str!("../migrations/012_fts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 13,
+            description: "fix_fts_triggers",
+            sql: include_str!("../migrations/013_fix_fts_triggers.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
