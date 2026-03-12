@@ -1,18 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import EpisodeList from '../EpisodeList/EpisodeList';
 import TranscriptViewer from '../TranscriptViewer/TranscriptViewer';
 
 interface EpisodesPageProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
+  pendingTranscriptNav?: { episodeId: number; startMs: number | null; title: string } | null;
+  onTranscriptNavConsumed?: () => void;
 }
 
 interface ViewingTranscript {
   episodeId: number;
   episodeTitle: string;
+  scrollToMs?: number;
 }
 
-export default function EpisodesPage({ onTranscriptionStateChange }: EpisodesPageProps) {
+export default function EpisodesPage({
+  onTranscriptionStateChange,
+  pendingTranscriptNav,
+  onTranscriptNavConsumed,
+}: EpisodesPageProps) {
   const { t } = useTranslation();
   const [viewingTranscript, setViewingTranscript] = useState<ViewingTranscript | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -31,6 +38,17 @@ export default function EpisodesPage({ onTranscriptionStateChange }: EpisodesPag
     setReloadKey((k) => k + 1);
   }
 
+  // Open TranscriptViewer when a search deep-link navigation arrives
+  useEffect(() => {
+    if (!pendingTranscriptNav) return;
+    setViewingTranscript({
+      episodeId: pendingTranscriptNav.episodeId,
+      episodeTitle: pendingTranscriptNav.title,
+      scrollToMs: pendingTranscriptNav.startMs ?? undefined,
+    });
+    onTranscriptNavConsumed?.();
+  }, [pendingTranscriptNav]);
+
   if (viewingTranscript) {
     return (
       <TranscriptViewer
@@ -38,6 +56,7 @@ export default function EpisodesPage({ onTranscriptionStateChange }: EpisodesPag
         episodeTitle={viewingTranscript.episodeTitle}
         onClose={handleCloseTranscript}
         onTranscriptDeleted={handleTranscriptDeleted}
+        scrollToMs={viewingTranscript.scrollToMs}
       />
     );
   }

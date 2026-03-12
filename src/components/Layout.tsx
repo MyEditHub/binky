@@ -97,7 +97,6 @@ export default function Layout() {
         return (
           <EpisodesPage
             onTranscriptionStateChange={handleTranscriptionStateChange}
-            // @ts-expect-error Plan 02 adds these props to EpisodesPage
             pendingTranscriptNav={pendingTranscriptNav}
             onTranscriptNavConsumed={() => setPendingTranscriptNav(null)}
           />
