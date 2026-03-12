@@ -10,7 +10,8 @@
     "topics": "Themen",
     "bird": "Vogel-Randomizer",
     "stats": "Statistiken",
-    "settings": "Einstellungen"
+    "settings": "Einstellungen",
+    "search": "Suche"
   },
   "nav_disabled": {
     "analytics": "Analytik (kommt bald)",
@@ -224,6 +225,14 @@
       "episode_analyzed": "Analysiert ({{count}} Themen)",
       "episode_analyzing": "Wird analysiert...",
       "episode_error": "Fehler bei Analyse"
+    },
+    "search": {
+      "placeholder": "Transkripte durchsuchen…",
+      "no_results": "Keine Ergebnisse",
+      "badge_transcript": "Transkript",
+      "badge_topic": "Thema",
+      "speaker_fallback_a": "Sprecher A",
+      "speaker_fallback_b": "Sprecher B"
     },
     "bird": {
       "title": "Vogel-Randomizer",

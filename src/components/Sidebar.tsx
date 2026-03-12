@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import QueueBadge from './TranscriptionQueue/QueueBadge';
 
-type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home';
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home' | 'search';
 
 interface SidebarProps {
   activePage: Page;
@@ -72,6 +72,12 @@ export default function Sidebar({
       collapsedLabel: 'Th',
       disabled: false,
       devOnly: false,
+    },
+    {
+      id: 'search',
+      labelKey: 'nav.search',
+      collapsedLabel: 'Su',
+      disabled: false,
     },
     {
       id: 'settings',

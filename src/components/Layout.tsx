@@ -9,8 +9,9 @@ import StatsPage from './pages/StatsPage';
 import HomePage from './pages/HomePage';
 import AssemblyAIDevPanel from './AssemblyAIDevPanel';
 import { getSetting, setSetting } from '../lib/settings';
+import SearchPage from './pages/SearchPage';
 
-type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home';
+type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home' | 'search';
 
 export default function Layout() {
   const [devMode, setDevMode] = useState(false);
@@ -21,6 +22,13 @@ export default function Layout() {
   // Transcription state lifted to Layout so Sidebar badge can reflect it
   const [transcriptionActive, setTranscriptionActive] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
+
+  // Pending deep-link navigation from Search → EpisodesPage transcript viewer
+  const [pendingTranscriptNav, setPendingTranscriptNav] = useState<{
+    episodeId: number;
+    startMs: number | null;
+    title: string;
+  } | null>(null);
 
   // Keep a ref to activePage so the keyboard handler doesn't go stale
   const activePageRef = useRef(activePage);
@@ -36,11 +44,23 @@ export default function Layout() {
 
   // ⌘⇧D — toggle developer mode (hidden shortcut, not shown in UI)
   useEffect(() => {
-    function handleNavigateTopics() {
+    function handleNavigateTopics() { setActivePage('topics'); }
+    function handleNavigateToTranscript(e: Event) {
+      const { episodeId, startMs, title } = (e as CustomEvent<{ episodeId: number; startMs: number | null; title: string }>).detail;
+      setPendingTranscriptNav({ episodeId, startMs, title });
+      setActivePage('episodes');
+    }
+    function handleNavigateToEpisodeTopics() {
       setActivePage('topics');
     }
     window.addEventListener('navigate-topics', handleNavigateTopics);
-    return () => window.removeEventListener('navigate-topics', handleNavigateTopics);
+    window.addEventListener('navigate-to-transcript', handleNavigateToTranscript);
+    window.addEventListener('navigate-to-episode-topics', handleNavigateToEpisodeTopics);
+    return () => {
+      window.removeEventListener('navigate-topics', handleNavigateTopics);
+      window.removeEventListener('navigate-to-transcript', handleNavigateToTranscript);
+      window.removeEventListener('navigate-to-episode-topics', handleNavigateToEpisodeTopics);
+    };
   }, []);
 
   useEffect(() => {
@@ -77,6 +97,9 @@ export default function Layout() {
         return (
           <EpisodesPage
             onTranscriptionStateChange={handleTranscriptionStateChange}
+            // @ts-expect-error Plan 02 adds these props to EpisodesPage
+            pendingTranscriptNav={pendingTranscriptNav}
+            onTranscriptNavConsumed={() => setPendingTranscriptNav(null)}
           />
         );
       case 'analytics':
@@ -91,6 +114,8 @@ export default function Layout() {
         return <StatsPage />;
       case 'settings':
         return <SettingsPage />;
+      case 'search':
+        return <SearchPage />;
       default:
         return <HomePage onNavigate={setActivePage} />;
     }
