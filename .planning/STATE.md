@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 11 — FTS Infrastructure (in progress)
-Plan: 02 complete — ready for Phase 12 (Search UI)
-Status: Plan 11-02 executed — search_transcripts and rebuild_search_index Tauri commands committed
-Last activity: 2026-03-10 — 11-02 executed (search backend commands)
+Phase: 12 — Search UI (in progress)
+Plan: 01 — Tasks 1+2 complete, awaiting human-verify checkpoint (Task 3)
+Status: Plan 12-01 auto tasks executed — useSearch hook, SearchPage, SearchResultCard/Group, Layout+Sidebar wiring committed
+Last activity: 2026-03-12 — 12-01 executed (search UI components)
 
-Progress: [Phase 11: ####------] [Phase 12: ----------] [Phase 13: ----------]
+Progress: [Phase 11: ##########] [Phase 12: ##--------] [Phase 13: ----------]
 
 ## Accumulated Context
 
@@ -51,6 +51,10 @@ Progress: [Phase 11: ####------] [Phase 12: ----------] [Phase 13: ----------]
 - Speaker block architecture: TranscriptViewer owns all highlight logic; SpeakerBlock accepts `children: React.ReactNode` (purely presentational)
 - Fallback pattern: `speakerBlocks.length > 0` gate — zero-config graceful degradation to plain paragraph view
 - All DB access goes through tauri-plugin-sql `invoke()` — no direct SQLite from frontend
+- Map insertion order used (not sort()) in useSearch to preserve BM25 ranking from search_transcripts
+- pendingTranscriptNav shape in Layout.tsx: { episodeId: number; startMs: number | null; title: string } — Plan 02 consumes this
+- indexOf-based snippet highlighting in SearchResultCard (RegExp-safe, handles German umlauts)
+- @ts-expect-error on EpisodesPage pendingTranscriptNav/onTranscriptNavConsumed props — Plan 02 removes this
 
 ### Critical Whisper-rs 0.15 Bugs (do not use)
 - `set_abort_callback_safe`: type-confusion UB → SIGSEGV/SIGABRT
@@ -90,7 +94,7 @@ Progress: [Phase 11: ####------] [Phase 12: ----------] [Phase 13: ----------]
 
 ## Session Continuity
 
-Last session: 2026-03-10
-Stopped at: Completed 11-02-PLAN.md (search_transcripts Tauri command)
+Last session: 2026-03-12
+Stopped at: 12-01 checkpoint:human-verify (Task 3 — visual verification of search page)
 Resume file: None
-Next: Execute Phase 12 (Search UI — React components consuming invoke('search_transcripts'))
+Next: Human verifies search page in Tauri dev mode, then continue 12-01 (mark checkpoint done) or proceed to Plan 12-02
