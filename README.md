@@ -78,9 +78,11 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
-### v0.2.6 (2026-03-12)
+### v0.2.6 (2026-03-13)
 
-- commited changes
+#### Added
+- **Search tab** — full-text search across all episode transcripts using SQLite FTS5; results show episode title, speaker, and a matching excerpt
+- **Deep-link navigation** — clicking a search result opens the episode and jumps directly to the matching moment in the transcript
 
 ### v0.2.5 (2026-03-12)
 

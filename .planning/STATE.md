@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 12 — Search UI (COMPLETE)
-Plan: 02 — complete (both plans done)
-Status: Plan 12-02 complete — deep-link navigation from search results to TranscriptViewer scrolled to matching segment; SRCH-02 and SRCH-03 satisfied
-Last activity: 2026-03-12 — 12-02 complete (all 4 tasks done including human-verify)
+Phase: 13 — Cross-Episode Topic Linking (IN PROGRESS)
+Plan: 01 — planned (13-01-PLAN.md: Rust fetch_related_episodes command)
+Status: 13-01 and 13-02 plans created; ready for execution
+Last activity: 2026-03-13 — Phase 13 planning complete (2 plans)
 
 Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
 
@@ -99,6 +99,6 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
 ## Session Continuity
 
 Last session: 2026-03-12
-Stopped at: Completed 12-02-PLAN.md (all tasks done, human-verified, migration 014 committed)
+Stopped at: Created 13-01-PLAN.md and 13-02-PLAN.md for Phase 13
 Resume file: None
-Next: Plan 13-01 — Cross-Episode Topic Linking (Phase 13 begins)
+Next: Execute 13-01-PLAN.md (Rust backend), then 13-02-PLAN.md (frontend)
