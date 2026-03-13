@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 — Cross-Episode Topic Linking (IN PROGRESS — awaiting human verify)
-Plan: 02 — executed (13-02-PLAN.md: Frontend related episodes UI)
-Status: 13-02 automated tasks complete; awaiting checkpoint:human-verify (task 5)
-Last activity: 2026-03-13 — 13-02 executed (frontend Weitere Episoden UI + deep-link nav)
+Phase: 13 — Cross-Episode Topic Linking (COMPLETE)
+Plan: 02 — complete (13-02-PLAN.md: Frontend related episodes UI)
+Status: All plans complete; human verify approved
+Last activity: 2026-03-13 — 13-02 human-verify approved; phase 13 complete
 
 Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
 
@@ -109,6 +109,6 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Checkpoint task 5 of 13-02-PLAN.md (human-verify: Weitere Episoden visible + navigation works)
+Stopped at: Completed 13-02-PLAN.md (all tasks done, human verify approved)
 Resume file: None
-Next: Human verify app in dev mode — Weitere Episoden section renders, navigation to episode groups works
+Next: v0.3.0 complete — all phases (11, 12, 13) done; ready for release or new milestone
