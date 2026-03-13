@@ -2724,3 +2724,42 @@ body {
   line-height: 1.5;
   margin: 0;
 }
+
+/* Related episodes section in TopicRow */
+.topic-related-episodes {
+  margin: 8px 0 4px;
+}
+
+.topic-related-episodes-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #999);
+  margin-bottom: 4px;
+}
+
+.topic-related-episodes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topic-related-episode-btn {
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--accent, #d97757);
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.topic-related-episode-btn:hover {
+  text-decoration-style: solid;
+}
