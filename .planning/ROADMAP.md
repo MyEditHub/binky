@@ -43,7 +43,7 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
 - [x] **Phase 11: FTS Infrastructure** — SQLite FTS5 index + Rust search command covering transcripts, titles, and topics
 - [x] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation (completed 2026-03-12)
 - [x] **Phase 13: Cross-Episode Topic Linking** — Auto-derived topic connections shown in topics view with navigation (completed 2026-03-13)
-- [ ] **Phase 14: Integration Gap Closure** — Register migration 014 in lib.rs and fix TopicsList scroll race (gap closure)
+- [x] **Phase 14: Integration Gap Closure** — Register migration 014 in lib.rs and fix TopicsList scroll race (gap closure) (completed 2026-03-13)
 
 ## Phase Details
 
@@ -117,7 +117,7 @@ Plans:
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
-| 14. Integration Gap Closure | v0.3.0 | 0/1 | Pending | - |
+| 14. Integration Gap Closure | 1/1 | Complete   | 2026-03-13 | - |
 
 ---
 

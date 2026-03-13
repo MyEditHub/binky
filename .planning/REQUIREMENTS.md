@@ -11,13 +11,13 @@
 - [x] **SRCH-02**: Search results show episode title, speaker label (if available), and a text snippet with the match highlighted
 - [x] **SRCH-03**: User can click a search result to open that episode's transcript scrolled to the matching segment
 - [x] **SRCH-04**: Search handles German text correctly (umlauts: ä, ö, ü, ß)
-- [ ] **SRCH-05**: Search results also include episode titles and AI-generated topic summaries
+- [x] **SRCH-05**: Search results also include episode titles and AI-generated topic summaries
 
 ### Cross-Episode Topic Linking (LINK)
 
-- [ ] **LINK-01**: In the topics view, each episode topic shows other episodes where the same theme appears
-- [ ] **LINK-02**: User can navigate from a cross-episode topic link directly to that episode's content
-- [ ] **LINK-03**: Cross-episode connections are derived automatically from transcript content (no manual tagging)
+- [x] **LINK-01**: In the topics view, each episode topic shows other episodes where the same theme appears
+- [x] **LINK-02**: User can navigate from a cross-episode topic link directly to that episode's content
+- [x] **LINK-03**: Cross-episode connections are derived automatically from transcript content (no manual tagging)
 
 ## Future Requirements
 
@@ -41,12 +41,12 @@
 |-------------|-------|--------|
 | SRCH-01 | Phase 11 | Complete |
 | SRCH-04 | Phase 11 | Complete |
-| SRCH-05 | Phase 11 → Phase 14 (gap closure) | Pending |
+| SRCH-05 | Phase 11 → Phase 14 (gap closure) | Complete |
 | SRCH-02 | Phase 12 | Complete |
 | SRCH-03 | Phase 12 | Complete |
-| LINK-01 | Phase 13 → Phase 14 (gap closure) | Pending |
-| LINK-02 | Phase 13 → Phase 14 (gap closure) | Pending |
-| LINK-03 | Phase 13 → Phase 14 (gap closure) | Pending |
+| LINK-01 | Phase 13 → Phase 14 (gap closure) | Complete |
+| LINK-02 | Phase 13 → Phase 14 (gap closure) | Complete |
+| LINK-03 | Phase 13 → Phase 14 (gap closure) | Complete |
 
 **Coverage:**
 - v0.3.0 requirements: 8 total
