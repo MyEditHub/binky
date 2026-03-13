@@ -107,7 +107,7 @@ Plans:
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
-| 13. Cross-Episode Topic Linking | 2/2 | Complete   | 2026-03-13 | - |
+| 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
 
 ---
 
