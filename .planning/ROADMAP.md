@@ -117,7 +117,7 @@ Plans:
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
-| 14. Integration Gap Closure | 1/1 | Complete   | 2026-03-13 | - |
+| 14. Integration Gap Closure | 1/1 | Complete    | 2026-03-13 | - |
 
 ---
 
