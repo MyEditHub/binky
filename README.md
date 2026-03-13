@@ -80,18 +80,12 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ### v0.2.6 (2026-03-12)
 
-- TODO: Changelog eintragen
-
+- commited changes
 
 ### v0.2.5 (2026-03-12)
 
-### Added
-- (none)
-
-### Changed
-- (none)
-
 ### Fixed
+
 - Speaker identification now uses a 4-wave detection strategy: intro pattern, first-person anchors ("Ich bin Philipp"), direct address ("Hey Nadine"), and positional fallback — correctly assigns speakers even when the name appears late in the episode
 - Speaker detection is now idempotent: re-running "Sprecher erkennen" always produces the same result instead of flipping speakers on every run
 - Added "Wie immer gegenüber" and "wunderschöne, einzigartige" as recognised intro patterns for episodes that don't use the standard intro
@@ -99,75 +93,55 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 - Fixed diarization queue race condition where episodes could get stuck after a batch completed
 - Reverted embedding model to wespeaker (NeMo TitaNet Large was CPU-only single-threaded: 6+ hours per episode)
 
-
 ### v0.2.4 (2026-03-03)
 
 ### Added
+
 - Diarisierungsmodell-Manager in den Einstellungen — Modelle herunterladen und löschen direkt in der App
 - Episoden mit Status „Nicht analysiert" können jetzt in der Analyse-Ansicht angeklickt und neu diarisiert werden
 
 ### Changed
+
 - Sprecher-Erkennungsmodell gewechselt zu NeMo TitaNet Large für bessere Sprecher-Trennung
 - Sprecher-Erkennung nutzt jetzt das Intro-Muster („Neue Woche, neue Folge…") statt Namens-Zählung — zuverlässiger bei Hosts, die sich gegenseitig erwähnen
 - Transkript-Anzeige zeigt Sprecher-Wechsel jetzt in chronologischer Reihenfolge (Whisper-Segmente als Anzeigeeinheit)
 
 ### Fixed
+
 - Doppelte Sätze im Transkript: Whisper-Segmente wurden mehreren Diarisierungs-Fenstern gleichzeitig zugewiesen
 - Große Sprecher-Blöcke statt feiner Wechsel: Scoring bevorzugt jetzt Whisper-Abdeckung als primäres Kriterium
 - Sprecher-Korrekturen wurden bei erneutem Öffnen der Analyse-Seite zurückgesetzt
 - Fortschritts-Banner blieb nach abgeschlossener Diarisierung stehen
 - Transkript zeigte veraltete Sprecher-Zuordnung nach „Sprecher erkennen" ohne Seiten-Wechsel
 
-
 ### v0.2.3 (2026-03-02)
 
 ### Added
+
 - Analytik: Schaltfläche „Sprecher erkennen" erkennt automatisch per Transkripttext, ob Sprecher 0 und Sprecher 1 vertauscht sind, und korrigiert alle betroffenen Episoden auf einmal
-
-### Changed
-- (none)
-
-### Fixed
-- (none)
-
-
-### v0.2.2 (2026-03-01)
-
-- TODO: Changelog eintragen
-
-
-### v0.2.1 (2026-03-01)
-
-- TODO: Changelog eintragen
-
 
 ### v0.2.0 (2026-03-01)
 
 ### Added
+
 - Transkripte zeigen jetzt, wer was gesagt hat: Jeder Absatz hat ein farbiges Label mit dem Namen des Sprechers (Nadine oder Philipp)
 - Aufeinanderfolgende Sätze desselben Sprechers werden automatisch zu einem Block zusammengefasst — kein Wechsel mitten im Gedanken
 - Suche im Transkript funktioniert auch in der neuen Sprecher-Ansicht mit Navigation zwischen Treffern
 
-### Changed
-- (none)
-
 ### Fixed
+
 - Themen-Seite war unter bestimmten Umständen nicht erreichbar
 - Vogel-Datenbank: Fehler in Migration behoben, der Vogelnamen nicht korrekt zuordnen konnte
 
-
 ### v0.1.3 (2026-02-27)
 
-
-### Added
-- (none)
-
 ### Changed
+
 - Release-Seite zeigt jetzt strukturierte Versionshinweise mit Download-Tabelle und Installationsanleitung
 
 ### Fixed
-- (none)
 
+- (none)
 
 ### v0.1.2 (2026-02-26)
 
