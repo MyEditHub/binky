@@ -5,11 +5,17 @@ import Database from '@tauri-apps/plugin-sql';
 import { useTopics } from '../../hooks/useTopics';
 import type { TopicStatus } from '../../hooks/useTopics';
 import TopicsList from '../Topics/TopicsList';
+import type { RelatedEpisode } from '../Topics/TopicRow';
 
 type FilterTab = 'offen' | 'erledigt';
 type ViewMode = 'list' | 'grouped';
 
-export default function TopicsPage() {
+interface TopicsPageProps {
+  pendingTopicGroupNav?: number | null;
+  onTopicGroupNavConsumed?: () => void;
+}
+
+export default function TopicsPage({ pendingTopicGroupNav: externalNav, onTopicGroupNavConsumed }: TopicsPageProps = {}) {
   const { t } = useTranslation();
   const {
     topics,
@@ -20,6 +26,7 @@ export default function TopicsPage() {
 
   const [activeFilter, setActiveFilter] = useState<FilterTab>('offen');
   const [viewMode, setViewMode] = useState<ViewMode>('grouped');
+  const [relatedMap, setRelatedMap] = useState<Map<number, RelatedEpisode[]>>(new Map());
   const autoAnalyzedRef = useRef(false);
 
   useEffect(() => {
@@ -58,6 +65,42 @@ export default function TopicsPage() {
       }
     })();
   }, [loadTopics]);
+
+  // Re-fetch related episodes whenever the topics list changes (initial load or filter change)
+  useEffect(() => {
+    if (topics.length > 0) {
+      void fetchRelatedForTopics(topics);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topics]);
+
+  // Handle deep-link nav: switch to grouped view, expand target group, scroll
+  useEffect(() => {
+    if (externalNav == null) return;
+    setViewMode('grouped');
+    const timer = setTimeout(() => onTopicGroupNavConsumed?.(), 800);
+    return () => clearTimeout(timer);
+  }, [externalNav, onTopicGroupNavConsumed]);
+
+  async function fetchRelatedForTopics(loadedTopics: typeof topics) {
+    const topicIds = loadedTopics.map(t => t.id);
+    if (topicIds.length === 0) {
+      setRelatedMap(new Map());
+      return;
+    }
+    try {
+      const result = await invoke<Record<string, RelatedEpisode[]>>(
+        'fetch_related_episodes',
+        { topicIds }
+      );
+      setRelatedMap(
+        new Map(Object.entries(result).map(([k, v]) => [Number(k), v]))
+      );
+    } catch {
+      // Silent fail — "Weitere Episoden" simply won't render
+      setRelatedMap(new Map());
+    }
+  }
 
   async function handleFilterChange(filter: FilterTab) {
     setActiveFilter(filter);
@@ -123,6 +166,8 @@ export default function TopicsPage() {
         loading={loading}
         onStatusChange={handleStatusChange}
         viewMode={viewMode}
+        relatedMap={relatedMap}
+        forceExpandEpisodeId={externalNav}
       />
     </div>
   );

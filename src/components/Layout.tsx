@@ -30,6 +30,9 @@ export default function Layout() {
     title: string;
   } | null>(null);
 
+  // Pending deep-link nav from "Weitere Episoden" → TopicsPage grouped view
+  const [pendingTopicGroupNav, setPendingTopicGroupNav] = useState<number | null>(null);
+
   // Keep a ref to activePage so the keyboard handler doesn't go stale
   const activePageRef = useRef(activePage);
   useEffect(() => { activePageRef.current = activePage; }, [activePage]);
@@ -50,7 +53,11 @@ export default function Layout() {
       setPendingTranscriptNav({ episodeId, startMs, title });
       setActivePage('episodes');
     }
-    function handleNavigateToEpisodeTopics() {
+    function handleNavigateToEpisodeTopics(e: Event) {
+      const detail = (e as CustomEvent<{ episodeId?: number }>).detail;
+      if (detail?.episodeId != null) {
+        setPendingTopicGroupNav(detail.episodeId);
+      }
       setActivePage('topics');
     }
     window.addEventListener('navigate-topics', handleNavigateTopics);
@@ -104,7 +111,12 @@ export default function Layout() {
       case 'analytics':
         return <AnalyticsPage />;
       case 'topics':
-        return <TopicsPage />;
+        return (
+          <TopicsPage
+            pendingTopicGroupNav={pendingTopicGroupNav}
+            onTopicGroupNavConsumed={() => setPendingTopicGroupNav(null)}
+          />
+        );
       case 'home':
         return <HomePage onNavigate={setActivePage} />;
       case 'bird':
