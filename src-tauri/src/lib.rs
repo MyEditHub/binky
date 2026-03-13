@@ -181,6 +181,7 @@ pub fn run() {
             commands::assemblyai::assemblyai_backfill_utterance_text,
             commands::search::search_transcripts,
             commands::search::rebuild_search_index,
+            commands::search::fetch_related_episodes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
