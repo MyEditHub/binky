@@ -1,15 +1,15 @@
 {
-  "version": "v0.2.6",
+  "version": "v0.2.7",
   "notes": "Neue Version verfügbar.",
-  "pub_date": "2026-03-13T06:42:28Z",
+  "pub_date": "2026-03-13T20:48:06Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNGppS0xITFBaRnJRQTJnTGhXcVpnMGNOaWlWZVVWaXVzVm52VjJSM2dxZ2RETThyL29LMWhFL3pGODdyOWp1R09ta2RwQjVtK3lrZkFtQW5BZFNTbWdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMzg0MDg2CWZpbGU6Qmlua3kuYXBwLnRhci5negowdTZOV3ZkL2VxNmJnTldDRHUvMzBhb3ZGWTM2eWcxOTlTdVd4MVVxenRuSWVycmQ0T0V1STlwZDhpK25PUDRNSUsrNmsrVGIwMW5LaTd4U0srbjJDZz09Cg==",
-      "url": "https://myedithub.github.io/binky/Binky_0.2.6_aarch64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHZRVTlqNG1KUXVyWHRCSmtSRENMSTBpZ3RrQlMzNXpNRHhxcHdqRGxBMlZxVmJMZXpReUlXeXBxejlBQ2ZTdTE2a0xmL1ZKSk8vMy9nR1ZjOExWOVFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczNDM0NzE1CWZpbGU6Qmlua3kuYXBwLnRhci5negpBaElkczdsMVBxK1QyRHJ4NGQvMkJUT3hNanc0dldwL0NHb0JoVUYrM1hzRGUxTE8xUEFjdTJEZFJTZERBM2xWL2Vsbm5QdzBYeVBsWGk2MzVOUGJCQT09Cg==",
+      "url": "https://myedithub.github.io/binky/Binky_0.2.7_aarch64.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHNXKzhGalZiYUQrQzR2MnVFc0pyY0p2VE8rRmZmVmZOLzhUbzllRTduOXN2Si9GeEljdUtUZmtUK09RbVArTGVHYndyVzZqWHE1Zk5mVUdHbFdwaUEwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczMzgzOTY1CWZpbGU6Qmlua3kuYXBwLnRhci5negpNTllUaVNWS3RkMlpDNUkrSEtjUzhQUlRDUXc2K1lIcUFaRzJCNlFBbzcxZFhEZnl0YjVaR2xHeUZ2dXJXU2dIbmJYQ0pIZHJ3cXhBQWc5S2h5cytDUT09Cg==",
-      "url": "https://myedithub.github.io/binky/Binky_0.2.6_x64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTUkNxT1V6bjdCNHNJU3RJWUdMeElEenVYQTl5TE51SEVFMG5IWmtPOXM0ZHJQSjVQcldSdnVYVXB6SkRpSG55UFFmN21UaFUrMFIvY3IrQmRqSUtqOTZ4TnQxc0ptcHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzczNDM0ODE4CWZpbGU6Qmlua3kuYXBwLnRhci5negp5RDJraE5BVTRJQ1JHZzdmRmtwME5GeDBWYk1ldFBnb1AzTk1Yd2FkOTZub3hIQ05iWFpnN2orNjVOVmY3YnJwdlllYWNuTFVBUE5GTXZreVNSeVVCQT09Cg==",
+      "url": "https://myedithub.github.io/binky/Binky_0.2.7_x64.app.tar.gz"
     }
   }
 }
