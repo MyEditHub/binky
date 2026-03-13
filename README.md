@@ -78,6 +78,19 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.7 (2026-03-13)
+
+### Added
+- „Weitere Episoden" Abschnitt in der Themenansicht zeigt verwandte Folgen
+
+### Changed
+- Suchergebnisse sind jetzt nach Episodennummer sortiert (neueste zuerst)
+
+### Fixed
+- Suchergebnisse zeigten Duplikate bei erneut diarisierten Episoden
+- „Weitere Episoden" blieb leer aufgrund eines SQLite FTS5-Fehlers (bm25() in JOIN)
+
+
 ### v0.2.6 (2026-03-13)
 
 #### Neu
