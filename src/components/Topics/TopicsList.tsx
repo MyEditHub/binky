@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { TopicRow, TopicStatus } from '../../hooks/useTopics';
 import TopicRowComponent from './TopicRow';
@@ -11,6 +11,7 @@ interface TopicsListProps {
   viewMode?: 'list' | 'grouped';
   relatedMap?: Map<number, RelatedEpisode[]>;
   forceExpandEpisodeId?: number | null;
+  onNavConsumed?: () => void;
 }
 
 export default function TopicsList({
@@ -20,10 +21,12 @@ export default function TopicsList({
   viewMode = 'grouped',
   relatedMap,
   forceExpandEpisodeId,
+  onNavConsumed,
 }: TopicsListProps) {
   const { t } = useTranslation();
   // Key: episode_id (number). Using -1 as the key for the "no episode" group.
   const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set());
+  const scrolledForRef = useRef<number | null>(null);
 
   const toggleGroup = (key: number) => {
     setCollapsedGroups(prev => {
@@ -36,20 +39,32 @@ export default function TopicsList({
 
   // Force-expand a specific episode group when deep-link nav arrives
   useEffect(() => {
-    if (!forceExpandEpisodeId) return;
-    // Remove from collapsed set (expand it)
+    // Clear ref when nav is consumed
+    if (!forceExpandEpisodeId) {
+      scrolledForRef.current = null;
+      return;
+    }
+    // Wait for topics to finish loading before scrolling
+    if (loading) return;
+    // Idempotency: skip if already scrolled for this nav event
+    if (scrolledForRef.current === forceExpandEpisodeId) return;
+
+    // Expand the target group
     setCollapsedGroups(prev => {
       const next = new Set(prev);
       next.delete(forceExpandEpisodeId);
       return next;
     });
-    // Scroll after React re-render
+
+    // Scroll after React has flushed the expand to DOM
     requestAnimationFrame(() => {
       document
         .querySelector(`[data-episode-group="${forceExpandEpisodeId}"]`)
         ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      scrolledForRef.current = forceExpandEpisodeId;
+      onNavConsumed?.();
     });
-  }, [forceExpandEpisodeId]);
+  }, [forceExpandEpisodeId, loading, topics, onNavConsumed]);
 
   if (loading) {
     return (

@@ -78,9 +78,8 @@ export default function TopicsPage({ pendingTopicGroupNav: externalNav, onTopicG
   useEffect(() => {
     if (externalNav == null) return;
     setViewMode('grouped');
-    const timer = setTimeout(() => onTopicGroupNavConsumed?.(), 800);
-    return () => clearTimeout(timer);
-  }, [externalNav, onTopicGroupNavConsumed]);
+    // Nav consumption is now event-driven: TopicsList calls onNavConsumed after scroll fires
+  }, [externalNav]);
 
   async function fetchRelatedForTopics(loadedTopics: typeof topics) {
     const topicIds = loadedTopics.map(t => t.id);
@@ -168,6 +167,7 @@ export default function TopicsPage({ pendingTopicGroupNav: externalNav, onTopicG
         viewMode={viewMode}
         relatedMap={relatedMap}
         forceExpandEpisodeId={externalNav}
+        onNavConsumed={onTopicGroupNavConsumed}
       />
     </div>
   );
