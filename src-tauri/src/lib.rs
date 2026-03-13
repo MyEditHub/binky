@@ -99,6 +99,12 @@ pub fn run() {
             sql: include_str!("../migrations/013_fix_fts_triggers.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 14,
+            description: "backfill_topics_fts",
+            sql: include_str!("../migrations/014_backfill_topics_fts.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
