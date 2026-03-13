@@ -224,7 +224,10 @@
       "episode_not_analyzed": "Nicht analysiert",
       "episode_analyzed": "Analysiert ({{count}} Themen)",
       "episode_analyzing": "Wird analysiert...",
-      "episode_error": "Fehler bei Analyse"
+      "episode_error": "Fehler bei Analyse",
+      "related_episodes_label": "Weitere Episoden",
+      "related_episode_entry": "Folge {{number}}: {{title}}",
+      "related_episodes_none": ""
     },
     "search": {
       "placeholder": "Transkripte durchsuchen…",
