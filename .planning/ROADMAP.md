@@ -83,7 +83,10 @@ Plans:
   2. The related-episode links are generated automatically from topic keyword overlap — no manual configuration needed
   3. User clicks a related episode link and navigates directly to that episode's content (topics or transcript view)
   4. Episodes with no thematic overlap show no related-episodes section rather than an empty list
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 13-01-PLAN.md — Rust fetch_related_episodes command: RelatedEpisode struct, stop-word filtering, FTS5 batch query, deduplication, lib.rs registration
+- [ ] 13-02-PLAN.md — Frontend: TopicRow "Weitere Episoden" section, TopicsList relatedMap threading + collapsedGroups refactor, TopicsPage batch fetch, Layout deep-link nav, translations
 
 ## Progress
 
@@ -104,7 +107,7 @@ Plans:
 | 10. Speaker-Labeled Transcript Viewer | v0.2.0 | 2/2 | Complete | 2026-02-28 |
 | 11. FTS Infrastructure | v0.3.0 | Complete    | 2026-03-10 | 2026-03-10 |
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
-| 13. Cross-Episode Topic Linking | v0.3.0 | 0/? | Not started | - |
+| 13. Cross-Episode Topic Linking | 1/2 | In Progress|  | - |
 
 ---
 

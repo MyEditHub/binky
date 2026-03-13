@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 13 — Cross-Episode Topic Linking (IN PROGRESS)
-Plan: 01 — planned (13-01-PLAN.md: Rust fetch_related_episodes command)
-Status: 13-01 and 13-02 plans created; ready for execution
-Last activity: 2026-03-13 — Phase 13 planning complete (2 plans)
+Plan: 02 — planned (13-02-PLAN.md: Frontend related episodes UI)
+Status: 13-01 complete; 13-02 ready for execution
+Last activity: 2026-03-13 — 13-01 executed (fetch_related_episodes Rust command)
 
-Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
+Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: #####-----]
 
 ## Accumulated Context
 
@@ -59,6 +59,11 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
 - Episodes nav item is devOnly: true — hidden from regular users, accessible in dev mode only
 - Deep-link scroll pattern: data-start-ms on all TranscriptViewer blocks, querySelectorAll + closest-ms arithmetic in useEffect depending on speakerBlocks + paragraphs
 - SpeakerBlock startMs: number field propagated from first segment in each RLE-merged block (both Whisper and AssemblyAI paths)
+- fetch_related_episodes invoke shape: invoke('fetch_related_episodes', { topicIds: number[] }) → Record<number, RelatedEpisode[]>
+- RelatedEpisode TS contract: { episode_id: number; episode_title: string; episode_number: number | null }
+- fetch_related_episodes is SYNCHRONOUS (fn not async fn) — FTS5 OR topic queries <5ms
+- German stop-word stripping applied before building FTS5 OR query — prevents noise results from high-freq words
+- Source episode excluded via exclude_id = detected_from_episode_id || -1 (−1 never matches real SQLite id)
 
 ### Critical Whisper-rs 0.15 Bugs (do not use)
 - `set_abort_callback_safe`: type-confusion UB → SIGSEGV/SIGABRT
@@ -98,7 +103,7 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ----------]
 
 ## Session Continuity
 
-Last session: 2026-03-12
-Stopped at: Created 13-01-PLAN.md and 13-02-PLAN.md for Phase 13
+Last session: 2026-03-13
+Stopped at: Completed 13-01-PLAN.md (fetch_related_episodes Rust command)
 Resume file: None
-Next: Execute 13-01-PLAN.md (Rust backend), then 13-02-PLAN.md (frontend)
+Next: Execute 13-02-PLAN.md (frontend related episodes UI)
