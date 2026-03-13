@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 — Cross-Episode Topic Linking (IN PROGRESS)
-Plan: 02 — planned (13-02-PLAN.md: Frontend related episodes UI)
-Status: 13-01 complete; 13-02 ready for execution
-Last activity: 2026-03-13 — 13-01 executed (fetch_related_episodes Rust command)
+Phase: 13 — Cross-Episode Topic Linking (IN PROGRESS — awaiting human verify)
+Plan: 02 — executed (13-02-PLAN.md: Frontend related episodes UI)
+Status: 13-02 automated tasks complete; awaiting checkpoint:human-verify (task 5)
+Last activity: 2026-03-13 — 13-02 executed (frontend Weitere Episoden UI + deep-link nav)
 
-Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: #####-----]
+Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
 
 ## Accumulated Context
 
@@ -60,6 +60,11 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: #####-----]
 - Deep-link scroll pattern: data-start-ms on all TranscriptViewer blocks, querySelectorAll + closest-ms arithmetic in useEffect depending on speakerBlocks + paragraphs
 - SpeakerBlock startMs: number field propagated from first segment in each RLE-merged block (both Whisper and AssemblyAI paths)
 - fetch_related_episodes invoke shape: invoke('fetch_related_episodes', { topicIds: number[] }) → Record<number, RelatedEpisode[]>
+- RelatedEpisode TS interface exported from TopicRow.tsx: { episode_id: number; episode_title: string; episode_number: number | null }
+- TopicsList.collapsedGroups uses Set<number> (episode_id) not Set<string> — enables forceExpandEpisodeId to delete exact key
+- deep-link group expand pattern: navigate-to-episode-topics CustomEvent detail.episodeId → Layout.pendingTopicGroupNav → TopicsPage externalNav prop → TopicsList forceExpandEpisodeId → useEffect(delete from collapsedGroups + scrollIntoView)
+- fetch_related_episodes called once per topics state change in TopicsPage (useEffect on topics) — batch, never per-card
+- pendingTopicGroupNav consumed after 800ms timeout to allow TopicsList re-render before clearing forceExpandEpisodeId
 - RelatedEpisode TS contract: { episode_id: number; episode_title: string; episode_number: number | null }
 - fetch_related_episodes is SYNCHRONOUS (fn not async fn) — FTS5 OR topic queries <5ms
 - German stop-word stripping applied before building FTS5 OR query — prevents noise results from high-freq words
@@ -104,6 +109,6 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: #####-----]
 ## Session Continuity
 
 Last session: 2026-03-13
-Stopped at: Completed 13-01-PLAN.md (fetch_related_episodes Rust command)
+Stopped at: Checkpoint task 5 of 13-02-PLAN.md (human-verify: Weitere Episoden visible + navigation works)
 Resume file: None
-Next: Execute 13-02-PLAN.md (frontend related episodes UI)
+Next: Human verify app in dev mode — Weitere Episoden section renders, navigation to episode groups works
