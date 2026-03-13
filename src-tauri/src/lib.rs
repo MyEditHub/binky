@@ -2,6 +2,7 @@ use std::sync::Arc;
 use tauri::Manager;
 use tauri_plugin_sql::{Builder as SqlBuilder, Migration, MigrationKind};
 use state::diarization_queue::DiarizationState;
+use state::pipeline::PipelineState;
 
 mod commands;
 mod models;
@@ -105,6 +106,18 @@ pub fn run() {
             sql: include_str!("../migrations/014_backfill_topics_fts.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 15,
+            description: "fix_fts_delete_triggers",
+            sql: include_str!("../migrations/015_fix_fts_delete_triggers.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 16,
+            description: "pipeline_progress",
+            sql: include_str!("../migrations/016_pipeline_progress.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
@@ -121,6 +134,7 @@ pub fn run() {
         // Manage Arc<TranscriptionState> so we can clone it into async tasks
         .manage(Arc::new(state::transcription_queue::TranscriptionState::new()))
         .manage(Arc::new(DiarizationState::new()))
+        .manage(PipelineState::default())
         .setup(|app| {
             // Reset any in-flight transcription statuses left over from a previous
             // crashed/force-quit session. The in-memory queue is empty on every
@@ -147,6 +161,15 @@ pub fn run() {
                              ) THEN 'done' ELSE 'not_started' END, \
                              diarization_error = NULL \
                          WHERE diarization_status IN ('queued', 'processing')",
+                        [],
+                    );
+                    // Mark any pipelines that were 'running' at crash time as 'interrupted'.
+                    // Preserves pipeline_progress so the UI shows where it stopped.
+                    // Runs AFTER the per-status resets above (transcription/diarization
+                    // status is already corrected by those UPDATEs).
+                    let _ = conn.execute(
+                        "UPDATE episodes SET pipeline_status = 'interrupted' \
+                         WHERE pipeline_status = 'running'",
                         [],
                     );
                 }
