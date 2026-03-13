@@ -1,6 +1,6 @@
 {
   "name": "binky-app",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Binky Podcast Manager - Desktop App",
   "type": "module",
   "scripts": {
