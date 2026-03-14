@@ -23,9 +23,9 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 15 — Unified Pipeline Progress Bar (IN PROGRESS)
-Plan: 01 — awaiting human-verify checkpoint (15-01-PLAN.md: Rust pipeline backend)
-Status: Tasks 1 + 2 complete, cargo check passes; checkpoint:human-verify pending
-Last activity: 2026-03-14 — 15-01 tasks executed, awaiting human verification
+Plan: 02 — awaiting human-verify checkpoint (15-02-PLAN.md: React frontend)
+Status: Tasks 1 + 2 complete, TypeScript compiles clean; checkpoint:human-verify pending
+Last activity: 2026-03-14 — 15-02 tasks executed, awaiting human verification
 
 Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [Phase 14: ##########] [Phase 15: #####     ]
 
@@ -109,9 +109,9 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [
 ## Session Continuity
 
 Last session: 2026-03-14
-Stopped at: 15-01-PLAN.md checkpoint:human-verify — Rust pipeline backend complete, awaiting user approval
+Stopped at: 15-02-PLAN.md checkpoint:human-verify — React frontend complete, awaiting user verification
 Resume file: None
-Next: After human-verify approval, continue to 15-02-PLAN.md (React frontend for unified progress bar)
+Next: After human-verify approval, phase 15 is complete
 
 ### Key Decisions from Phase 15
 
@@ -120,3 +120,6 @@ Next: After human-verify approval, continue to 15-02-PLAN.md (React frontend for
 - Topics optional in pipeline: skips if no OpenAI key; topic errors don't halt pipeline (transcription+diarization data preserved)
 - PipelineEvent::Error returns Ok(()) from command — errors communicated via channel event, not Result::Err
 - Diarization re-downloads audio separately (diarize_pipeline_{id}.mp3) because transcription stage deletes its temp file
+- Pipeline state lifted through EpisodeList→EpisodesPage→Layout→Sidebar via callbacks for sidebar strip visibility from any page
+- Stage labels in usePipeline use STAGE_LABELS constant (not t()) — cleaner inside Channel onmessage closure
+- Only German locale (de/translation.json) in project — no en.json to update

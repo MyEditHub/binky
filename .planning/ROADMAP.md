@@ -44,7 +44,7 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
 - [x] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation (completed 2026-03-12)
 - [x] **Phase 13: Cross-Episode Topic Linking** — Auto-derived topic connections shown in topics view with navigation (completed 2026-03-13)
 - [x] **Phase 14: Integration Gap Closure** — Register migration 014 in lib.rs and fix TopicsList scroll race (gap closure) (completed 2026-03-13)
-- [ ] **Phase 15: Unified Pipeline Progress Bar** — Single 0–100% progress bar across download → transcription → diarization → topics
+- [x] **Phase 15: Unified Pipeline Progress Bar** — Single 0–100% progress bar across download → transcription → diarization → topics (completed 2026-03-14)
 - [ ] **Phase 16: Vogelstimmen-Mix** — Extract Nadine's bird imitation from episode audio, mix with bundled ambience, play + export
 
 ## Phase Details
@@ -148,7 +148,7 @@ Plans:
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
 | 14. Integration Gap Closure | 1/1 | Complete    | 2026-03-13 | - |
-| 15. Unified Pipeline Progress Bar | v0.3.0 | 1/2 | In Progress | - |
+| 15. Unified Pipeline Progress Bar | 2/2 | Complete   | 2026-03-14 | - |
 | 16. Vogelstimmen-Mix | v0.3.0 | 0/4 | Planned | - |
 
 ---
