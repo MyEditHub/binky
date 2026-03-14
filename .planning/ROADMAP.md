@@ -5,7 +5,7 @@
 - ✅ **v0.1 Feature Development** — Phases 1–5 (shipped 2026-02-23)
 - ✅ **v0.2 Release Polish** — Phases 6–8.2 (shipped 2026-02-27 as Binky v0.1.3)
 - ✅ **v0.2.0 Speaker-Labeled Transcripts** — Phases 9–10 (shipped 2026-03-01)
-- 🔄 **v0.3.0 Transkript-Suche & Themenverknüpfung** — Phases 11–13 (in progress)
+- 🔄 **v0.3.0 Transkript-Suche, Themenverknüpfung & Vogelstimmen-Mix** — Phases 11–16 (in progress)
 
 ## Phases
 
@@ -44,6 +44,8 @@ All phases complete. Full archive: `.planning/milestones/v0.2.0-ROADMAP.md`
 - [x] **Phase 12: Search UI** — Dedicated Suche page with results list, snippets, and transcript navigation (completed 2026-03-12)
 - [x] **Phase 13: Cross-Episode Topic Linking** — Auto-derived topic connections shown in topics view with navigation (completed 2026-03-13)
 - [x] **Phase 14: Integration Gap Closure** — Register migration 014 in lib.rs and fix TopicsList scroll race (gap closure) (completed 2026-03-13)
+- [ ] **Phase 15: Unified Pipeline Progress Bar** — Single 0–100% progress bar across download → transcription → diarization → topics
+- [ ] **Phase 16: Vogelstimmen-Mix** — Extract Nadine's bird imitation from episode audio, mix with bundled ambience, play + export
 
 ## Phase Details
 
@@ -95,7 +97,35 @@ Plans:
 **Gap Closure**: Closes gaps INT-01 and INT-02 from v0.3.0 audit
 **Plans**: 1 plan
 Plans:
-- [ ] 14-01-PLAN.md — Register migration 014 in lib.rs migrations vec; fix TopicsList scroll race by re-triggering scroll after topics load when externalNav is still set
+- [x] 14-01-PLAN.md — Register migration 014 in lib.rs migrations vec; fix TopicsList scroll race by re-triggering scroll after topics load when externalNav is still set
+
+### Phase 15: Unified Pipeline Progress Bar
+**Goal**: A single progress bar per episode shows percentage and current step across the full processing pipeline (download → transcription → diarization → topic analysis), replacing the current separate status indicators.
+**Depends on**: Phases 2, 9, 10
+**Success Criteria** (what must be TRUE):
+  1. While an episode is being processed, a single progress bar shows 0–100% with the current step name
+  2. Transcription progress reflects chunk-level granularity (not just "started/done")
+  3. Diarization and topic analysis each contribute a weighted share of the total percentage
+  4. Progress state survives app restart (persisted in DB, not just in-memory)
+**Plans**: 2 plans
+Plans:
+- [x] 15-01-PLAN.md — DB schema + Rust: unified progress column on episodes, weight constants, progress emission per stage (awaiting human-verify)
+- [ ] 15-02-PLAN.md — Frontend: replace separate status indicators with single ProgressBar component, wiring to Tauri events
+
+### Phase 16: Vogelstimmen-Mix
+**Goal**: For each "Vogel der Woche" episode, users can generate and play a short audio track mixing Nadine's bird imitation (extracted from the episode) over a bundled atmospheric background — and export it as an audio file.
+**Depends on**: Phase 15 (episode audio cache), diarization (Nadine speaker label), topics (Vogel der Woche timestamps)
+**Success Criteria** (what must be TRUE):
+  1. User triggers "Mix generieren" on a bird episode and Binky downloads + caches the MP3 if not already cached
+  2. The imitation segment (Nadine speaking in the Vogel der Woche timeframe) is located automatically from transcript + diarization data
+  3. A mini player on the bird page plays the mixed track (imitation + atmospheric background)
+  4. User can export the track as an MP3 or WAV to a user-chosen location
+**Plans**: 4 plans
+Plans:
+- [ ] 16-01-PLAN.md — Audio cache: download_episode_audio command, cached_audio_path on episodes, cache management
+- [ ] 16-02-PLAN.md — Imitation detection: scan Vogel der Woche topic timeframe for Nadine segments, store imitation_start_ms/end_ms in birds table
+- [ ] 16-03-PLAN.md — Audio extraction + mixing: symphonia slice, mix with bundled ambience asset (Rust, no ffmpeg)
+- [ ] 16-04-PLAN.md — Player + export UI: mini player on bird page, export command, translations
 
 ## Progress
 
@@ -118,6 +148,8 @@ Plans:
 | 12. Search UI | 2/2 | Complete    | 2026-03-12 | - |
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
 | 14. Integration Gap Closure | 1/1 | Complete    | 2026-03-13 | - |
+| 15. Unified Pipeline Progress Bar | v0.3.0 | 1/2 | In Progress | - |
+| 16. Vogelstimmen-Mix | v0.3.0 | 0/4 | Planned | - |
 
 ---
 

@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v0.1
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-13T15:22:27.793Z"
+last_updated: "2026-03-14T00:00:00.000Z"
 progress:
-  total_phases: 4
+  total_phases: 5
   completed_phases: 4
-  total_plans: 7
+  total_plans: 9
   completed_plans: 7
 ---
 
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 14 — Integration Gap Closure (COMPLETE)
-Plan: 01 — complete (14-01-PLAN.md: FTS migration registration + TopicsList scroll race fix)
-Status: All plans complete; human verify approved
-Last activity: 2026-03-13 — 14-01 human-verify approved; phase 14 complete
+Phase: 15 — Unified Pipeline Progress Bar (IN PROGRESS)
+Plan: 01 — awaiting human-verify checkpoint (15-01-PLAN.md: Rust pipeline backend)
+Status: Tasks 1 + 2 complete, cargo check passes; checkpoint:human-verify pending
+Last activity: 2026-03-14 — 15-01 tasks executed, awaiting human verification
 
-Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
+Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [Phase 14: ##########] [Phase 15: #####     ]
 
 ## Accumulated Context
 
@@ -39,7 +39,7 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
 - Distribution: PKG installer + auto-updater via GitHub Releases
 - Signing key: `~/.tauri/binky.key` (must be backed up to 1Password)
 - Version management: `bump-version.sh` syncs package.json, tauri.conf.json, Cargo.toml
-- Migration pattern: create .sql file, register in lib.rs migrations vec with next sequential version (current highest is 014 — next migration is 015)
+- Migration pattern: create .sql file, register in lib.rs migrations vec with next sequential version (current highest is 016 — next migration is 017)
 - FTS5 search_index schema: 7 columns (episode_id UNINDEXED, episode_title, speaker UNINDEXED, segment_text, segment_type UNINDEXED, start_ms UNINDEXED, end_ms UNINDEXED), tokenize='unicode61' (umlaut-tolerant)
 - FTS column indices (0-based): episode_id=0, episode_title=1, speaker=2, segment_text=3, segment_type=4, start_ms=5, end_ms=6 — snippet() uses column index 3
 - FTS5 contentless delete syntax: INSERT INTO search_index(search_index, rowid, episode_title, segment_text) VALUES('delete', id, old_title, old_text)
@@ -108,7 +108,15 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########]
 
 ## Session Continuity
 
-Last session: 2026-03-13
-Stopped at: Completed 14-01-PLAN.md (all tasks done, human verify approved)
+Last session: 2026-03-14
+Stopped at: 15-01-PLAN.md checkpoint:human-verify — Rust pipeline backend complete, awaiting user approval
 Resume file: None
-Next: v0.3.0 integration gaps closed — phases 11–14 done; ready for release or new milestone
+Next: After human-verify approval, continue to 15-02-PLAN.md (React frontend for unified progress bar)
+
+### Key Decisions from Phase 15
+
+- Pipeline approach (a): pipeline.rs replicates inner logic using pub(crate) helpers (decode_mp3_to_pcm, is_duplicate_segment, backfill_all_whisper_segment_text) — avoids restructuring existing queue-based state machines
+- Diarization optional in pipeline: skips gracefully if models not downloaded, emits StageDone at 93%
+- Topics optional in pipeline: skips if no OpenAI key; topic errors don't halt pipeline (transcription+diarization data preserved)
+- PipelineEvent::Error returns Ok(()) from command — errors communicated via channel event, not Result::Err
+- Diarization re-downloads audio separately (diarize_pipeline_{id}.mp3) because transcription stage deletes its temp file
