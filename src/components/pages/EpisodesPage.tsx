@@ -5,6 +5,12 @@ import TranscriptViewer from '../TranscriptViewer/TranscriptViewer';
 
 interface EpisodesPageProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
+  onPipelineStateChange?: (
+    isProcessing: boolean,
+    progress: number,
+    stepLabel: string | null,
+    episodeTitle: string | null
+  ) => void;
   pendingTranscriptNav?: { episodeId: number; startMs: number | null; title: string } | null;
   onTranscriptNavConsumed?: () => void;
 }
@@ -17,6 +23,7 @@ interface ViewingTranscript {
 
 export default function EpisodesPage({
   onTranscriptionStateChange,
+  onPipelineStateChange,
   pendingTranscriptNav,
   onTranscriptNavConsumed,
 }: EpisodesPageProps) {
@@ -69,6 +76,7 @@ export default function EpisodesPage({
       <EpisodeList
         key={reloadKey}
         onTranscriptionStateChange={onTranscriptionStateChange}
+        onPipelineStateChange={onPipelineStateChange}
         onViewTranscript={handleViewTranscript}
       />
     </div>

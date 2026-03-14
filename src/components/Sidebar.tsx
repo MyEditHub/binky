@@ -11,6 +11,9 @@ interface SidebarProps {
   transcriptionActive?: boolean;
   queueCount?: number;
   devMode?: boolean;
+  pipelineProgress?: number;
+  pipelineStepLabel?: string | null;
+  pipelineEpisodeTitle?: string | null;
 }
 
 interface NavItem {
@@ -30,6 +33,9 @@ export default function Sidebar({
   transcriptionActive = false,
   queueCount = 0,
   devMode = false,
+  pipelineProgress = 0,
+  pipelineStepLabel = null,
+  pipelineEpisodeTitle = null,
 }: SidebarProps) {
   const { t } = useTranslation();
 
@@ -137,6 +143,29 @@ export default function Sidebar({
           </button>
         ))}
       </nav>
+      {pipelineProgress > 0 && !isCollapsed && (
+        <div className="sidebar-pipeline-strip">
+          <span className="sidebar-pipeline-label">
+            {pipelineEpisodeTitle ?? pipelineStepLabel ?? '…'}
+          </span>
+          <div className="sidebar-pipeline-bar">
+            <div
+              className="sidebar-pipeline-bar-fill"
+              style={{ width: `${pipelineProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {pipelineProgress > 0 && isCollapsed && (
+        <div className="sidebar-pipeline-strip sidebar-pipeline-strip-collapsed">
+          <div className="sidebar-pipeline-bar">
+            <div
+              className="sidebar-pipeline-bar-fill"
+              style={{ width: `${pipelineProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

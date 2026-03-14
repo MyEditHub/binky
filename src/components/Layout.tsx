@@ -23,6 +23,11 @@ export default function Layout() {
   const [transcriptionActive, setTranscriptionActive] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
 
+  // Pipeline state lifted to Layout so Sidebar strip can reflect it from any page
+  const [pipelineProgress, setPipelineProgress] = useState<number>(0);
+  const [pipelineStepLabel, setPipelineStepLabel] = useState<string | null>(null);
+  const [pipelineEpisodeTitle, setPipelineEpisodeTitle] = useState<string | null>(null);
+
   // Pending deep-link navigation from Search → EpisodesPage transcript viewer
   const [pendingTranscriptNav, setPendingTranscriptNav] = useState<{
     episodeId: number;
@@ -98,12 +103,28 @@ export default function Layout() {
     []
   );
 
+  const handlePipelineStateChange = useCallback(
+    (
+      isProcessing: boolean,
+      progress: number,
+      stepLabel: string | null,
+      episodeTitle: string | null
+    ) => {
+      setPipelineProgress(isProcessing ? progress : 0);
+      setPipelineStepLabel(isProcessing ? stepLabel : null);
+      setPipelineEpisodeTitle(isProcessing ? episodeTitle : null);
+      setTranscriptionActive(isProcessing);
+    },
+    []
+  );
+
   const renderPage = () => {
     switch (activePage) {
       case 'episodes':
         return (
           <EpisodesPage
             onTranscriptionStateChange={handleTranscriptionStateChange}
+            onPipelineStateChange={handlePipelineStateChange}
             pendingTranscriptNav={pendingTranscriptNav}
             onTranscriptNavConsumed={() => setPendingTranscriptNav(null)}
           />
@@ -142,6 +163,9 @@ export default function Layout() {
         transcriptionActive={transcriptionActive}
         queueCount={queueCount}
         devMode={devMode}
+        pipelineProgress={pipelineProgress}
+        pipelineStepLabel={pipelineStepLabel}
+        pipelineEpisodeTitle={pipelineEpisodeTitle}
       />
       <div className="content-area">
         <div className="content-scroll">

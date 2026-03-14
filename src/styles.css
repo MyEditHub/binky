@@ -1115,6 +1115,82 @@ body {
   transition: width 0.4s ease;
 }
 
+/* Pipeline progress bar states */
+.episode-progress-fill.error {
+  background-color: var(--color-error, #e53e3e);
+}
+
+.episode-progress-fill.interrupted {
+  background-color: var(--color-warning, #d69e2e);
+  opacity: 0.8;
+}
+
+/* Pipeline completion fade-out animation */
+.episode-progress-bar.fade-out {
+  animation: progressFadeOut 0.4s ease forwards;
+}
+
+@keyframes progressFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* Pipeline step label shown below the episode progress bar */
+.pipeline-step-label {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sidebar pipeline strip — pinned to bottom of sidebar */
+.sidebar-pipeline-strip {
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.sidebar-pipeline-label {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+
+.sidebar-pipeline-bar {
+  height: 3px;
+  background-color: var(--color-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sidebar-pipeline-bar-fill {
+  height: 100%;
+  background-color: var(--color-primary);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.sidebar-pipeline-strip-collapsed {
+  padding: 6px 8px 8px;
+}
+
+/* Sidebar pipeline bar fill states */
+.sidebar-pipeline-bar-fill.error {
+  background-color: var(--color-error, #e53e3e);
+}
+
+.sidebar-pipeline-bar-fill.interrupted {
+  background-color: var(--color-warning, #d69e2e);
+  opacity: 0.8;
+}
+
 /* Spinner inside a button */
 .episode-btn-spinner {
   display: inline-block;
