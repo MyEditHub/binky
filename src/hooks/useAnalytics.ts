@@ -101,74 +101,106 @@ export function useAnalytics() {
   const loadEpisodeStats = useCallback(async () => {
     const db = await Database.load('sqlite:binky.db');
 
-    // Get episodes with diarization — one row per (episode, speaker)
-    const rows = await db.select<
-      Array<{
-        id: number;
-        title: string;
-        publish_date: string;
-        audio_url: string;
-        diarization_status: string;
-        effective_speaker: string | null;
-        speaking_ms: number;
-        turn_count: number;
-      }>
-    >(`
-      SELECT e.id, e.title, e.publish_date, e.audio_url, e.diarization_status,
-             COALESCE(ds.corrected_speaker, ds.speaker_label) AS effective_speaker,
-             SUM(ds.end_ms - ds.start_ms) AS speaking_ms,
-             COUNT(ds.id) AS turn_count
-      FROM episodes e
-      LEFT JOIN diarization_segments ds ON ds.episode_id = e.id
-      WHERE e.transcription_status = 'done'
-      GROUP BY e.id, effective_speaker
-      ORDER BY e.publish_date DESC
-    `);
+    // Batch-load everything in parallel.
+    // Speaking time is computed from Whisper segments (not raw diarization window
+    // durations) using the same precision-scoring as useSpeakerBlocks so that
+    // Analytics matches the transcript view even when sherpa-rs produces large
+    // overlapping SPEAKER_0 windows containing tiny SPEAKER_1 snippets.
+    const [episodeRows, diarRows, transcriptRows] = await Promise.all([
+      db.select<Array<{
+        id: number; title: string; publish_date: string;
+        audio_url: string; diarization_status: string;
+      }>>(`
+        SELECT id, title, publish_date, audio_url, diarization_status
+        FROM episodes WHERE transcription_status = 'done'
+        ORDER BY publish_date DESC
+      `),
+      db.select<Array<{
+        episode_id: number; start_ms: number; end_ms: number;
+        speaker_label: string; corrected_speaker: string | null;
+      }>>(`
+        SELECT ds.episode_id, ds.start_ms, ds.end_ms, ds.speaker_label, ds.corrected_speaker
+        FROM diarization_segments ds
+        JOIN episodes e ON e.id = ds.episode_id
+        WHERE e.transcription_status = 'done'
+        ORDER BY ds.episode_id, ds.start_ms
+      `),
+      db.select<Array<{ episode_id: number; segments_json: string }>>(`
+        SELECT t.episode_id, t.segments_json
+        FROM transcripts t
+        JOIN episodes e ON e.id = t.episode_id
+        WHERE e.transcription_status = 'done' AND t.segments_json IS NOT NULL
+      `),
+    ]);
 
-    // Group by episode
-    const episodeMap = new Map<number, EpisodeStats>();
-
-    for (const row of rows) {
-      if (!episodeMap.has(row.id)) {
-        episodeMap.set(row.id, {
-          episodeId: row.id,
-          title: row.title,
-          publishDate: row.publish_date,
-          audioUrl: row.audio_url,
-          host0Pct: 0,
-          host1Pct: 0,
-          host0Minutes: 0,
-          host1Minutes: 0,
-          totalSpeakingMs: 0,
-          host0Turns: 0,
-          host1Turns: 0,
-          diarizationStatus: row.diarization_status,
-        });
-      }
-
-      const stats = episodeMap.get(row.id)!;
-
-      if (row.effective_speaker === 'SPEAKER_0') {
-        stats.host0Minutes = Math.round(((row.speaking_ms ?? 0) / 60000) * 10) / 10;
-        stats.host0Turns = row.turn_count;
-        stats.totalSpeakingMs += row.speaking_ms ?? 0;
-      } else if (row.effective_speaker === 'SPEAKER_1') {
-        stats.host1Minutes = Math.round(((row.speaking_ms ?? 0) / 60000) * 10) / 10;
-        stats.host1Turns = row.turn_count;
-        stats.totalSpeakingMs += row.speaking_ms ?? 0;
-      }
+    // Index by episode_id
+    const diarByEp = new Map<number, typeof diarRows>();
+    for (const r of diarRows) {
+      if (!diarByEp.has(r.episode_id)) diarByEp.set(r.episode_id, []);
+      diarByEp.get(r.episode_id)!.push(r);
     }
+    const segJsonByEp = new Map<number, string>();
+    for (const r of transcriptRows) segJsonByEp.set(r.episode_id, r.segments_json);
 
-    // Compute percentages
-    for (const stats of episodeMap.values()) {
-      const total = stats.totalSpeakingMs;
-      if (total > 0) {
-        stats.host0Pct = Math.round((stats.host0Minutes * 60000 / total) * 100);
-        stats.host1Pct = 100 - stats.host0Pct;
-      } else {
-        stats.host0Pct = 50;
-        stats.host1Pct = 50;
+    const episodeMap = new Map<number, EpisodeStats>();
+    for (const ep of episodeRows) {
+      const diarSegs = diarByEp.get(ep.id) ?? [];
+      const segJson = segJsonByEp.get(ep.id);
+
+      let host0Ms = 0; let host1Ms = 0;
+      let host0Turns = 0; let host1Turns = 0;
+
+      if (segJson && diarSegs.length > 0) {
+        // Assign each Whisper segment to a speaker via precision scoring:
+        // score = overlap_ms / diar_window_ms — tiny SPEAKER_1 windows win over
+        // large surrounding SPEAKER_0 windows, matching the transcript view.
+        const whisperSegs = JSON.parse(segJson) as Array<{ text: string; start_ms: number; end_ms: number }>;
+        for (const ws of whisperSegs) {
+          if (!ws.text.trim()) continue;
+          const wsDur = ws.end_ms - ws.start_ms;
+          if (wsDur <= 0) continue;
+          let bestScore = -1;
+          let bestSpeaker = 'SPEAKER_0';
+          for (const ds of diarSegs) {
+            const overlap = Math.min(ws.end_ms, ds.end_ms) - Math.max(ws.start_ms, ds.start_ms);
+            const dsDur = ds.end_ms - ds.start_ms;
+            if (overlap > 0 && dsDur > 0) {
+              const score = (overlap * 1_000_000) / dsDur;
+              if (score > bestScore) {
+                bestScore = score;
+                bestSpeaker = ds.corrected_speaker ?? ds.speaker_label;
+              }
+            }
+          }
+          if (bestSpeaker === 'SPEAKER_0') { host0Ms += wsDur; host0Turns++; }
+          else { host1Ms += wsDur; host1Turns++; }
+        }
+      } else if (diarSegs.length > 0) {
+        // Fallback: no Whisper segments — sum raw diarization durations
+        for (const ds of diarSegs) {
+          const eff = ds.corrected_speaker ?? ds.speaker_label;
+          const dur = ds.end_ms - ds.start_ms;
+          if (eff === 'SPEAKER_0') { host0Ms += dur; host0Turns++; }
+          else { host1Ms += dur; host1Turns++; }
+        }
       }
+
+      const totalMs = host0Ms + host1Ms;
+      const host0Pct = totalMs > 0 ? Math.round((host0Ms / totalMs) * 100) : 50;
+      episodeMap.set(ep.id, {
+        episodeId: ep.id,
+        title: ep.title,
+        publishDate: ep.publish_date,
+        audioUrl: ep.audio_url,
+        host0Pct,
+        host1Pct: 100 - host0Pct,
+        host0Minutes: Math.round((host0Ms / 60000) * 10) / 10,
+        host1Minutes: Math.round((host1Ms / 60000) * 10) / 10,
+        totalSpeakingMs: totalMs,
+        host0Turns,
+        host1Turns,
+        diarizationStatus: ep.diarization_status,
+      });
     }
 
     return Array.from(episodeMap.values());
