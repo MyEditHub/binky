@@ -102,7 +102,7 @@ pub async fn analyze_episode_topics(
     }
 }
 
-async fn run_llm_analysis(
+pub(crate) async fn run_llm_analysis(
     episode_id: i64,
     api_key: &str,
     transcript_text: &str,

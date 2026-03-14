@@ -5,3 +5,4 @@ pub mod topics;
 pub mod birds;
 pub mod assemblyai;
 pub mod search;
+pub mod pipeline;
