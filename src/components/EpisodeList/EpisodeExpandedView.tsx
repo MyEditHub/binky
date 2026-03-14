@@ -4,12 +4,12 @@ import { Episode } from '../../hooks/useEpisodes';
 
 interface EpisodeExpandedViewProps {
   episode: Episode;
-  onTranscribe: () => void;
+  onProcess: () => void;
   onCancel: () => void;
   onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
-  isTranscribing: boolean;
+  isPipelineRunning: boolean;
   modelDownloaded: boolean;
-  /** True when a different episode is currently being transcribed. Disables the transcribe button. */
+  /** True when a different episode's pipeline is currently running. Disables the button. */
   anotherIsActive: boolean;
 }
 
@@ -25,10 +25,10 @@ function formatDate(dateStr: string | null): string {
 
 export default function EpisodeExpandedView({
   episode,
-  onTranscribe,
+  onProcess,
   onCancel,
   onViewTranscript,
-  isTranscribing,
+  isPipelineRunning,
   modelDownloaded,
   anotherIsActive,
 }: EpisodeExpandedViewProps) {
@@ -53,13 +53,13 @@ export default function EpisodeExpandedView({
       : null;
 
   // Render the appropriate action button depending on state
-  function renderTranscribeAction() {
+  function renderProcessAction() {
     if (isDone) {
-      // No transcribe button when done — only "view transcript"
+      // No process button when done — only "view transcript"
       return null;
     }
 
-    if (isActive || isTranscribing) {
+    if (isActive || isPipelineRunning) {
       // Show cancel button while downloading or transcribing
       return (
         <button
@@ -82,18 +82,18 @@ export default function EpisodeExpandedView({
           disabled
         >
           <span className="spinner episode-btn-spinner" />
-          {t('pages.episodes.transcription_queued')}
+          {t('pipeline.queued')}
         </button>
       );
     }
 
-    // not_started or error — show transcribe button
+    // not_started or error — show process button
     const disabledByOther = anotherIsActive;
     const isDisabled = hasNoModel || disabledByOther;
     const titleHint = hasNoModel
       ? t('pages.episodes.model_needed')
       : disabledByOther
-      ? 'Eine andere Episode wird gerade transkribiert.'
+      ? 'Eine andere Episode wird gerade verarbeitet.'
       : undefined;
     return (
       <button
@@ -102,12 +102,12 @@ export default function EpisodeExpandedView({
         title={titleHint}
         onClick={(e) => {
           e.stopPropagation();
-          onTranscribe();
+          onProcess();
         }}
       >
         {isError
           ? t('pages.episodes.transcription_retry')
-          : t('pages.episodes.transcribe_btn')}
+          : t('episodes.process')}
       </button>
     );
   }
@@ -153,7 +153,7 @@ export default function EpisodeExpandedView({
 
       {/* Action buttons */}
       <div className="episode-actions">
-        {renderTranscribeAction()}
+        {renderProcessAction()}
         <button
           className="episode-action-btn episode-action-secondary"
           disabled={!isDone}

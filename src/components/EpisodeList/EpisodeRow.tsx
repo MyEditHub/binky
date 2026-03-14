@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Episode } from '../../hooks/useEpisodes';
 
@@ -5,8 +6,16 @@ interface EpisodeRowProps {
   episode: Episode;
   isExpanded: boolean;
   onToggle: (id: number) => void;
-  /** Progress value 0–100 if this episode is actively being transcribed, otherwise null */
-  transcriptionProgress: number | null;
+  /** 0–100 overall progress, null when idle and not in interrupted/error state */
+  pipelineProgress: number | null;
+  /** Step label e.g. 'Herunterladen...', 'Transkription...' */
+  pipelineStepLabel: string | null;
+  /** True while pipeline is actively running for this episode */
+  pipelineActive: boolean;
+  /** True when pipeline errored — turns fill red */
+  pipelineError: boolean;
+  /** True when showing interrupted state */
+  pipelineInterrupted: boolean;
 }
 
 function formatDate(dateStr: string | null): string {
@@ -48,20 +57,82 @@ export default function EpisodeRow({
   episode,
   isExpanded,
   onToggle,
-  transcriptionProgress,
+  pipelineProgress,
+  pipelineStepLabel,
+  pipelineActive,
+  pipelineError,
+  pipelineInterrupted,
 }: EpisodeRowProps) {
   const { t } = useTranslation();
+
+  // Fade-out state: when pipeline completes (pipelineActive flips false after 100%)
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const prevActiveRef = useRef(pipelineActive);
+  const prevProgressRef = useRef(pipelineProgress);
+
+  useEffect(() => {
+    // Detect transition from active@100 → idle
+    if (prevActiveRef.current && !pipelineActive && prevProgressRef.current === 100) {
+      setIsFadingOut(true);
+      const timer = setTimeout(() => setIsFadingOut(false), 400);
+      prevActiveRef.current = pipelineActive;
+      prevProgressRef.current = pipelineProgress;
+      return () => clearTimeout(timer);
+    }
+    prevActiveRef.current = pipelineActive;
+    prevProgressRef.current = pipelineProgress;
+  }, [pipelineActive, pipelineProgress]);
 
   const durationLabel =
     episode.duration_minutes != null
       ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
       : null;
 
-  // Show the progress bar whenever the parent hook says this episode is active —
-  // don't gate on episode.transcription_status from DB, which lags behind the
-  // real-time Rust updates and would never be 'downloading'|'transcribing' during
-  // the early phases of progress reporting.
-  const showProgress = transcriptionProgress !== null;
+  // Show interrupted state from persisted DB values even when not actively processing
+  const isPersistedInterrupted =
+    !pipelineActive &&
+    !pipelineError &&
+    !pipelineInterrupted &&
+    episode.pipeline_status === 'interrupted' &&
+    (episode.pipeline_progress ?? 0) > 0;
+
+  // Determine whether to show the progress bar
+  const showBar =
+    pipelineActive ||
+    pipelineError ||
+    pipelineInterrupted ||
+    isFadingOut ||
+    isPersistedInterrupted;
+
+  // Determine the fill width
+  let fillWidth: number;
+  if (isFadingOut) {
+    fillWidth = 100;
+  } else if (isPersistedInterrupted) {
+    fillWidth = episode.pipeline_progress ?? 0;
+  } else {
+    fillWidth = pipelineProgress ?? 0;
+  }
+
+  // Determine fill CSS classes
+  const fillClasses = ['episode-progress-fill'];
+  if (pipelineError) fillClasses.push('error');
+  if (pipelineInterrupted || isPersistedInterrupted) fillClasses.push('interrupted');
+
+  // Bar container CSS classes
+  const barClasses = ['episode-progress-bar'];
+  if (isFadingOut) barClasses.push('fade-out');
+
+  // Determine the step label to show
+  let displayLabel: string | null = null;
+  if (pipelineActive || pipelineError) {
+    displayLabel = pipelineStepLabel;
+  } else if (pipelineInterrupted || isPersistedInterrupted) {
+    displayLabel = 'Unterbrochen';
+  }
+
+  // Hide StatusBadge while bar is shown
+  const showStatusBadge = !showBar;
 
   return (
     <div
@@ -88,17 +159,20 @@ export default function EpisodeRow({
           </div>
         </div>
         <div className="episode-row-right">
-          <StatusBadge status={episode.transcription_status} />
+          {showStatusBadge && <StatusBadge status={episode.transcription_status} />}
           <span className="episode-row-chevron">{isExpanded ? '▲' : '▼'}</span>
         </div>
       </div>
-      {showProgress && (
-        <div className="episode-progress-bar">
+      {showBar && (
+        <div className={barClasses.join(' ')}>
           <div
-            className="episode-progress-fill"
-            style={{ width: `${transcriptionProgress ?? 0}%` }}
+            className={fillClasses.join(' ')}
+            style={{ width: `${fillWidth}%` }}
           />
         </div>
+      )}
+      {showBar && displayLabel && (
+        <span className="pipeline-step-label">{displayLabel}</span>
       )}
     </div>
   );

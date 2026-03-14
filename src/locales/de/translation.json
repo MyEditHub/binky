@@ -305,5 +305,17 @@
     "cancel": "Abbrechen",
     "close": "Schließen",
     "back": "Zurück"
+  },
+  "episodes": {
+    "process": "Verarbeiten"
+  },
+  "pipeline": {
+    "downloading": "Herunterladen...",
+    "transcribing": "Transkription...",
+    "diarizing": "Sprecher erkennen...",
+    "analyzing": "Themen analysieren...",
+    "error": "Fehler: {{stage}}",
+    "interrupted": "Unterbrochen",
+    "queued": "In Warteschlange"
   }
 }

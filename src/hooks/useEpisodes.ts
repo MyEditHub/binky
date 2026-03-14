@@ -15,6 +15,9 @@ export interface Episode {
   podcast_name: string | null;
   created_at: string | null;
   updated_at: string | null;
+  // Pipeline columns (added in migration 016)
+  pipeline_status: 'idle' | 'running' | 'done' | 'error' | 'interrupted' | null;
+  pipeline_progress: number | null;
 }
 
 /** Metadata returned from sync_rss Rust command. */

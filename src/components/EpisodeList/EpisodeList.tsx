@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { useEpisodes } from '../../hooks/useEpisodes';
-import { useTranscription } from '../../hooks/useTranscription';
+import { usePipeline } from '../../hooks/usePipeline';
 import EpisodeRow from './EpisodeRow';
 import EpisodeExpandedView from './EpisodeExpandedView';
 
@@ -13,9 +13,19 @@ interface ModelStatus {
 interface EpisodeListProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
   onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
+  onPipelineStateChange?: (
+    isProcessing: boolean,
+    progress: number,
+    stepLabel: string | null,
+    episodeTitle: string | null
+  ) => void;
 }
 
-export default function EpisodeList({ onTranscriptionStateChange, onViewTranscript }: EpisodeListProps) {
+export default function EpisodeList({
+  onTranscriptionStateChange,
+  onViewTranscript,
+  onPipelineStateChange,
+}: EpisodeListProps) {
   const { t } = useTranslation();
   const {
     episodes,
@@ -37,24 +47,36 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
       .catch(() => setDownloadedModel(null));
   }, []);
 
+  const handlePipelineStateChange = useCallback(
+    (
+      isProcessing: boolean,
+      progress: number,
+      stepLabel: string | null,
+      episodeTitle: string | null
+    ) => {
+      // Notify Layout for sidebar strip
+      onPipelineStateChange?.(isProcessing, progress, stepLabel, episodeTitle);
+      // Keep the existing transcription badge in the sidebar working
+      onTranscriptionStateChange?.(isProcessing, 0);
+    },
+    [onPipelineStateChange, onTranscriptionStateChange]
+  );
+
   const {
     activeEpisodeId,
     progress,
-    queueLength,
     isProcessing,
-    startTranscription,
-    cancelTranscription,
-  } = useTranscription(() => {
-    // Reload episodes from DB when a transcription completes/errors/cancels
-    loadEpisodes();
-    // Notify Layout of state changes for the sidebar badge
-    onTranscriptionStateChange?.(isProcessing, queueLength);
-  });
+    stepLabel,
+    error: pipelineError,
+    interrupted: pipelineInterrupted,
+    startPipeline,
+    cancelPipeline,
+  } = usePipeline(loadEpisodes, handlePipelineStateChange);
 
-  // Keep parent in sync when processing state changes
+  // Keep parent in sync when processing state changes (for badge)
   useEffect(() => {
-    onTranscriptionStateChange?.(isProcessing, queueLength);
-  }, [isProcessing, queueLength, onTranscriptionStateChange]);
+    onTranscriptionStateChange?.(isProcessing, 0);
+  }, [isProcessing, onTranscriptionStateChange]);
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -141,9 +163,7 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
         <div className="episode-rows">
           {episodes.map((ep) => {
             const isThisActive = activeEpisodeId === ep.id;
-            // Disable transcription on other episodes while one is already running.
-            // The Rust queue is sequential so we block at the UI level to avoid
-            // a second invoke call that would crash the runtime.
+            // Disable pipeline on other episodes while one is already running.
             const anotherIsActive = isProcessing && !isThisActive;
             return (
               <div key={ep.id}>
@@ -151,22 +171,26 @@ export default function EpisodeList({ onTranscriptionStateChange, onViewTranscri
                   episode={ep}
                   isExpanded={expandedId === ep.id}
                   onToggle={handleToggle}
-                  transcriptionProgress={isThisActive ? progress : null}
+                  pipelineProgress={isThisActive ? progress : null}
+                  pipelineStepLabel={isThisActive ? stepLabel : null}
+                  pipelineActive={isThisActive && isProcessing}
+                  pipelineError={isThisActive && pipelineError}
+                  pipelineInterrupted={isThisActive && pipelineInterrupted}
                 />
                 {expandedId === ep.id && (
                   <EpisodeExpandedView
                     episode={ep}
                     modelDownloaded={modelDownloaded}
-                    isTranscribing={isThisActive && isProcessing}
+                    isPipelineRunning={isThisActive && isProcessing}
                     anotherIsActive={anotherIsActive}
-                    onTranscribe={() => {
+                    onProcess={() => {
                       if (ep.audio_url) {
-                        startTranscription(ep.id, ep.audio_url);
+                        startPipeline(ep.id, ep.audio_url, ep.title);
                       } else {
                         alert('Keine Audio-URL für diese Episode gefunden. Bitte neu synchronisieren (Synchronisieren-Button).');
                       }
                     }}
-                    onCancel={cancelTranscription}
+                    onCancel={cancelPipeline}
                     onViewTranscript={onViewTranscript}
                   />
                 )}
