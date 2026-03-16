@@ -25,6 +25,16 @@ export default function AnalyticsPage() {
   const diarization = useDiarization(refresh);
   const autoStartedRef = useRef(false);
 
+  // Auto-run speaker detection when the pipeline finishes an episode
+  useEffect(() => {
+    function handlePipelineDone() {
+      if (!hostProfile.confirmed) return;
+      autoDetectAllSpeakers().catch(console.error);
+    }
+    window.addEventListener('pipeline-speaker-detect', handlePipelineDone);
+    return () => window.removeEventListener('pipeline-speaker-detect', handlePipelineDone);
+  }, [hostProfile.confirmed, autoDetectAllSpeakers]);
+
   // Auto-start diarization for all transcribed but not-diarized episodes on first visit
   useEffect(() => {
     if (!hostProfile.confirmed || autoStartedRef.current) return;

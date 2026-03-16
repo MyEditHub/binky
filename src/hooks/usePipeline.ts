@@ -8,7 +8,7 @@ type PipelineEvent =
   | { event: 'StageStarted'; data: { stage: string; overall_percent: number } }
   | { event: 'Progress';     data: { stage: string; stage_percent: number; overall_percent: number } }
   | { event: 'StageDone';    data: { stage: string; overall_percent: number } }
-  | { event: 'Done';         data: { episode_id: number } }
+  | { event: 'Done';         data: { episode_id: number; timing: { download_s: number; transcription_s: number; diarization_s: number; topics_s: number; total_s: number } } }
   | { event: 'Error';        data: { stage: string; message: string; overall_percent: number } }
   | { event: 'Cancelled';    data: { completed_stages: string[]; overall_percent: number } };
 
@@ -113,9 +113,25 @@ export function usePipeline(
             break;
           }
           case 'Done': {
+            const t = event.data.timing;
+            const completedEpisodeId = event.data.episode_id;
+            const totalMin = Math.floor(t.total_s / 60);
+            const totalSec = Math.round(t.total_s % 60);
+            const doneLabel = totalMin > 0
+              ? `Fertig · ${totalMin}m ${totalSec}s`
+              : `Fertig · ${totalSec}s`;
+            console.log(
+              `[pipeline timing] ep=${completedEpisodeId}`,
+              `download=${t.download_s.toFixed(1)}s`,
+              `transcription=${t.transcription_s.toFixed(1)}s`,
+              `diarization=${t.diarization_s.toFixed(1)}s`,
+              `topics=${t.topics_s.toFixed(1)}s`,
+              `total=${t.total_s.toFixed(1)}s`,
+            );
             setProgress(100);
-            notify(true, 100, stepLabel, title);
-            // Hold at 100% for 1s then clear
+            setStepLabel(doneLabel);
+            notify(true, 100, doneLabel, title);
+            // Hold at 100% for 3s then clear, then trigger speaker detection
             setTimeout(() => {
               setIsProcessing(false);
               setActiveEpisodeId(null);
@@ -125,7 +141,11 @@ export function usePipeline(
               activeTitleRef.current = null;
               notify(false, 0, null, null);
               onEpisodeUpdated?.();
-            }, 1000);
+              // Notify AnalyticsPage to run autoDetectAllSpeakers for this episode
+              window.dispatchEvent(
+                new CustomEvent('pipeline-speaker-detect', { detail: { episodeId: completedEpisodeId } })
+              );
+            }, 3000);
             break;
           }
           case 'Error': {
