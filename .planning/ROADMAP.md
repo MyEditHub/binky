@@ -112,6 +112,13 @@ Plans:
 - [x] 15-01-PLAN.md — DB schema + Rust: unified progress column on episodes, weight constants, progress emission per stage (awaiting human-verify)
 - [ ] 15-02-PLAN.md — Frontend: replace separate status indicators with single ProgressBar component, wiring to Tauri events
 
+### Phase 15.1: Phase 15 Gap Closure
+**Goal**: Register the missing migration 017 so `pipeline_duration_s` is written to the DB and the processing-time badge renders, then verify Phase 15 meets its success criteria.
+**Gap Closure**: Closes gaps from v0.3.0 audit (INT-015-001 + Phase 15 VERIFICATION.md missing)
+**Plans**: 1 plan
+Plans:
+- [ ] 15.1-01-PLAN.md — Register migration 017 in lib.rs migrations vec; run gsd-verifier on Phase 15 to produce 15-VERIFICATION.md
+
 ### Phase 16: Vogelstimmen-Mix
 **Goal**: For each "Vogel der Woche" episode, users can generate and play a short audio track mixing Nadine's bird imitation (extracted from the episode) over a bundled atmospheric background — and export it as an audio file.
 **Depends on**: Phase 15 (episode audio cache), diarization (Nadine speaker label), topics (Vogel der Woche timestamps)
@@ -149,6 +156,7 @@ Plans:
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
 | 14. Integration Gap Closure | 1/1 | Complete    | 2026-03-13 | - |
 | 15. Unified Pipeline Progress Bar | 2/2 | Complete   | 2026-03-14 | - |
+| 15.1. Phase 15 Gap Closure | v0.3.0 | 0/1 | Planned | - |
 | 16. Vogelstimmen-Mix | v0.3.0 | 0/4 | Planned | - |
 
 ---
