@@ -156,7 +156,7 @@ Plans:
 | 13. Cross-Episode Topic Linking | 2/2 | Complete    | 2026-03-13 | - |
 | 14. Integration Gap Closure | 1/1 | Complete    | 2026-03-13 | - |
 | 15. Unified Pipeline Progress Bar | 2/2 | Complete   | 2026-03-14 | - |
-| 15.1. Phase 15 Gap Closure | v0.3.0 | 0/1 | Planned | - |
+| 15.1. Phase 15 Gap Closure | 1/1 | Complete   | 2026-03-17 | - |
 | 16. Vogelstimmen-Mix | v0.3.0 | 0/4 | Planned | - |
 
 ---

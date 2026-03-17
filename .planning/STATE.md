@@ -6,9 +6,9 @@ status: unknown
 last_updated: "2026-03-14T00:00:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 9
-  completed_plans: 7
+  completed_plans: 9
 ---
 
 # Project State
@@ -22,12 +22,10 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 15 — Unified Pipeline Progress Bar (IN PROGRESS)
-Plan: 02 — awaiting human-verify checkpoint (15-02-PLAN.md: React frontend)
-Status: Tasks 1 + 2 complete, TypeScript compiles clean; checkpoint:human-verify pending
-Last activity: 2026-03-14 — 15-02 tasks executed, awaiting human verification
+Phase: 15.1 — Phase 15 Gap Closure (COMPLETE)
+Last activity: 2026-03-17 — 15.1-01-PLAN.md executed: migration 017 registered + Phase 15 VERIFICATION.md written
 
-Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [Phase 14: ##########] [Phase 15: #####     ]
+Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [Phase 14: ##########] [Phase 15: ##########] [Phase 15.1: #]
 
 ## Accumulated Context
 
@@ -108,10 +106,9 @@ Progress: [Phase 11: ##########] [Phase 12: ##########] [Phase 13: ##########] [
 
 ## Session Continuity
 
-Last session: 2026-03-14
-Stopped at: 15-02-PLAN.md checkpoint:human-verify — React frontend complete, awaiting user verification
-Resume file: None
-Next: After human-verify approval, phase 15 is complete
+Last session: 2026-03-17
+Stopped at: Phase 15.1-01-PLAN.md executed — migration 017 registered + 15-VERIFICATION.md written
+Next: Human QA for Phase 15 visual checks (VIS-01/VIS-02/VIS-03 in 15-VERIFICATION.md)
 
 ### Key Decisions from Phase 15
 
@@ -123,3 +120,9 @@ Next: After human-verify approval, phase 15 is complete
 - Pipeline state lifted through EpisodeList→EpisodesPage→Layout→Sidebar via callbacks for sidebar strip visibility from any page
 - Stage labels in usePipeline use STAGE_LABELS constant (not t()) — cleaner inside Channel onmessage closure
 - Only German locale (de/translation.json) in project — no en.json to update
+
+### Key Decisions from Phase 15.1
+
+- Migration 017 registration gap: migration file existed but was never registered; INT-015-001 closed by adding version 17 block to lib.rs migrations vec
+- Phase 15 verification score 14/15: parallel transcription+diarization (tokio::join!) is approved architectural improvement over plan's sequential approach — all must-haves still satisfied
+- Migration pattern (updated): current highest migration is 017 — next migration is 018
