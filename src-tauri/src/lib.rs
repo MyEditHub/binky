@@ -118,6 +118,12 @@ pub fn run() {
             sql: include_str!("../migrations/016_pipeline_progress.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 17,
+            description: "pipeline_duration",
+            sql: include_str!("../migrations/017_pipeline_duration.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()
