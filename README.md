@@ -78,6 +78,26 @@ Euer Werkzeug für die Nettgeflüster-Sendungsvorbereitung. Vogel der Woche, Wor
 
 ## 📝 Changelog
 
+### v0.2.8 (2026-03-18)
+
+### Added
+- Einheitliche Pipeline: Transkription und Diarisierung starten jetzt in einem Schritt und laufen parallel (Whisper auf GPU, sherpa-rs auf CPU gleichzeitig)
+- Fortschrittsbalken in der Seitenleiste zeigt den aktuellen Schritt und eine Zeitschätzung ("Transkription... noch ~22 Min.") basierend auf den letzten 10 Durchläufen
+- Pipeline überspringt Whisper bei Neustart nach Unterbrechung — bereits abgeschlossene Transkriptionen werden nicht wiederholt
+- Download-Timeout: hängende Verbindungen werden nach 60 Sekunden Inaktivität automatisch abgebrochen
+
+### Changed
+- Diarisierer verwendet jetzt den linken Kanal (CH0) statt des gemischten Signals — besserer Sprecher-Kontrast bei Zwei-Mikrofon-Aufnahmen
+- Diarisierungskonfiguration: min_duration_on/off von 0,3 s auf 0,1 s gesenkt für feinere Segment-Erkennung
+- Sprechzeit in der Analytik wird aus rohen Diarisierungsfenstern berechnet (konsistenter mit AssemblyAI-Semantik)
+- Suchergebnisse werden nach Episodennummer sortiert (neueste Episode zuerst)
+
+### Fixed
+- Sprecher-Erkennung läuft automatisch nach abgeschlossener Pipeline, sodass neue Episoden sofort korrekte Sprecher-Zuordnung haben
+- Unterbrochene Pipeline-Episoden zeigen wieder den „Verarbeiten"-Button
+- FTS-Einträge werden vor der Neuindizierung bereinigt, um ROWID-Kollisionen zu verhindern
+
+
 ### v0.2.7 (2026-03-13)
 
 ### Added
