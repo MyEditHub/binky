@@ -34,8 +34,8 @@ export function useSearch(query: string, debounceMs = 300): { groups: EpisodeGro
       setLoading(true);
       try {
         const raw = await invoke<SearchResult[]>('search_transcripts', { query, limit: 50 });
-        // Group by episode_id preserving BM25 order (Map insertion = first-appearance order)
-        // CRITICAL: do NOT sort() — this would destroy the backend's BM25 ranking
+        // Group by episode_id, then sort groups numerically by episode number (newest first).
+        // BM25 ranking is preserved within each group; only group order changes.
         const map = new Map<number, EpisodeGroup>();
         for (const r of raw) {
           if (!map.has(r.episode_id)) {
@@ -43,7 +43,11 @@ export function useSearch(query: string, debounceMs = 300): { groups: EpisodeGro
           }
           map.get(r.episode_id)!.results.push(r);
         }
-        setGroups(Array.from(map.values()));
+        const episodeNumber = (title: string) => {
+          const m = title.match(/^#(\d+)/);
+          return m ? parseInt(m[1], 10) : 0;
+        };
+        setGroups(Array.from(map.values()).sort((a, b) => episodeNumber(b.title) - episodeNumber(a.title)));
       } catch {
         setGroups([]);
       } finally {

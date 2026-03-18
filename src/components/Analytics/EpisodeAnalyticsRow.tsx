@@ -71,6 +71,15 @@ export default function EpisodeAnalyticsRow({
         <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)' }}>
           {hostProfile.host0Name}: ~100%
         </div>
+      ) : stats.diarizationStatus === 'queued' || stats.diarizationStatus === 'processing' ? (
+        <div className="analytics-progress-wrap">
+          <div className="analytics-progress-bar">
+            <div className={`analytics-progress-fill${stats.diarizationStatus === 'processing' ? ' analytics-progress-fill--active' : ''}`} />
+          </div>
+          <span className="analytics-progress-label">
+            {statusLabel[stats.diarizationStatus]}
+          </span>
+        </div>
       ) : (
         <div style={{ fontSize: 12, color: 'var(--text-secondary, #888)', fontStyle: 'italic' }}>
           {statusLabel[stats.diarizationStatus] ?? stats.diarizationStatus}

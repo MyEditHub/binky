@@ -18,7 +18,6 @@ interface DiarizationSegmentRow {
   end_ms: number;
   speaker_label: string;
   corrected_speaker: string | null;
-  confidence: number | null;
   text: string | null;
 }
 
@@ -132,7 +131,7 @@ export function useSpeakerBlocks(episodeId: number | null): {
 
       const [diarRows, transcriptRows, host0Name, host1Name, host0Color, host1Color] = await Promise.all([
         db.select<DiarizationSegmentRow[]>(
-          `SELECT id, start_ms, end_ms, speaker_label, corrected_speaker, confidence, text
+          `SELECT id, start_ms, end_ms, speaker_label, corrected_speaker, text
            FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
           [id],
         ),

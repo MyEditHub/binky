@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Episode } from '../../hooks/useEpisodes';
 
@@ -33,7 +32,6 @@ export default function EpisodeExpandedView({
   anotherIsActive,
 }: EpisodeExpandedViewProps) {
   const { t } = useTranslation();
-  const [showFull, setShowFull] = useState(false);
 
   const hasDescription = !!episode.description?.trim();
   const descriptionText = hasDescription
@@ -46,6 +44,7 @@ export default function EpisodeExpandedView({
   const isActive = status === 'downloading' || status === 'transcribing';
   const isError = status === 'error';
   const hasNoModel = !modelDownloaded;
+  const isPipelineInterrupted = episode.pipeline_status === 'interrupted';
 
   const durationLabel =
     episode.duration_minutes != null
@@ -54,8 +53,8 @@ export default function EpisodeExpandedView({
 
   // Render the appropriate action button depending on state
   function renderProcessAction() {
-    if (isDone) {
-      // No process button when done — only "view transcript"
+    if (isDone && !isPipelineInterrupted) {
+      // No process button when fully done — only "view transcript"
       return null;
     }
 
@@ -105,7 +104,7 @@ export default function EpisodeExpandedView({
           onProcess();
         }}
       >
-        {isError
+        {isError || isPipelineInterrupted
           ? t('pages.episodes.transcription_retry')
           : t('episodes.process')}
       </button>
@@ -135,21 +134,10 @@ export default function EpisodeExpandedView({
         </div>
       )}
 
-      {/* Description with truncation toggle */}
-      <div className={`episode-description${showFull ? ' episode-description-full' : ''}`}>
+      {/* Description */}
+      <div className="episode-description">
         {descriptionText}
       </div>
-      {hasDescription && (
-        <button
-          className="episode-toggle-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowFull((prev) => !prev);
-          }}
-        >
-          {showFull ? t('pages.episodes.show_less') : t('pages.episodes.show_more')}
-        </button>
-      )}
 
       {/* Action buttons */}
       <div className="episode-actions">

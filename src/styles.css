@@ -920,6 +920,12 @@ body {
   color: var(--color-text-secondary);
 }
 
+.episode-row-processing-time {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  opacity: 0.6;
+}
+
 .episode-row-right {
   display: flex;
   align-items: center;
@@ -1012,38 +1018,11 @@ body {
   color: var(--color-text-secondary);
 }
 
-/* Description text */
+/* Description text — always shows in full (user already chose to expand the row) */
 .episode-description {
   font-size: 13px;
   color: var(--color-text);
   line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.episode-description.episode-description-full {
-  display: block;
-  -webkit-line-clamp: unset;
-  overflow: visible;
-}
-
-/* Show more / less toggle */
-.episode-toggle-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-primary);
-  font-size: 12px;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  align-self: flex-start;
-}
-
-.episode-toggle-btn:hover {
-  opacity: 0.8;
 }
 
 /* Action buttons */
@@ -2049,6 +2028,44 @@ body {
   font-size: 11px;
   color: var(--text-secondary, #888);
   margin-bottom: 6px;
+}
+
+.analytics-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analytics-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--border-color, #333);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.analytics-progress-fill {
+  height: 100%;
+  width: 40%;
+  background: var(--color-accent, #555);
+  border-radius: 2px;
+  animation: analytics-shimmer 2.4s ease-in-out infinite;
+}
+
+.analytics-progress-fill--active {
+  background: var(--color-primary, #4a90d9);
+  animation-duration: 1.6s;
+}
+
+@keyframes analytics-shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+.analytics-progress-label {
+  font-size: 11px;
+  color: var(--text-secondary, #888);
+  white-space: nowrap;
 }
 
 .analytics-badge-solo {

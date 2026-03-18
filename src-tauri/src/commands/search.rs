@@ -229,17 +229,21 @@ pub fn fetch_related_episodes(
         };
 
         // 3. Query search_index for related topic rows, excluding source episode.
-        //    JOIN episodes to get episode_number.
+        //    NOTE: No JOIN here — FTS5 auxiliary functions (bm25) are unreliable in JOIN
+        //    contexts. SQLite docs state "if the FTS table is used as part of a join,
+        //    the bm25() function may not return correct results." A JOIN causes bm25()
+        //    to fail per-row, silently dropped by filter_map, yielding an empty result.
+        //    We fetch episode_id and episode_title from FTS only, then look up
+        //    episode_number in a separate query after deduplication.
         //    LIMIT 10 to allow deduplication before taking top 3.
         let exclude_id = source_episode_id.unwrap_or(-1); // -1 never matches a real id
 
         let sql = "
-            SELECT si.episode_id, si.episode_title, e.episode_number
-            FROM search_index si
-            LEFT JOIN episodes e ON e.id = si.episode_id
+            SELECT episode_id, episode_title
+            FROM search_index
             WHERE search_index MATCH ?1
-              AND si.segment_type = 'topic'
-              AND si.episode_id != ?2
+              AND segment_type = 'topic'
+              AND episode_id != ?2
             ORDER BY bm25(search_index)
             LIMIT 10
         ";
@@ -251,12 +255,11 @@ pub fn fetch_related_episodes(
                 continue;
             }
         };
-        let rows: Vec<(i64, String, Option<i64>)> =
+        let rows: Vec<(i64, String)> =
             match stmt.query_map(rusqlite::params![fts_query, exclude_id], |row| {
                 Ok((
                     row.get::<_, i64>(0)?,
                     row.get::<_, String>(1)?,
-                    row.get::<_, Option<i64>>(2)?,
                 ))
             }) {
                 Ok(mapped) => mapped.filter_map(|r| r.ok()).collect(),
@@ -269,14 +272,30 @@ pub fn fetch_related_episodes(
         // 4. Deduplicate by episode_id (preserve BM25 order = first occurrence wins),
         //    then take top 3 unique episodes.
         let mut seen = std::collections::HashSet::new();
-        let deduped: Vec<RelatedEpisode> = rows
+        let unique_episodes: Vec<(i64, String)> = rows
             .into_iter()
-            .filter(|(eid, _, _)| seen.insert(*eid))
+            .filter(|(eid, _)| seen.insert(*eid))
             .take(3)
-            .map(|(episode_id, episode_title, episode_number)| RelatedEpisode {
-                episode_id,
-                episode_title,
-                episode_number,
+            .collect();
+
+        // 5. Look up episode_number for each unique episode in a separate query.
+        //    This keeps the FTS query JOIN-free (required for correct bm25 behavior).
+        let deduped: Vec<RelatedEpisode> = unique_episodes
+            .into_iter()
+            .map(|(episode_id, episode_title)| {
+                let episode_number: Option<i64> = conn
+                    .query_row(
+                        "SELECT episode_number FROM episodes WHERE id = ?1",
+                        rusqlite::params![episode_id],
+                        |row| row.get(0),
+                    )
+                    .ok()
+                    .flatten();
+                RelatedEpisode {
+                    episode_id,
+                    episode_title,
+                    episode_number,
+                }
             })
             .collect();
 

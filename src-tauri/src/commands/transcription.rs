@@ -318,12 +318,18 @@ fn store_transcript(
 
 /// Decode an MP3 file to mono f32 PCM at 16 kHz using symphonia + rubato.
 ///
+/// Returns `(mixed_mono, channel_0_mono)`:
+/// - `mixed_mono`: all channels averaged — used by Whisper transcription.
+/// - `channel_0_mono`: left channel only.
+/// Channel 1 can be recovered as `2×mixed − ch0` (exact since resampling is linear
+/// and mixed = (ch0+ch1)/2), avoiding a third resampler and ~230MB extra RAM.
+///
 /// Streams packets directly through the resampler so that only the growing
 /// output buffer (~230 MB for a 60-min episode) is kept in memory, rather
 /// than first accumulating a full decoded buffer (~635 MB) and then a
 /// resampled buffer simultaneously.
-pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
-    use rubato::{FftFixedIn, Resampler};
+pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<(Vec<f32>, Vec<f32>), String> {
+    use rubato::FftFixedIn;
     use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
     use symphonia::core::formats::FormatOptions;
     use symphonia::core::io::MediaSourceStream;
@@ -368,7 +374,8 @@ pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
 
     // If no resampling is needed, collect directly into output.
     if sample_rate == 16000 {
-        let mut output: Vec<f32> = Vec::new();
+        let mut mixed: Vec<f32> = Vec::new();
+        let mut ch0: Vec<f32> = Vec::new();
         loop {
             let packet = match format.next_packet() {
                 Ok(p) => p,
@@ -381,50 +388,28 @@ pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
                 Ok(d) => d,
                 Err(_) => continue,
             };
-            push_mono_frames(&decoded, track_channels, &mut output);
+            push_frames_dual(&decoded, track_channels, &mut mixed, &mut ch0);
         }
-        if output.is_empty() {
+        if mixed.is_empty() {
             return Err("No audio data decoded from MP3".to_string());
         }
-        return Ok(output);
+        return Ok((mixed, ch0));
     }
 
     // Streaming resample path: feed each decoded packet directly through rubato
     // so the intermediate "all decoded samples" buffer is never materialised.
+    // Two resamplers run in lockstep — one for the mixed mono channel (used by
+    // Whisper), one for channel-0 only (used by the speaker diarizer).
     const CHUNK_SIZE: usize = 4096;
-    let mut resampler = FftFixedIn::<f32>::new(sample_rate as usize, 16000, CHUNK_SIZE, 2, 1)
+    let mut mixed_resampler = FftFixedIn::<f32>::new(sample_rate as usize, 16000, CHUNK_SIZE, 2, 1)
+        .map_err(|e| format!("Resampler creation error: {}", e))?;
+    let mut ch0_resampler = FftFixedIn::<f32>::new(sample_rate as usize, 16000, CHUNK_SIZE, 2, 1)
         .map_err(|e| format!("Resampler creation error: {}", e))?;
 
-    // `pending` holds decoded samples waiting to fill one resampler chunk (tiny).
-    let mut pending: Vec<f32> = Vec::with_capacity(CHUNK_SIZE * 2);
-    let mut resampled: Vec<f32> = Vec::new();
-
-    // Flush `pending` through the resampler whenever it has a full chunk.
-    let flush = |resampler: &mut FftFixedIn<f32>,
-                 pending: &mut Vec<f32>,
-                 resampled: &mut Vec<f32>,
-                 force: bool|
-     -> Result<(), String> {
-        loop {
-            let needed = resampler.input_frames_next();
-            if pending.len() < needed {
-                if !force {
-                    break;
-                }
-                // Pad the last partial chunk with silence.
-                pending.resize(needed, 0.0);
-            }
-            let chunk: Vec<f32> = pending.drain(..needed).collect();
-            let out = resampler
-                .process(&[&chunk], None)
-                .map_err(|e| format!("Resample error: {}", e))?;
-            resampled.extend_from_slice(&out[0]);
-            if force && pending.is_empty() {
-                break;
-            }
-        }
-        Ok(())
-    };
+    let mut mixed_pending: Vec<f32> = Vec::with_capacity(CHUNK_SIZE * 2);
+    let mut ch0_pending:   Vec<f32> = Vec::with_capacity(CHUNK_SIZE * 2);
+    let mut mixed_out: Vec<f32> = Vec::new();
+    let mut ch0_out:   Vec<f32> = Vec::new();
 
     loop {
         let packet = match format.next_packet() {
@@ -438,60 +423,85 @@ pub(crate) fn decode_mp3_to_pcm(path: &Path) -> Result<Vec<f32>, String> {
             Ok(d) => d,
             Err(_) => continue,
         };
-        push_mono_frames(&decoded, track_channels, &mut pending);
-        flush(&mut resampler, &mut pending, &mut resampled, false)?;
+        push_frames_dual(&decoded, track_channels, &mut mixed_pending, &mut ch0_pending);
+        flush_resampler(&mut mixed_resampler, &mut mixed_pending, &mut mixed_out, false)?;
+        flush_resampler(&mut ch0_resampler,   &mut ch0_pending,   &mut ch0_out,   false)?;
     }
 
     // Flush any remaining samples with zero-padding.
-    if !pending.is_empty() {
-        flush(&mut resampler, &mut pending, &mut resampled, true)?;
+    if !mixed_pending.is_empty() || !ch0_pending.is_empty() {
+        flush_resampler(&mut mixed_resampler, &mut mixed_pending, &mut mixed_out, true)?;
+        flush_resampler(&mut ch0_resampler,   &mut ch0_pending,   &mut ch0_out,   true)?;
     }
 
-    if resampled.is_empty() {
+    if mixed_out.is_empty() {
         return Err("No audio data decoded from MP3".to_string());
     }
 
-    Ok(resampled)
+    Ok((mixed_out, ch0_out))
 }
 
-/// Extract mono f32 frames from a decoded AudioBufferRef and append to `out`.
-pub(crate) fn push_mono_frames(
+/// Flush pending PCM through one resampler into `out`.
+/// When `force` is true, zero-pads the last partial chunk.
+fn flush_resampler(
+    resampler: &mut rubato::FftFixedIn<f32>,
+    pending: &mut Vec<f32>,
+    out: &mut Vec<f32>,
+    force: bool,
+) -> Result<(), String> {
+    use rubato::Resampler;
+    loop {
+        let needed = resampler.input_frames_next();
+        if pending.len() < needed {
+            if !force {
+                break;
+            }
+            pending.resize(needed, 0.0);
+        }
+        let chunk: Vec<f32> = pending.drain(..needed).collect();
+        let result = resampler
+            .process(&[&chunk], None)
+            .map_err(|e| format!("Resample error: {}", e))?;
+        out.extend_from_slice(&result[0]);
+        if force && pending.is_empty() {
+            break;
+        }
+    }
+    Ok(())
+}
+
+/// Decode one packet into mixed-mono and channel-0-only buffers simultaneously.
+/// Channel 1 can be recovered post-resampling as `2×mixed − ch0` (exact, since
+/// resampling is linear and mixed = (ch0+ch1)/2).
+pub(crate) fn push_frames_dual(
     decoded: &symphonia::core::audio::AudioBufferRef<'_>,
     track_channels: usize,
-    out: &mut Vec<f32>,
+    mixed: &mut Vec<f32>,
+    ch0: &mut Vec<f32>,
 ) {
     use symphonia::core::audio::{AudioBufferRef, Signal};
+    macro_rules! push_dual {
+        ($buf:expr, $scale:expr) => {{
+            let n = $buf.frames();
+            for i in 0..n {
+                let s0 = $buf.chan(0)[i] as f32 * $scale;
+                ch0.push(s0);
+                if track_channels > 1 {
+                    let mut sum = s0;
+                    for ch in 1..track_channels {
+                        sum += $buf.chan(ch)[i] as f32 * $scale;
+                    }
+                    mixed.push(sum / track_channels as f32);
+                } else {
+                    mixed.push(s0);
+                }
+            }
+        }};
+    }
     match decoded {
-        AudioBufferRef::F32(buf) => {
-            let n = buf.frames();
-            for i in 0..n {
-                let mut sum = 0.0f32;
-                for ch in 0..track_channels {
-                    sum += buf.chan(ch)[i];
-                }
-                out.push(sum / track_channels as f32);
-            }
-        }
-        AudioBufferRef::S16(buf) => {
-            let n = buf.frames();
-            for i in 0..n {
-                let mut sum = 0.0f32;
-                for ch in 0..track_channels {
-                    sum += buf.chan(ch)[i] as f32 / 32768.0;
-                }
-                out.push(sum / track_channels as f32);
-            }
-        }
-        AudioBufferRef::S32(buf) => {
-            let n = buf.frames();
-            for i in 0..n {
-                let mut sum = 0.0f32;
-                for ch in 0..track_channels {
-                    sum += buf.chan(ch)[i] as f32 / 2_147_483_648.0;
-                }
-                out.push(sum / track_channels as f32);
-            }
-        }
+        AudioBufferRef::F32(buf) => push_dual!(buf, 1.0_f32),
+        AudioBufferRef::S16(buf) => push_dual!(buf, 1.0 / 32768.0_f32),
+        AudioBufferRef::S32(buf) => push_dual!(buf, 1.0 / 2_147_483_648.0_f32),
         _ => {}
     }
 }
@@ -635,9 +645,9 @@ async fn process_episode(
     // Update status to 'transcribing'
     update_episode_status(db_path, episode_id, "transcribing", None);
 
-    // Decode MP3 to mono f32 PCM at 16 kHz
+    // Decode MP3 to mono f32 PCM at 16 kHz (mixed mono for Whisper)
     let audio_data = match decode_mp3_to_pcm(&temp_path) {
-        Ok(data) => data,
+        Ok((mixed, _ch0)) => mixed,
         Err(e) => {
             let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
             let msg = format!("Audio decode failed: {}", e);

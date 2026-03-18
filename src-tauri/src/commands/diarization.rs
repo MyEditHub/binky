@@ -697,7 +697,7 @@ async fn process_diarization_episode(
     // ── Decode audio to 16 kHz mono f32 PCM ────────────────────────────────
 
     let samples = match crate::commands::transcription::decode_mp3_to_pcm(&temp_path) {
-        Ok(s) => s,
+        Ok((mixed, _ch0)) => mixed,
         Err(e) => {
             let _ = tokio::fs::remove_file(&temp_path_for_cleanup).await;
             let msg = format!("Audio decode failed: {}", e);
@@ -724,10 +724,10 @@ async fn process_diarization_episode(
         use sherpa_rs::diarize::{Diarize, DiarizeConfig};
 
         let config = DiarizeConfig {
-            num_clusters: Some(2), // 2 main podcast hosts
-            threshold: Some(0.5),
-            min_duration_on: Some(0.3),
-            min_duration_off: Some(0.3),
+            num_clusters: Some(2), // always exactly 2 hosts
+            threshold: None,
+            min_duration_on: Some(0.1),
+            min_duration_off: Some(0.1),
             provider: None,
             debug: false,
         };

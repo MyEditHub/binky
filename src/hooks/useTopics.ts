@@ -1,5 +1,4 @@
 import Database from '@tauri-apps/plugin-sql';
-import { invoke } from '@tauri-apps/api/core';
 import { useState, useCallback } from 'react';
 
 export type TopicStatus = 'offen' | 'erledigt' | 'zurückgestellt';
@@ -18,18 +17,9 @@ export interface TopicRow {
   created_at: string;
 }
 
-export interface EpisodeForAnalysis {
-  id: number;
-  title: string;
-  analysis_status: string;
-  topics_found: number;
-}
-
 export function useTopics() {
   const [topics, setTopics] = useState<TopicRow[]>([]);
-  const [episodes, setEpisodes] = useState<EpisodeForAnalysis[]>([]);
   const [loading, setLoading] = useState(false);
-  const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadTopics = useCallback(async (statusFilter?: TopicStatus) => {
@@ -74,24 +64,6 @@ export function useTopics() {
     }
   }, []);
 
-  const loadEpisodes = useCallback(async () => {
-    try {
-      const db = await Database.load('sqlite:binky.db');
-      const rows = await db.select<EpisodeForAnalysis[]>(`
-        SELECT e.id, e.title,
-               COALESCE(ea.status, 'not_started') as analysis_status,
-               COALESCE(ea.topics_found, 0) as topics_found
-        FROM episodes e
-        INNER JOIN transcripts tr ON tr.episode_id = e.id
-        LEFT JOIN episode_analysis ea ON ea.episode_id = e.id
-        ORDER BY e.publish_date DESC
-      `);
-      setEpisodes(rows);
-    } catch (err) {
-      setError(String(err));
-    }
-  }, []);
-
   const updateStatus = useCallback(async (topicId: number, status: TopicStatus) => {
     // Optimistic update
     setTopics(prev =>
@@ -110,28 +82,11 @@ export function useTopics() {
     }
   }, [loadTopics]);
 
-  const analyzeEpisode = useCallback(async (episodeId: number) => {
-    setAnalyzing(true);
-    setError(null);
-    try {
-      await invoke('analyze_episode_topics', { episodeId });
-      await Promise.all([loadTopics(), loadEpisodes()]);
-    } catch (err) {
-      setError(String(err));
-    } finally {
-      setAnalyzing(false);
-    }
-  }, [loadTopics, loadEpisodes]);
-
   return {
     topics,
-    episodes,
     loading,
-    analyzing,
     error,
     loadTopics,
-    loadEpisodes,
     updateStatus,
-    analyzeEpisode,
   };
 }

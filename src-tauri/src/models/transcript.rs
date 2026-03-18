@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transcript {
     pub id: i64,
@@ -16,7 +17,6 @@ pub struct Transcript {
 pub enum TranscriptionEvent {
     Downloading { percent: i32 },
     Progress { percent: i32 },
-    Segment { text: String, start_ms: i64, end_ms: i64 },
     Done { episode_id: i64 },
     Error { message: String },
     Cancelled,

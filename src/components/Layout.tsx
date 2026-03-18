@@ -10,6 +10,7 @@ import HomePage from './pages/HomePage';
 import AssemblyAIDevPanel from './AssemblyAIDevPanel';
 import { getSetting, setSetting } from '../lib/settings';
 import SearchPage from './pages/SearchPage';
+import { usePipeline, UsePipelineReturn } from '../hooks/usePipeline';
 
 type Page = 'episodes' | 'analytics' | 'topics' | 'bird' | 'stats' | 'settings' | 'home' | 'search';
 
@@ -27,6 +28,16 @@ export default function Layout() {
   const [pipelineProgress, setPipelineProgress] = useState<number>(0);
   const [pipelineStepLabel, setPipelineStepLabel] = useState<string | null>(null);
   const [pipelineEpisodeTitle, setPipelineEpisodeTitle] = useState<string | null>(null);
+
+  const pipeline: UsePipelineReturn = usePipeline(
+    () => window.dispatchEvent(new CustomEvent('pipeline-episode-updated')),
+    (isProcessing, progress, stepLabel, episodeTitle) => {
+      setPipelineProgress(isProcessing ? progress : 0);
+      setPipelineStepLabel(isProcessing ? stepLabel : null);
+      setPipelineEpisodeTitle(isProcessing ? episodeTitle : null);
+      setTranscriptionActive(isProcessing);
+    }
+  );
 
   // Pending deep-link navigation from Search → EpisodesPage transcript viewer
   const [pendingTranscriptNav, setPendingTranscriptNav] = useState<{
@@ -103,20 +114,6 @@ export default function Layout() {
     []
   );
 
-  const handlePipelineStateChange = useCallback(
-    (
-      isProcessing: boolean,
-      progress: number,
-      stepLabel: string | null,
-      episodeTitle: string | null
-    ) => {
-      setPipelineProgress(isProcessing ? progress : 0);
-      setPipelineStepLabel(isProcessing ? stepLabel : null);
-      setPipelineEpisodeTitle(isProcessing ? episodeTitle : null);
-      setTranscriptionActive(isProcessing);
-    },
-    []
-  );
 
   const renderPage = () => {
     switch (activePage) {
@@ -124,7 +121,7 @@ export default function Layout() {
         return (
           <EpisodesPage
             onTranscriptionStateChange={handleTranscriptionStateChange}
-            onPipelineStateChange={handlePipelineStateChange}
+            pipeline={pipeline}
             pendingTranscriptNav={pendingTranscriptNav}
             onTranscriptNavConsumed={() => setPendingTranscriptNav(null)}
           />

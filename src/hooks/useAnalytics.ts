@@ -102,11 +102,10 @@ export function useAnalytics() {
     const db = await Database.load('sqlite:binky.db');
 
     // Batch-load everything in parallel.
-    // Speaking time is computed from Whisper segments (not raw diarization window
-    // durations) using the same precision-scoring as useSpeakerBlocks so that
-    // Analytics matches the transcript view even when sherpa-rs produces large
-    // overlapping SPEAKER_0 windows containing tiny SPEAKER_1 snippets.
-    const [episodeRows, diarRows, transcriptRows] = await Promise.all([
+    // Speaking time is computed from raw diarization window durations (speaker-turn
+    // time), which matches AssemblyAI semantics and avoids over-counting the dominant
+    // speaker that Whisper-based scoring introduces when windows are sequential.
+    const [episodeRows, diarRows] = await Promise.all([
       db.select<Array<{
         id: number; title: string; publish_date: string;
         audio_url: string; diarization_status: string;
@@ -125,12 +124,6 @@ export function useAnalytics() {
         WHERE e.transcription_status = 'done'
         ORDER BY ds.episode_id, ds.start_ms
       `),
-      db.select<Array<{ episode_id: number; segments_json: string }>>(`
-        SELECT t.episode_id, t.segments_json
-        FROM transcripts t
-        JOIN episodes e ON e.id = t.episode_id
-        WHERE e.transcription_status = 'done' AND t.segments_json IS NOT NULL
-      `),
     ]);
 
     // Index by episode_id
@@ -139,50 +132,19 @@ export function useAnalytics() {
       if (!diarByEp.has(r.episode_id)) diarByEp.set(r.episode_id, []);
       diarByEp.get(r.episode_id)!.push(r);
     }
-    const segJsonByEp = new Map<number, string>();
-    for (const r of transcriptRows) segJsonByEp.set(r.episode_id, r.segments_json);
 
     const episodeMap = new Map<number, EpisodeStats>();
     for (const ep of episodeRows) {
       const diarSegs = diarByEp.get(ep.id) ?? [];
-      const segJson = segJsonByEp.get(ep.id);
 
       let host0Ms = 0; let host1Ms = 0;
       let host0Turns = 0; let host1Turns = 0;
 
-      if (segJson && diarSegs.length > 0) {
-        // Assign each Whisper segment to a speaker via precision scoring:
-        // score = overlap_ms / diar_window_ms — tiny SPEAKER_1 windows win over
-        // large surrounding SPEAKER_0 windows, matching the transcript view.
-        const whisperSegs = JSON.parse(segJson) as Array<{ text: string; start_ms: number; end_ms: number }>;
-        for (const ws of whisperSegs) {
-          if (!ws.text.trim()) continue;
-          const wsDur = ws.end_ms - ws.start_ms;
-          if (wsDur <= 0) continue;
-          let bestScore = -1;
-          let bestSpeaker = 'SPEAKER_0';
-          for (const ds of diarSegs) {
-            const overlap = Math.min(ws.end_ms, ds.end_ms) - Math.max(ws.start_ms, ds.start_ms);
-            const dsDur = ds.end_ms - ds.start_ms;
-            if (overlap > 0 && dsDur > 0) {
-              const score = (overlap * 1_000_000) / dsDur;
-              if (score > bestScore) {
-                bestScore = score;
-                bestSpeaker = ds.corrected_speaker ?? ds.speaker_label;
-              }
-            }
-          }
-          if (bestSpeaker === 'SPEAKER_0') { host0Ms += wsDur; host0Turns++; }
-          else { host1Ms += wsDur; host1Turns++; }
-        }
-      } else if (diarSegs.length > 0) {
-        // Fallback: no Whisper segments — sum raw diarization durations
-        for (const ds of diarSegs) {
-          const eff = ds.corrected_speaker ?? ds.speaker_label;
-          const dur = ds.end_ms - ds.start_ms;
-          if (eff === 'SPEAKER_0') { host0Ms += dur; host0Turns++; }
-          else { host1Ms += dur; host1Turns++; }
-        }
+      for (const ds of diarSegs) {
+        const eff = ds.corrected_speaker ?? ds.speaker_label;
+        const dur = ds.end_ms - ds.start_ms;
+        if (eff === 'SPEAKER_0') { host0Ms += dur; host0Turns++; }
+        else { host1Ms += dur; host1Turns++; }
       }
 
       const totalMs = host0Ms + host1Ms;
@@ -358,11 +320,12 @@ export function useAnalytics() {
     const fullScanEpisodes: number[] = [];
 
     for (const [episode_id, segments] of byEpisode) {
-      const { result } = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '', { earlyOnly: true });
-      if (result === 'swap') {
+      const earlyOutcome = detectSpeakerSwap(segments, h0Name ?? '', h1Name ?? '', { earlyOnly: true });
+      console.log(`[speakerDetect] ep=${episode_id} early → ${earlyOutcome.result} (method=${earlyOutcome.method}, score=${earlyOutcome.score})`);
+      if (earlyOutcome.result === 'swap') {
         await applySwap(episode_id);
         swapped++;
-      } else if (result === 'no_swap') {
+      } else if (earlyOutcome.result === 'no_swap') {
         await applyNoSwap(episode_id);
         unchanged++;
       } else {
@@ -380,11 +343,12 @@ export function useAnalytics() {
          FROM diarization_segments WHERE episode_id = ? ORDER BY start_ms`,
         [episode_id],
       );
-      const { result } = detectSpeakerSwap(allSegments, h0Name ?? '', h1Name ?? '');
-      if (result === 'swap') {
+      const outcome = detectSpeakerSwap(allSegments, h0Name ?? '', h1Name ?? '');
+      console.log(`[speakerDetect] ep=${episode_id} → ${outcome.result} (method=${outcome.method}, score=${outcome.score})`);
+      if (outcome.result === 'swap') {
         await applySwap(episode_id);
         swapped++;
-      } else if (result === 'no_swap') {
+      } else if (outcome.result === 'no_swap') {
         await applyNoSwap(episode_id);
         unchanged++;
       } else {
@@ -400,6 +364,16 @@ export function useAnalytics() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Poll every 3s while any episode is queued or processing
+  useEffect(() => {
+    const hasActive = episodes.some(
+      (e) => e.diarizationStatus === 'queued' || e.diarizationStatus === 'processing'
+    );
+    if (!hasActive) return;
+    const id = setInterval(() => refresh(), 3000);
+    return () => clearInterval(id);
+  }, [episodes, refresh]);
 
   return {
     episodes,

@@ -6,7 +6,7 @@ import Database from '@tauri-apps/plugin-sql';
 import { getSetting, setSetting } from '../../lib/settings';
 import ModelManager from '../ModelManager/ModelManager';
 import DiarizationModelManager from '../ModelManager/DiarizationModelManager';
-import { parseWordGroups, type WordGroup } from './StatsPage';
+import { parseWordGroups, type WordGroup } from '../../lib/wordGroups';
 
 // ─── OpenAI Settings Section ─────────────────────────────────────────────────
 

@@ -15,9 +15,10 @@ export interface Episode {
   podcast_name: string | null;
   created_at: string | null;
   updated_at: string | null;
-  // Pipeline columns (added in migration 016)
+  // Pipeline columns (added in migration 016–017)
   pipeline_status: 'idle' | 'running' | 'done' | 'error' | 'interrupted' | null;
   pipeline_progress: number | null;
+  pipeline_duration_s: number | null;
 }
 
 /** Metadata returned from sync_rss Rust command. */
@@ -48,7 +49,6 @@ export function useEpisodes() {
       const db = await getDb();
       const rows = await db.select<Episode[]>(
         `SELECT * FROM episodes
-         WHERE publish_date >= '2024-01-01'
          ORDER BY publish_date DESC`
       );
       setEpisodes(rows);

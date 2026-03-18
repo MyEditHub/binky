@@ -1,12 +1,17 @@
 use rusqlite::Connection;
 use serde::{Deserialize, Serialize};
+#[cfg(debug_assertions)]
 use std::sync::Arc;
+#[cfg(debug_assertions)]
 use tauri::Emitter;
+#[cfg(debug_assertions)]
 use tauri::Manager;
 use tauri_plugin_http::reqwest;
+#[cfg(debug_assertions)]
 use tokio::sync::Semaphore;
 use tokio::time::{sleep, Duration};
 
+#[cfg(debug_assertions)]
 #[derive(Clone, Serialize)]
 pub struct AssemblyAIProgress {
     pub episode_id: i64,
@@ -17,6 +22,7 @@ pub struct AssemblyAIProgress {
     pub total_count: u32,
 }
 
+#[cfg(debug_assertions)]
 #[derive(Debug, Deserialize)]
 struct SubmitResponse {
     id: String,
@@ -24,6 +30,7 @@ struct SubmitResponse {
     status: String,
 }
 
+#[cfg(debug_assertions)]
 #[derive(Debug, Deserialize)]
 struct PollResponse {
     #[allow(dead_code)]
@@ -34,6 +41,7 @@ struct PollResponse {
     error: Option<String>,
 }
 
+#[cfg(debug_assertions)]
 #[derive(Debug, Deserialize)]
 struct Utterance {
     speaker: String,
@@ -42,8 +50,7 @@ struct Utterance {
     text: String,
 }
 
-/// Maps AssemblyAI speaker letter to SPEAKER_N format.
-/// "A" -> "SPEAKER_0", "B" -> "SPEAKER_1", etc.
+#[cfg(debug_assertions)]
 fn map_speaker_label(speaker: &str) -> String {
     let index = speaker
         .chars()
@@ -60,7 +67,10 @@ pub async fn assemblyai_process_backlog(
 ) -> Result<String, String> {
     // Release build guard — this command is dev/internal only
     #[cfg(not(debug_assertions))]
-    return Err("Dev-only command".to_string());
+    {
+        let _ = (&app, &api_key);
+        return Err("Dev-only command".to_string());
+    }
 
     #[cfg(debug_assertions)]
     {
@@ -239,6 +249,7 @@ pub async fn assemblyai_process_backlog(
     }
 }
 
+#[cfg(debug_assertions)]
 async fn submit_episode(audio_url: &str, api_key: &str) -> Result<String, String> {
     let client = reqwest::Client::new();
     let body = serde_json::json!({
@@ -274,6 +285,7 @@ async fn submit_episode(audio_url: &str, api_key: &str) -> Result<String, String
     Ok(resp.id)
 }
 
+#[cfg(debug_assertions)]
 async fn poll_until_done(transcript_id: &str, api_key: &str) -> Result<PollResponse, String> {
     let client = reqwest::Client::new();
     let url = format!(
@@ -340,7 +352,10 @@ pub async fn assemblyai_backfill_utterance_text(
 ) -> Result<String, String> {
     // Release build guard — this command is dev/internal only
     #[cfg(not(debug_assertions))]
-    return Err("Dev-only command".to_string());
+    {
+        let _ = (&app, &api_key);
+        return Err("Dev-only command".to_string());
+    }
 
     #[cfg(debug_assertions)]
     {
@@ -559,6 +574,7 @@ pub async fn assemblyai_backfill_utterance_text(
     }
 }
 
+#[cfg(debug_assertions)]
 fn write_results_to_db(
     episode_id: i64,
     poll: &PollResponse,
@@ -575,6 +591,14 @@ fn write_results_to_db(
         rusqlite::params![episode_id, full_text],
     )
     .map_err(|e| format!("Transkript konnte nicht gespeichert werden: {}", e))?;
+
+    // Clear stale FTS entries first — prevents rowid collision when new
+    // diarization_segment AUTOINCREMENT IDs match existing search_index rowids.
+    conn.execute(
+        "DELETE FROM search_index WHERE episode_id = ?1",
+        rusqlite::params![episode_id],
+    )
+    .map_err(|e| e.to_string())?;
 
     // Clear existing diarization segments
     conn.execute(

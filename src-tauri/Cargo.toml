@@ -51,3 +51,6 @@ scraper = "0.25"
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+
+[patch.crates-io]
+sherpa-rs = { path = "vendor/sherpa-rs" }

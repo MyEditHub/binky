@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 import { useEpisodes } from '../../hooks/useEpisodes';
-import { usePipeline } from '../../hooks/usePipeline';
+import { UsePipelineReturn } from '../../hooks/usePipeline';
 import EpisodeRow from './EpisodeRow';
 import EpisodeExpandedView from './EpisodeExpandedView';
 
@@ -13,18 +13,13 @@ interface ModelStatus {
 interface EpisodeListProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
   onViewTranscript?: (episodeId: number, episodeTitle: string) => void;
-  onPipelineStateChange?: (
-    isProcessing: boolean,
-    progress: number,
-    stepLabel: string | null,
-    episodeTitle: string | null
-  ) => void;
+  pipeline?: UsePipelineReturn;
 }
 
 export default function EpisodeList({
   onTranscriptionStateChange,
   onViewTranscript,
-  onPipelineStateChange,
+  pipeline,
 }: EpisodeListProps) {
   const { t } = useTranslation();
   const {
@@ -47,46 +42,30 @@ export default function EpisodeList({
       .catch(() => setDownloadedModel(null));
   }, []);
 
-  const handlePipelineStateChange = useCallback(
-    (
-      isProcessing: boolean,
-      progress: number,
-      stepLabel: string | null,
-      episodeTitle: string | null
-    ) => {
-      // Notify Layout for sidebar strip
-      onPipelineStateChange?.(isProcessing, progress, stepLabel, episodeTitle);
-      // Keep the existing transcription badge in the sidebar working
-      onTranscriptionStateChange?.(isProcessing, 0);
-    },
-    [onPipelineStateChange, onTranscriptionStateChange]
-  );
+  // Refresh episode list when pipeline completes (event fired from Layout)
+  useEffect(() => {
+    function handleUpdated() { loadEpisodes(); }
+    window.addEventListener('pipeline-episode-updated', handleUpdated);
+    return () => window.removeEventListener('pipeline-episode-updated', handleUpdated);
+  }, [loadEpisodes]);
 
-  const {
-    activeEpisodeId,
-    progress,
-    isProcessing,
-    stepLabel,
-    error: pipelineError,
-    interrupted: pipelineInterrupted,
-    startPipeline,
-    cancelPipeline,
-  } = usePipeline(loadEpisodes, handlePipelineStateChange);
-
-  // Keep parent in sync when processing state changes (for badge)
+  // Keep parent in sync when processing state changes (for sidebar badge)
+  const isProcessing = pipeline?.isProcessing ?? false;
   useEffect(() => {
     onTranscriptionStateChange?.(isProcessing, 0);
   }, [isProcessing, onTranscriptionStateChange]);
 
+  const activeEpisodeId = pipeline?.activeEpisodeId ?? null;
+  const progress = pipeline?.progress ?? 0;
+  const stepLabel = pipeline?.stepLabel ?? null;
+  const pipelineError = pipeline?.error ?? false;
+  const pipelineInterrupted = pipeline?.interrupted ?? false;
+  const startPipeline = pipeline?.startPipeline;
+  const cancelPipeline = pipeline?.cancelPipeline;
+
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   function handleToggle(id: number) {
-    // Find the episode to check if it's done
-    const ep = episodes.find((e) => e.id === id);
-    if (ep?.transcription_status === 'done' && onViewTranscript) {
-      onViewTranscript(ep.id, ep.title);
-      return;
-    }
     setExpandedId((prev) => (prev === id ? null : id));
   }
 
@@ -163,7 +142,6 @@ export default function EpisodeList({
         <div className="episode-rows">
           {episodes.map((ep) => {
             const isThisActive = activeEpisodeId === ep.id;
-            // Disable pipeline on other episodes while one is already running.
             const anotherIsActive = isProcessing && !isThisActive;
             return (
               <div key={ep.id}>
@@ -185,12 +163,12 @@ export default function EpisodeList({
                     anotherIsActive={anotherIsActive}
                     onProcess={() => {
                       if (ep.audio_url) {
-                        startPipeline(ep.id, ep.audio_url, ep.title);
+                        startPipeline?.(ep.id, ep.audio_url, ep.title);
                       } else {
                         alert('Keine Audio-URL für diese Episode gefunden. Bitte neu synchronisieren (Synchronisieren-Button).');
                       }
                     }}
-                    onCancel={cancelPipeline}
+                    onCancel={() => cancelPipeline?.()}
                     onViewTranscript={onViewTranscript}
                   />
                 )}

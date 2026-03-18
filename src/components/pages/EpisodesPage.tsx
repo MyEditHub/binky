@@ -2,15 +2,11 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import EpisodeList from '../EpisodeList/EpisodeList';
 import TranscriptViewer from '../TranscriptViewer/TranscriptViewer';
+import { UsePipelineReturn } from '../../hooks/usePipeline';
 
 interface EpisodesPageProps {
   onTranscriptionStateChange?: (isProcessing: boolean, queueCount: number) => void;
-  onPipelineStateChange?: (
-    isProcessing: boolean,
-    progress: number,
-    stepLabel: string | null,
-    episodeTitle: string | null
-  ) => void;
+  pipeline?: UsePipelineReturn;
   pendingTranscriptNav?: { episodeId: number; startMs: number | null; title: string } | null;
   onTranscriptNavConsumed?: () => void;
 }
@@ -23,7 +19,7 @@ interface ViewingTranscript {
 
 export default function EpisodesPage({
   onTranscriptionStateChange,
-  onPipelineStateChange,
+  pipeline,
   pendingTranscriptNav,
   onTranscriptNavConsumed,
 }: EpisodesPageProps) {
@@ -76,7 +72,7 @@ export default function EpisodesPage({
       <EpisodeList
         key={reloadKey}
         onTranscriptionStateChange={onTranscriptionStateChange}
-        onPipelineStateChange={onPipelineStateChange}
+        pipeline={pipeline}
         onViewTranscript={handleViewTranscript}
       />
     </div>

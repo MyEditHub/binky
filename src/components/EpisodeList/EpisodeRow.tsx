@@ -88,6 +88,14 @@ export default function EpisodeRow({
       ? t('pages.episodes.duration_minutes', { minutes: Math.round(episode.duration_minutes) })
       : null;
 
+  const processingTimeLabel = (() => {
+    const s = episode.pipeline_duration_s;
+    if (!s) return null;
+    const m = Math.floor(s / 60);
+    const sec = Math.round(s % 60);
+    return m > 0 ? `⚙ ${m}m ${sec}s` : `⚙ ${sec}s`;
+  })();
+
   // Show interrupted state from persisted DB values even when not actively processing
   const isPersistedInterrupted =
     !pipelineActive &&
@@ -155,6 +163,9 @@ export default function EpisodeRow({
             )}
             {durationLabel && (
               <span className="episode-row-duration">{durationLabel}</span>
+            )}
+            {processingTimeLabel && (
+              <span className="episode-row-processing-time">{processingTimeLabel}</span>
             )}
           </div>
         </div>

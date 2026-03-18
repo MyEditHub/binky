@@ -1,12 +1,25 @@
 use serde::Serialize;
 
+/// Wall-clock timing for each pipeline stage (seconds).
+/// Transcription and diarization run in parallel, so their times overlap —
+/// the parallel block wall time ≤ transcription_s + diarization_s.
+#[derive(Clone, Serialize)]
+pub struct PipelineTiming {
+    pub download_s: f64,
+    pub decode_s: f64,
+    pub transcription_s: f64,
+    pub diarization_s: f64,
+    pub topics_s: f64,
+    pub total_s: f64,
+}
+
 #[derive(Clone, Serialize)]
 #[serde(tag = "event", content = "data")]
 pub enum PipelineEvent {
     StageStarted  { stage: String, overall_percent: i32 },
     Progress      { stage: String, stage_percent: i32, overall_percent: i32 },
     StageDone     { stage: String, overall_percent: i32 },
-    Done          { episode_id: i64 },
+    Done          { episode_id: i64, timing: PipelineTiming },
     Error         { stage: String, message: String, overall_percent: i32 },
     Cancelled     { completed_stages: Vec<String>, overall_percent: i32 },
 }
