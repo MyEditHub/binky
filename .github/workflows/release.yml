@@ -169,7 +169,7 @@ jobs:
           cp "$BUNDLE/Binky.app.tar.gz.sig" "artifacts/updater/Binky_${VERSION}_${{ matrix.arch }}.app.tar.gz.sig"
 
       - name: Upload PKG to release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: artifacts/release/*.pkg
         env:
@@ -245,7 +245,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Update release description
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: 'Binky v${{ steps.version.outputs.VERSION }}'
           body: |
